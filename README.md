@@ -46,32 +46,42 @@ Express API	Validates requests, checks permissions, and applies booking and queu
 MongoDB	Stores application data accessed by the backend
 
 
+
+
 The server should handle competing booking requests safely to prevent two guests from reserving the same table for overlapping times.
 📁 Proposed Folder Structure
+
+```text
 restaurant-reservation-queue-app/
-├── mobile/                  # React Native + Expo application
-│   ├── app/                 # Expo Router screens and layouts
-│   ├── components/          # Reusable UI components
-│   ├── services/            # API client and feature API calls
-│   ├── hooks/               # Shared React hooks
-│   ├── constants/           # Theme values and configuration
-│   ├── assets/              # Images, icons, and fonts
+├── mobile/
+│   ├── app/
+│   ├── components/
+│   ├── services/
+│   ├── hooks/
+│   ├── constants/
+│   ├── assets/
 │   ├── .env.example
 │   └── package.json
-├── backend/                 # Node.js + Express API
+├── backend/
 │   ├── src/
-│   │   ├── config/          # Database and server configuration
-│   │   ├── models/          # Mongoose schemas
-│   │   ├── controllers/     # Request handlers
-│   │   ├── routes/          # API route definitions
-│   │   ├── middleware/      # Authentication, validation, error handling
-│   │   ├── services/        # Booking and queue business logic
-│   │   └── server.js        # API entry point
+│   │   ├── config/
+│   │   ├── models/
+│   │   ├── controllers/
+│   │   ├── routes/
+│   │   ├── middleware/
+│   │   ├── services/
+│   │   └── server.js
 │   ├── .env.example
 │   └── package.json
-├── docs/                    # API agreements, diagrams, and screenshots
+├── docs/
 ├── .gitignore
 └── README.md
+```
+
+
+
+
+
 🚀 Getting Started
 These instructions assume the team has created the mobile/ and backend/ projects using the structure above. Cloning a repository containing only this README will not create a runnable app.
 
