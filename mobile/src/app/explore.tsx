@@ -1,180 +1,219 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  SafeAreaView,
+  Platform,
+  StatusBar,
+  Alert,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import Icon from '@/components/ui/Icon';
+import StatusBadge from '@/components/StatusBadge';
+import ReservationCard from '@/components/ReservationCard';
+import BottomNavBar, { TabKey } from '@/components/BottomNavBar';
+import { useReservations } from '@/hooks/useReservations';
+import { ReservationStatus } from '@/constants/status';
 
-import { ExternalLink } from '@/components/external-link';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+export default function ExploreScreen() {
+  const router = useRouter();
+  const { reservations, overview } = useReservations();
+  const [filter, setFilter] = useState<'all' | ReservationStatus>('all');
 
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
-  };
-  const theme = useTheme();
-
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
+  const filteredReservations = reservations.filter((r) => {
+    if (filter === 'all') return true;
+    return r.status === filter;
   });
 
+  const handleSeatGuests = (guestName: string, table?: string) => {
+    Alert.alert(
+      'Seat Guests',
+      `Seated ${guestName} at ${table || 'assigned table'}. Table status set to Occupied.`
+    );
+  };
+
+  const handleTabChange = (tab: TabKey) => {
+    if (tab === 'dashboard') {
+      router.push('/');
+    } else if (tab === 'waitlist') {
+      router.push('/queue');
+    }
+  };
+
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
-          </ThemedText>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F6F9F8" />
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [styles.backBtn, pressed && styles.pressed]}>
+            <Icon name="arrow-back" size={20} color="#111827" />
+          </Pressable>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>Reservations & Tables</Text>
+            <Text style={styles.headerSubtitle}>
+              {overview?.occupiedTables ?? 14} / {overview?.totalTables ?? 20} Tables Occupied (
+              {overview?.tablesOccupancyRate ?? 70}%)
+            </Text>
+          </View>
+          <StatusBadge label="DINNER" variant="green" dot />
+        </View>
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
-            </Pressable>
-          </ExternalLink>
-        </ThemedView>
+        {/* Filter Pills */}
+        <View style={styles.filtersWrapper}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+            {(['all', 'confirmed', 'seated', 'completed', 'no-show'] as const).map((status) => {
+              const isSelected = filter === status;
+              return (
+                <Pressable
+                  key={status}
+                  onPress={() => setFilter(status)}
+                  style={[styles.filterChip, isSelected && styles.filterChipActive]}>
+                  <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
 
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
+        {/* Reservations List */}
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}>
+          {filteredReservations.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Icon name="calendar" size={40} color="#9CA3AF" />
+              <Text style={styles.emptyTitle}>No reservations found</Text>
+              <Text style={styles.emptySub}>No bookings in this category for tonight.</Text>
+            </View>
+          ) : (
+            filteredReservations.map((res) => (
+              <ReservationCard
+                key={res.id}
+                reservation={res}
+                onSeat={() => handleSeatGuests(res.guestName, res.tableNumber)}
+                onPress={() =>
+                  Alert.alert(
+                    res.guestName,
+                    `Party of ${res.partySize} at ${res.time} (${res.tableNumber || 'Unassigned'})\n${
+                      res.notes ? `Notes: ${res.notes}` : ''
+                    }`
+                  )
+                }
               />
-            </ThemedView>
-          </Collapsible>
+            ))
+          )}
+        </ScrollView>
 
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
+        {/* Bottom Nav */}
+        <BottomNavBar
+          activeTab="bookings"
+          onSelectTab={handleTabChange}
+          waitlistCount={overview?.guestsInQueue ?? 4}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  safeArea: {
     flex: 1,
-  },
-  contentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    backgroundColor: '#F6F9F8',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
+    flex: 1,
+    backgroundColor: '#F6F9F8',
   },
-  titleContainer: {
-    gap: Spacing.three,
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF2F0',
+    backgroundColor: '#FFFFFF',
+    gap: 12,
   },
-  centerText: {
-    textAlign: 'center',
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   pressed: {
     opacity: 0.7,
   },
-  linkButton: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
+  headerTitleContainer: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 1,
+  },
+  filtersWrapper: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF2F0',
+  },
+  filterRow: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+  },
+  filterChipActive: {
+    backgroundColor: '#009669',
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
+  filterChipTextActive: {
+    color: '#FFFFFF',
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    padding: 16,
+  },
+  emptyContainer: {
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.one,
-    alignItems: 'center',
+    paddingVertical: 48,
+    gap: 8,
   },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#374151',
   },
-  collapsibleContent: {
-    alignItems: 'center',
-  },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
+  emptySub: {
+    fontSize: 13,
+    color: '#9CA3AF',
   },
 });
