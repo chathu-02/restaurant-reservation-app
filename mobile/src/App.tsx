@@ -3,38 +3,49 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { AuthProvider } from './context/AuthContext';
 import { StaffProvider } from './context/StaffContext';
+import { CustomerProvider } from './context/CustomerContext';
 import { MobileFrame } from './components/layout/MobileFrame';
+
+// Staff Pages
 import { SignInPage } from './pages/SignInPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { StaffAccountsPage } from './pages/StaffAccountsPage';
 import { ProfileSettingsPage } from './pages/ProfileSettingsPage';
+
+// Customer Pages
+import { JoinQueuePage } from './pages/customer/JoinQueuePage';
+import { YourQueuePage } from './pages/customer/YourQueuePage';
+import { NotificationsPage } from './pages/customer/NotificationsPage';
+import { CustomerProfilePage } from './pages/customer/CustomerProfilePage';
 
 export const App: React.FC = () => {
   return (
     <ToastProvider>
       <AuthProvider>
         <StaffProvider>
-          <BrowserRouter>
-            <MobileFrame>
-              <Routes>
-                {/* 1. Staff Sign In (Screenshot 1) */}
-                <Route path="/login" element={<SignInPage />} />
+          <CustomerProvider>
+            <BrowserRouter>
+              <MobileFrame>
+                <Routes>
+                  {/* Customer Portal Routes */}
+                  <Route path="/join-queue" element={<JoinQueuePage />} />
+                  <Route path="/queue" element={<YourQueuePage />} />
+                  <Route path="/alerts" element={<NotificationsPage />} />
+                  <Route path="/customer-profile" element={<CustomerProfilePage />} />
 
-                {/* 2. Staff Dashboard Overview (Screenshot 2) */}
-                <Route path="/dashboard" element={<DashboardPage />} />
+                  {/* Staff Portal Routes */}
+                  <Route path="/login" element={<SignInPage />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/staff" element={<StaffAccountsPage />} />
+                  <Route path="/profile" element={<ProfileSettingsPage />} />
 
-                {/* 3. Staff Accounts Management (Screenshot 3) */}
-                <Route path="/staff" element={<StaffAccountsPage />} />
-
-                {/* 4. Profile & Settings (Screenshot 4) */}
-                <Route path="/profile" element={<ProfileSettingsPage />} />
-
-                {/* Root default & fallback */}
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </MobileFrame>
-          </BrowserRouter>
+                  {/* Default Route: Customer Join Queue */}
+                  <Route path="/" element={<Navigate to="/join-queue" replace />} />
+                  <Route path="*" element={<Navigate to="/join-queue" replace />} />
+                </Routes>
+              </MobileFrame>
+            </BrowserRouter>
+          </CustomerProvider>
         </StaffProvider>
       </AuthProvider>
     </ToastProvider>
