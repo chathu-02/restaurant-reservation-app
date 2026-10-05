@@ -1,56 +1,136 @@
-# Welcome to your Expo app 👋
+# 🍽️ Restaurant Reservation & Queue App — Staff Mobile Frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Mobile-first restaurant reservation, queue management, and staff operations frontend built with **React + Vite**, **React Router**, and **Tailwind CSS**.
 
-## Get started
+Developed for **IT3060 Human Computer Interaction — Milestone 03** on branch `feature/customer-staff`.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 📱 Implemented High-Fidelity Interfaces
 
-2. Start the app
+This frontend recreation implements all 4 assigned interfaces from the high-fidelity UI prototypes:
 
-   ```bash
-   npx expo start
-   ```
+1. **Staff Sign In (`/login`)** — Matching Prototype Screen 1
+   - Brand logo badge with `STAFF ACCESS` indicator.
+   - Form with client-side validation for Staff Email/ID and Password.
+   - Password visibility toggle (eye / eye-off).
+   - Sign In action with loading indicator and direct authentication.
+   - Quick Fill test accounts (Manager Kaweerna & Staff Jane).
+   - "Trouble signing in?" assistance card with modal overlay.
 
-In the output, you'll find options to open the app in a
+2. **Staff Dashboard Overview (`/dashboard`)** — Matching Prototype Screen 2
+   - Active shift badge ("Dinner Service • Shift A") and profile avatar with online status indicator.
+   - Current date & greeting ("Today, Wednesday, June 12").
+   - 2x2 Key Operational Metrics grid:
+     - **Reservations today** (24, `+14%`)
+     - **Guests in queue** (6, `~12m wait`)
+     - **Tables occupied** (12/20 with visual progress bar)
+     - **No-shows** (2, `Low` badge)
+   - Dinner Rush Alert card ("Rush expected 7:30 PM • 48 covers reserved") with interactive **View slots** capacity modal.
+   - Action buttons:
+     - **Walk-in**: Register walk-in guest to live queue (CRUD Create).
+     - **+ New Booking**: Comprehensive reservation booking modal (CRUD Create).
+     - **Manage**: Shift overrides and table capacity forecast.
+   - Manager tools section: Direct navigation to **Staff Accounts** and **Restaurant Settings**.
+   - 5-tab bottom navigation bar (`Dashboard`, `Reservations`, `Tables`, `Queue`, `Alerts`).
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+3. **Staff Accounts Management (`/staff`)** — Matching Prototype Screen 3
+   - Top header with dynamic member counts ("X team members • Y active").
+   - Add new staff account button (`+`) opening modal form.
+   - Real-time search by name, role, department, or staff ID (`⌘K`).
+   - Category filter tabs: `All`, `Active`, `Managers`, `Kitchen`.
+   - Dinner Shift Roster banner with active clock count.
+   - **Full Working CRUD Operations**:
+     - **Create**: Add new staff member with name, role, station, duty status, and code.
+     - **Read**: Dynamic list with avatars, roles, duty status, and search/filter.
+     - **Update**: Edit staff details via pencil button, or toggle `On duty` / `Off duty` in real-time.
+     - **Delete**: Remove staff member from roster with confirmation modal.
+     - Empty state with reset filters button if search returns no results.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+4. **Profile & Settings (`/profile`)** — Matching Prototype Screen 4
+   - Header with Staff ID `#MGR-4082` and edit profile button.
+   - Profile Hero Card featuring:
+     - Manager avatar photo (Kaweerna Sneha) with camera icon.
+     - "On Shift" interactive status toggle pill.
+     - Name, email, "General Manager" and "Floor & Service • Shift A" pills.
+     - 3-column operational stats: **RATING 4.9 ★**, **COMPLETED 142 Shifts**, **FLOOR Zone A**.
+   - **Account & Security**:
+     - Personal Details edit modal with validation (CRUD Update).
+     - Security & Passcode (PIN/passcode update modal).
+     - Shift Alerts & Sound (On/Off toggle switch).
+   - **Preferences & Support**:
+     - Table & Floor Map (Interactive floor visualizer for Zone A).
+     - Help & Manager Desk (Hotline, emergency override code, handover checklist).
+   - **Log Out of Session** button returning to sign-in.
+   - Footer: `Stitch POS v2.4.1 • Terminal #04 • Synced`.
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## 🛠️ Technology Stack
 
+- **Framework**: React 18
+- **Build Tool**: Vite 6 (Fast HMR & optimal production bundling)
+- **Routing**: React Router v6 (`BrowserRouter` with route navigation)
+- **Styling**: Tailwind CSS v3 + Custom design tokens matching prototype
+- **Icons**: Lucide React
+- **State Management & Persistence**: React Context API (`AuthContext`, `StaffContext`, `ToastContext`) + LocalStorage with seamless backend API fallbacks
+- **Backend API Integration**: Node.js + Express REST API endpoints (`/api/staff`, `/api/auth`, `/api/dashboard`, `/api/reservations`, `/api/queue`)
+
+---
+
+## 🚀 How to Run the Application
+
+### 1. Prerequisites
+- Node.js (v18+)
+- npm (v9+)
+
+### 2. Frontend Setup
 ```bash
-npm run reset-project
+cd mobile
+npm install
+npm run dev
+```
+Open your browser at `http://localhost:3000` (or the port displayed in terminal).
+
+### 3. Production Build
+```bash
+cd mobile
+npm run build
+npm run preview
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 4. Running the Backend API (Optional)
+```bash
+cd ../backend
+npm install
+npm run start
+```
+The frontend automatically connects to the backend on `http://localhost:5000/api` if running, and seamlessly falls back to persistent local storage if offline.
 
-### Other setup steps
+---
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## 🔍 Desktop & Mobile View Modes
 
-## Learn more
+When running on desktop, a **Device Frame Bar** is provided at the top:
+- Switch directly between screens:
+  - `1. Staff Sign In`
+  - `2. Staff Dashboard`
+  - `3. Staff Accounts`
+  - `4. Profile & Settings`
+- Toggle between **Phone Frame Mode** (realistic mobile device bezel) and **Full Responsive View**.
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 📋 CRUD Operations Summary
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+| Interface | Operation | Trigger | Details |
+|---|---|---|---|
+| **Staff Accounts** | **Create** | Click `+` button in top right | Adds new staff member with code, name, role, station, duty status |
+| **Staff Accounts** | **Read** | Screen load / search / filter | Reads roster, filters by All / Active / Managers / Kitchen, live search query |
+| **Staff Accounts** | **Update** | Pencil icon or duty toggle switch | Modifies member details or switches duty state |
+| **Staff Accounts** | **Delete** | Trash icon on member card | Deletes member with confirmation modal |
+| **Profile & Settings** | **Read** | Screen load | Displays manager stats, rating, shift info, floor assignment |
+| **Profile & Settings** | **Update** | Edit button or Personal Details item | Updates contact info, name, floor, shift assignment with validation |
+| **Profile & Settings** | **Update** | On Shift pill or Alerts row | Toggles shift status and sound alerts |
+| **Dashboard** | **Create** | `+ New Booking` button | Adds reservation with guest details, party size, and time |
+| **Dashboard** | **Create** | `Walk-in` button | Adds guest to waiting queue with estimated wait time |
