@@ -141,7 +141,7 @@ export default function TablesScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F9EC" />
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
       <View style={styles.container}>
         {/* Top Header */}
         <View style={styles.header}>
@@ -542,7 +542,7 @@ export default function TablesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F4F9EC',
+    backgroundColor: '#022C22',
   },
   container: {
     flex: 1,
@@ -553,9 +553,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 10,
-    backgroundColor: '#F4F9EC',
+    paddingTop: 10,
+    paddingBottom: 14,
+    backgroundColor: '#022C22',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     gap: 8,
   },
   headerLeft: {
@@ -570,25 +572,25 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#0F172A',
+    color: '#FFFFFF',
   },
   peakBadge: {
-    backgroundColor: '#E6F8F0',
+    backgroundColor: 'rgba(52, 211, 153, 0.2)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: 'rgba(52, 211, 153, 0.3)',
   },
   peakBadgeText: {
     fontSize: 9.5,
     fontWeight: '800',
-    color: '#009669',
+    color: '#34D399',
     letterSpacing: 0.5,
   },
   headerSubtitle: {
     fontSize: 12.5,
-    color: '#6B7280',
+    color: '#34D399',
     marginTop: 2,
   },
   headerRight: {
@@ -599,7 +601,7 @@ const styles = StyleSheet.create({
   liveShiftBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E6F8F0',
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -609,12 +611,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10B981',
+    backgroundColor: '#34D399',
   },
   liveShiftText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#00875A',
+    color: '#34D399',
   },
   filterBtn: {
     width: 34,

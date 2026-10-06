@@ -199,7 +199,7 @@ export default function ReservationsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F9EC" />
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
       <View style={styles.container}>
         {/* Top Header Bar */}
         <View style={styles.header}>
@@ -583,7 +583,7 @@ export default function ReservationsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F4F9EC',
+    backgroundColor: '#022C22',
   },
   container: {
     flex: 1,
@@ -594,8 +594,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#F4F9EC',
+    paddingVertical: 14,
+    backgroundColor: '#022C22',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     gap: 8,
   },
   headerLeft: {
@@ -633,11 +635,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 21,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFFFFF',
     flexShrink: 1,
   },
   liveBadge: {
-    backgroundColor: '#E6F8F0',
+    backgroundColor: 'rgba(52, 211, 153, 0.2)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
@@ -645,14 +647,14 @@ const styles = StyleSheet.create({
   liveBadgeText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#009669',
+    color: '#34D399',
     letterSpacing: 0.5,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#6B7280',
+    color: '#34D399',
     marginTop: 1,
-    fontWeight: '400',
+    fontWeight: '500',
   },
   headerRight: {
     flexDirection: 'row',

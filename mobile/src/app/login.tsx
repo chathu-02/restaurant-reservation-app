@@ -65,7 +65,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F9EC" />
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
 
       {/* Decorative ambient background glows */}
       <View style={styles.ambientTopGlow} pointerEvents="none" />
@@ -369,7 +369,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F3F7EE',
+    backgroundColor: '#022C22',
     position: 'relative',
   },
   keyboardContainer: {

@@ -186,7 +186,7 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F9EC" />
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
       <View style={styles.container}>
         <ScrollView
           style={styles.scrollView}
@@ -200,45 +200,47 @@ export default function DashboardScreen() {
               tintColor="#009669"
             />
           }>
-          {/* Top Bar */}
-          <View style={styles.topBar}>
-            <View style={styles.topBarLeft}>
-              <View style={styles.serviceIconContainer}>
-                <Icon name="utensils" size={18} color="#FFFFFF" />
-              </View>
-              <StatusBadge
-                label={overview?.service || user?.service || 'DINNER SERVICE'}
-                variant="green"
-                dot
-                size="medium"
-              />
-            </View>
-
-            {/* Live clock pill */}
-            <View style={styles.clockPill}>
-              <Icon name="clock" size={13} color="#0c6c4fff" />
-              <Text style={styles.clockText}>{liveTime}</Text>
-            </View>
-
-            {/* Avatar */}
-            <Pressable
-              onPress={() => router.push('/profile')}
-              style={styles.avatarWrapper}>
-              <Image
-                source={require('@/assets/images/staff_avatar.jpg')}
-                style={styles.avatarImage}
-                defaultSource={require('@/assets/images/icon.png')}
-              />
-              <View style={styles.onlineBadge} />
-            </Pressable>
-          </View>
-
-          {/* ─── Hero Greeting & Shift Progress Container (#022C22) ─ */}
+          {/* ─── Unified Dark Emerald Header & Greeting Section (#022C22) ─ */}
           <Animated.View
             style={[
               styles.heroSection,
               { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
             ]}>
+            {/* Top Bar */}
+            <View style={styles.topBar}>
+              <View style={styles.topBarLeft}>
+                <View style={styles.serviceIconContainer}>
+                  <Icon name="utensils" size={18} color="#FFFFFF" />
+                </View>
+                <StatusBadge
+                  label={overview?.service || user?.service || 'DINNER SERVICE'}
+                  variant="green"
+                  dot
+                  size="medium"
+                />
+              </View>
+
+              {/* Live clock pill */}
+              <View style={styles.clockPill}>
+                <Icon name="clock" size={13} color="#34D399" />
+                <Text style={styles.clockText}>{liveTime}</Text>
+              </View>
+
+              {/* Avatar */}
+              <Pressable
+                onPress={() => router.push('/profile')}
+                style={styles.avatarWrapper}>
+                <Image
+                  source={require('@/assets/images/staff_avatar.jpg')}
+                  style={styles.avatarImage}
+                  defaultSource={require('@/assets/images/icon.png')}
+                />
+                <View style={styles.onlineBadge} />
+              </Pressable>
+            </View>
+
+            <View style={styles.headerDivider} />
+
             <Text style={styles.dateText}>
               {overview?.date || getFormattedDate().toUpperCase()}
             </Text>
@@ -699,7 +701,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F4F9EC',
+    backgroundColor: '#022C22',
   },
   container: {
     flex: 1,
@@ -719,8 +721,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    paddingBottom: 12,
     gap: 8,
+  },
+  headerDivider: {
+    height: 1,
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
+    marginHorizontal: -18,
+    marginBottom: 16,
   },
   topBarLeft: {
     flexDirection: 'row',
@@ -746,18 +754,18 @@ const styles = StyleSheet.create({
   clockPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(5, 112, 80, 0.08)',
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 16,
     gap: 5,
     borderWidth: 1,
-    borderColor: 'rgba(0, 150, 105, 0.15)',
+    borderColor: 'rgba(52, 211, 153, 0.3)',
   },
   clockText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#007A55',
+    color: '#FFFFFF',
     letterSpacing: 0.3,
   },
   avatarWrapper: {
@@ -786,14 +794,19 @@ const styles = StyleSheet.create({
   // ── Hero Section (Combined #022C22 Dark Emerald Container) ───
   heroSection: {
     backgroundColor: '#022C22',
-    borderRadius: 24,
-    paddingVertical: 22,
-    paddingHorizontal: 22,
-    marginHorizontal: -6,
-    marginBottom: 14,
-    borderWidth: 1.5,
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    paddingTop: 10,
+    paddingBottom: 22,
+    paddingHorizontal: 18,
+    marginHorizontal: -16,
+    marginTop: -8,
+    marginBottom: 16,
+    borderWidth: 1,
     borderColor: '#065F46',
-    borderTopColor: '#0A7456',
+    borderTopWidth: 0,
     shadowColor: '#022C22',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,

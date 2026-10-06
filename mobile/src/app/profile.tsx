@@ -28,14 +28,14 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F9EC" />
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
             style={({ pressed }) => [styles.backBtn, pressed && styles.pressed]}>
-            <Icon name="arrow-back" size={20} color="#111827" />
+            <Icon name="arrow-back" size={20} color="#FFFFFF" />
           </Pressable>
           <Text style={styles.headerTitle}>Staff Profile & Shift</Text>
           <View style={{ width: 36 }} />
@@ -179,7 +179,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F4F9EC',
+    backgroundColor: '#022C22',
   },
   container: {
     flex: 1,
@@ -190,16 +190,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F0',
-    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
+    backgroundColor: '#022C22',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -208,8 +210,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   scroll: {
     flex: 1,

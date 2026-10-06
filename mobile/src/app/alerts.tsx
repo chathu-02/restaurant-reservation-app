@@ -161,7 +161,7 @@ export default function AlertsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F9EC" />
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
       <View style={styles.container}>
         {/* Top Header */}
         <View style={styles.header}>
@@ -176,15 +176,15 @@ export default function AlertsScreen() {
           {/* Right Actions Header */}
           <View style={styles.headerRightActions}>
             <Pressable style={styles.headerIconBtn}>
-              <Icon name="bell" size={17} color="#475569" />
+              <Icon name="bell" size={17} color="#FFFFFF" />
             </Pressable>
             <Pressable style={styles.headerIconBtn}>
-              <Icon name="clock" size={17} color="#475569" />
+              <Icon name="clock" size={17} color="#FFFFFF" />
             </Pressable>
             <Pressable
               onPress={() => router.push('/profile')}
               style={styles.headerIconBtn}>
-              <Icon name="person" size={17} color="#475569" />
+              <Icon name="person" size={17} color="#FFFFFF" />
             </Pressable>
           </View>
         </View>
@@ -503,7 +503,7 @@ export default function AlertsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F4F9EC',
+    backgroundColor: '#022C22',
   },
   container: {
     flex: 1,
@@ -515,7 +515,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 4,
+    paddingBottom: 14,
+    backgroundColor: '#022C22',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerTitleRow: {
     flexDirection: 'row',
@@ -525,30 +528,30 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#1c4f25ff',
+    color: '#FFFFFF',
     letterSpacing: -0.3,
   },
   liveDispatchBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E6F8F0',
+    backgroundColor: 'rgba(52, 211, 153, 0.2)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: 'rgba(52, 211, 153, 0.3)',
     gap: 4,
   },
   liveDispatchDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#00A86B',
+    backgroundColor: '#34D399',
   },
   liveDispatchText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#00875A',
+    color: '#34D399',
   },
   headerRightActions: {
     flexDirection: 'row',
@@ -559,16 +562,11 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.2,
-    borderColor: '#E2E8F0',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1.5,
   },
   headerSubtitle: {
     fontSize: 12.5,

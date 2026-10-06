@@ -127,14 +127,14 @@ export default function ReservationDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F9EC" />
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
       <View style={styles.container}>
         {/* Top Header Bar */}
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
             style={({ pressed }) => [styles.circularBtn, pressed && styles.pressed]}>
-            <Icon name="arrow-back" size={20} color="#174825ff" />
+            <Icon name="arrow-back" size={20} color="#FFFFFF" />
           </Pressable>
 
           <View style={styles.headerCenter}>
@@ -454,7 +454,7 @@ export default function ReservationDetailScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F4F9EC',
+    backgroundColor: '#022C22',
   },
   container: {
     flex: 1,
@@ -465,23 +465,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#F4F9EC',
+    paddingVertical: 14,
+    backgroundColor: '#022C22',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   circularBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#EEF2F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   headerCenter: {
     alignItems: 'center',
@@ -496,16 +493,16 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#10B981',
+    backgroundColor: '#34D399',
   },
   resTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFFFFF',
   },
   resSubtitle: {
     fontSize: 12,
-    color: '#6B7280',
+    color: '#34D399',
     marginTop: 1,
   },
   headerRight: {

@@ -9,10 +9,12 @@ import {
   TextInput,
   Alert,
   StatusBar,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from '@/components/ui/Icon';
+import StatusBadge from '@/components/StatusBadge';
 import { BottomNavBar, TabKey } from '@/components/BottomNavBar';
 
 // Types
@@ -42,6 +44,24 @@ export default function QueueScreen() {
 
   // Walk-in Modal State
   const [walkInModalVisible, setWalkInModalVisible] = useState(false);
+
+  // Live Clock String
+  const [liveTime, setLiveTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const formattedHours = hours % 12 || 12;
+      const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+      setLiveTime(`${formattedHours}:${formattedMinutes} ${ampm}`);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (openModal === 'true') {

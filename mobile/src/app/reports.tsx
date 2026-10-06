@@ -70,14 +70,14 @@ export default function ReportsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F9EC" />
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
       <View style={styles.container}>
         {/* Header Bar */}
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
             style={({ pressed }) => [styles.backBtn, pressed && styles.pressed]}>
-            <Icon name="arrow-back" size={20} color="#286e57ff" />
+            <Icon name="arrow-back" size={20} color="#FFFFFF" />
           </Pressable>
 
           <View style={styles.headerBadgesRow}>
@@ -372,7 +372,7 @@ export default function ReportsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F4F9EC',
+    backgroundColor: '#022C22',
   },
   container: {
     flex: 1,
@@ -384,22 +384,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: 4,
+    paddingBottom: 14,
+    backgroundColor: '#022C22',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.2,
-    borderColor: '#E2E8F0',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#1e6136ff',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1.5,
   },
   headerBadgesRow: {
     flexDirection: 'row',

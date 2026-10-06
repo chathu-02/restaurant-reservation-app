@@ -89,14 +89,14 @@ export default function AddWalkInScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F9EC" />
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
       <View style={styles.container}>
         {/* Header Bar */}
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
             style={({ pressed }) => [styles.circularBtn, pressed && styles.pressed]}>
-            <Icon name="arrow-back" size={18} color="#111827" />
+            <Icon name="arrow-back" size={18} color="#FFFFFF" />
           </Pressable>
 
           <View style={styles.headerCenter}>
@@ -115,7 +115,7 @@ export default function AddWalkInScreen() {
               )
             }
             style={({ pressed }) => [styles.circularBtn, pressed && styles.pressed]}>
-            <Icon name="help-circle" size={20} color="#4B5563" />
+            <Icon name="help-circle" size={20} color="#FFFFFF" />
           </Pressable>
         </View>
 
@@ -302,7 +302,7 @@ export default function AddWalkInScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F4F9EC',
+    backgroundColor: '#022C22',
   },
   container: {
     flex: 1,
@@ -322,10 +322,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F0',
+    paddingTop: 12,
+    paddingBottom: 14,
+    backgroundColor: '#022C22',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerCenter: {
     alignItems: 'center',
@@ -333,7 +334,7 @@ const styles = StyleSheet.create({
   liveHostPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: 'rgba(52, 211, 153, 0.2)',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
@@ -344,24 +345,26 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10B981',
+    backgroundColor: '#34D399',
   },
   liveHostText: {
     fontSize: 9.5,
     fontWeight: '800',
-    color: '#047857',
+    color: '#34D399',
     letterSpacing: 0.5,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: '#FFFFFF',
   },
   circularBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
