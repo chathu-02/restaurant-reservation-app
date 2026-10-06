@@ -21,7 +21,7 @@ export const colors = {
   error: "#8A2D2D",
 };
 
-export function Screen({ children }: { children: ReactNode }) {
+export function Screen({ children, top }: { children: ReactNode; top?: boolean }) {
   return (
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView
@@ -29,7 +29,7 @@ export function Screen({ children }: { children: ReactNode }) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[styles.scroll, top && { justifyContent: "flex-start" }]}
           keyboardShouldPersistTaps="handled"
         >
           {children}
@@ -135,3 +135,83 @@ const styles = StyleSheet.create({
   buttonSecondary: { backgroundColor: "#fff", borderWidth: 2, borderColor: colors.green },
   buttonText: { color: "#fff", fontSize: 17, fontWeight: "700" },
 });
+
+export function Chip({
+  title,
+  selected,
+  disabled,
+  onPress,
+}: {
+  title: string;
+  selected?: boolean;
+  disabled?: boolean;
+  onPress?: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected, disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={{
+        minHeight: 48,
+        paddingHorizontal: 14,
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: selected ? colors.green : colors.border,
+        backgroundColor: selected ? colors.green : disabled ? "#ECEFED" : "#fff",
+      }}
+    >
+      <Text
+        style={{
+          color: selected ? "#fff" : disabled ? colors.muted : colors.text,
+          fontWeight: selected ? "700" : "500",
+          fontSize: 15,
+        }}
+      >
+        {title}
+      </Text>
+    </Pressable>
+  );
+}
+
+export function Card({ children, tint }: { children: ReactNode; tint?: string }) {
+  return (
+    <View
+      style={{
+        backgroundColor: tint ?? "#fff",
+        borderRadius: 16,
+        padding: 16,
+        borderWidth: tint ? 0 : 1,
+        borderColor: "#DDE4DF",
+        marginBottom: 14,
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+export function Badge({ text, tone }: { text: string; tone: "good" | "wait" | "bad" }) {
+  const map = {
+    good: ["#D5EDE3", "#14503E"],
+    wait: ["#FCEBCB", "#6B3A00"],
+    bad: ["#F3D9D9", "#8A2D2D"],
+  } as const;
+  const [bg, fg] = map[tone];
+  return (
+    <View
+      style={{
+        alignSelf: "flex-start",
+        backgroundColor: bg,
+        borderRadius: 99,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+      }}
+    >
+      <Text style={{ color: fg, fontWeight: "700", fontSize: 13 }}>{text}</Text>
+    </View>
+  );
+}

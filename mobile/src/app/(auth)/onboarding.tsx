@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Logo } from "@/components/logo";
+import { BRAND } from "@/lib/brand";
 
-const RESTAURANT_NAME = "Restaurant Name"; // change to the real name
 
 const SLIDES = [
   { icon: "🗓️", title: "Book ahead", text: "Reserve a table before you arrive and skip the wait on busy nights." },
@@ -23,11 +24,14 @@ export default function Onboarding() {
 
   const finish = () => router.replace("/sign-in" as never);
 
-  if (step === -1) {
+    if (step === -1) {
     return (
-      <View style={[styles.screen, styles.center]}>
-        <Text style={styles.logo}>🍽️</Text>
-        <Text style={styles.name}>{RESTAURANT_NAME}</Text>
+      <View style={[styles.screen, styles.center, { backgroundColor: "#fff" }]}>
+        <Logo size={240} />
+        <Text style={styles.name}>{BRAND.name}</Text>
+        <Text style={{ color: "#1F6B54", fontSize: 13, letterSpacing: 2, marginTop: 4 }}>
+          {BRAND.tagline.toUpperCase()}
+        </Text>
       </View>
     );
   }
