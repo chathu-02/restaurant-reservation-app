@@ -33,9 +33,14 @@ export interface Reservation {
   partySize: number;
   time: string;
   tableNumber?: string;
+  tableArea?: string;
   status: ReservationStatus;
   phone?: string;
   notes?: string;
+  vipBadge?: string;
+  tags?: string[];
+  seatedInfo?: string;
+  actionType?: 'seat' | 'assign' | 'seated-info' | 'waitlist-offer';
 }
 
 export interface QueueGuest {
@@ -45,19 +50,20 @@ export interface QueueGuest {
   joinedAt: string;
   estimatedWaitMinutes: number;
   phone?: string;
+  notes?: string;
 }
 
 const DEFAULT_OVERVIEW: ShiftOverviewData = {
   date: 'WEDNESDAY, JUNE 12',
   service: 'DINNER SERVICE',
   dutyRole: 'Shift Lead on Duty',
-  reservationsToday: 24,
+  reservationsToday: 42,
   newReservations: 4,
   guestsInQueue: 6,
   queueWaitMinutes: 12,
   occupiedTables: 14,
   totalTables: 20,
-  tablesOccupancyRate: 70,
+  tablesOccupancyRate: 85,
   noShowsToday: 2,
   noShowRateLabel: 'Low rate',
   rushAlert: {
@@ -76,53 +82,77 @@ const DEFAULT_OVERVIEW: ShiftOverviewData = {
 const DEFAULT_RESERVATIONS: Reservation[] = [
   {
     id: 'res-1',
-    guestName: 'Alex Mercer',
+    guestName: 'Sarah Johnson',
     partySize: 4,
-    time: '7:00 PM',
-    tableNumber: 'Table 4',
-    status: 'seated',
-    notes: 'Window booth requested, birthday celebration',
+    time: '6:00 PM',
+    tableNumber: 'Table 12',
+    tableArea: 'Main Room',
+    status: 'confirmed',
+    vipBadge: '★ VIP',
+    tags: ['🎉 Anniversary', 'Window seat'],
+    actionType: 'seat',
   },
   {
     id: 'res-2',
-    guestName: 'Elena Rostova',
+    guestName: 'Michael Chen',
     partySize: 2,
-    time: '7:30 PM',
-    tableNumber: 'Table 7',
-    status: 'confirmed',
-    notes: 'Anniversary, champagne pre-ordered',
+    time: '6:30 PM',
+    tableNumber: 'Unassigned',
+    tableArea: '',
+    status: 'pending',
+    tags: ['Booth requested'],
+    actionType: 'assign',
   },
   {
     id: 'res-3',
-    guestName: 'Marcus Vance',
+    guestName: 'Emily Davis',
     partySize: 6,
-    time: '7:30 PM',
-    tableNumber: 'Table 12',
-    status: 'confirmed',
-    notes: 'VIP guest - GM acquaintance',
+    time: '7:00 PM',
+    tableNumber: 'Table 4',
+    tableArea: 'Patio',
+    status: 'seated',
+    seatedInfo: 'Seated 25m ago • Entrées Cooking',
+    actionType: 'seated-info',
   },
   {
     id: 'res-4',
-    guestName: 'Sophia Lin',
+    guestName: 'James Wilson',
     partySize: 3,
-    time: '8:00 PM',
-    tableNumber: 'Table 9',
+    time: '7:30 PM',
+    tableNumber: 'Table 8',
+    tableArea: 'Dining',
     status: 'confirmed',
+    tags: ['👶 High chair needed'],
   },
   {
     id: 'res-5',
-    guestName: 'David Kim',
-    partySize: 2,
-    time: '6:30 PM',
-    tableNumber: 'Table 2',
-    status: 'completed',
+    guestName: 'Olivia Martinez',
+    partySize: 5,
+    time: '8:00 PM',
+    tableNumber: 'Unassigned',
+    status: 'cancelled',
+    notes: 'Released table back to inventory',
+    actionType: 'waitlist-offer',
   },
   {
     id: 'res-6',
-    guestName: 'Oliver Twist Party',
-    partySize: 5,
-    time: '6:15 PM',
-    status: 'no-show',
+    guestName: 'Daniel Brown',
+    partySize: 2,
+    time: '8:30 PM',
+    tableNumber: 'Table 6',
+    status: 'deposit-due',
+    tags: ['SMS reminder sent'],
+  },
+  {
+    id: 'res-7',
+    guestName: 'Sophia Taylor',
+    partySize: 4,
+    time: '9:00 PM',
+    tableNumber: 'Table 15',
+    tableArea: 'Chef Counter',
+    status: 'confirmed',
+    vipBadge: 'VIP Concierge',
+    tags: ['Sommelier Pairing'],
   },
 ];
 

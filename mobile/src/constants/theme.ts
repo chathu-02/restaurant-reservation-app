@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 export const Colors = {
   light: {
     text: '#111827',
-    background: '#F6F9F8',
+    background: '#F4F9EC',
     surface: '#FFFFFF',
     backgroundElement: '#EEF2F1',
     backgroundSelected: '#E0EAE5',
@@ -136,3 +136,40 @@ export const Spacing = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+
+export const Typography = {
+  // Screen title — “Dashboard” (Bold 700, 26–28)
+  screenTitle: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+  },
+  // Section heading — “Staff On Duty” (SemiBold 600, 18–20)
+  sectionHeading: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+  },
+  // Buttons / input labels (Medium 500, 14–16)
+  button: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+  },
+  // සාමාන්‍ය text (Regular 400, 16)
+  body: {
+    fontSize: 16,
+    fontWeight: '400' as const,
+  },
+  // Secondary details (Regular 400, 13–14)
+  secondary: {
+    fontSize: 13,
+    fontWeight: '400' as const,
+  },
+  // KPI numbers (Bold 700, 28–32)
+  kpiNumber: {
+    fontSize: 30,
+    fontWeight: '700' as const,
+  },
+} as const;

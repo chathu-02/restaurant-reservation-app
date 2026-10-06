@@ -51,8 +51,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
     color: '#374151',
     marginBottom: 6,
   },
@@ -74,13 +74,15 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
+    fontWeight: '400',
     color: '#111827',
     paddingVertical: 10,
   },
   errorText: {
     color: '#EF4444',
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '400',
     marginTop: 4,
   },
 });

@@ -6,11 +6,11 @@ import {
   ScrollView,
   Image,
   Pressable,
-  SafeAreaView,
   Platform,
   StatusBar,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Icon from '@/components/ui/Icon';
 import StatusBadge from '@/components/StatusBadge';
@@ -22,22 +22,13 @@ export default function ProfileScreen() {
   const { user, toggleDuty, updateService, logout } = useAuth();
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to end your shift and sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: () => {
-          logout();
-          router.replace('/login');
-        },
-      },
-    ]);
+    logout();
+    router.replace('/login');
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F6F9F8" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F9EC" />
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -188,12 +179,11 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F6F9F8',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: '#F4F9EC',
   },
   container: {
     flex: 1,
-    backgroundColor: '#F6F9F8',
+    backgroundColor: '#F4F9EC',
   },
   header: {
     flexDirection: 'row',
@@ -217,8 +207,8 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#111827',
   },
   scroll: {
@@ -263,12 +253,13 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   userName: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '600',
     color: '#111827',
   },
   userEmail: {
     fontSize: 13,
+    fontWeight: '400',
     color: '#6B7280',
     marginTop: 2,
     marginBottom: 12,
@@ -281,10 +272,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionHeader: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#6B7280',
-    letterSpacing: 0.6,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#374151',
+    letterSpacing: 0.4,
     marginLeft: 4,
   },
   optionsCard: {
@@ -311,12 +302,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#111827',
   },
   optionSub: {
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '400',
     color: '#6B7280',
     marginTop: 2,
   },

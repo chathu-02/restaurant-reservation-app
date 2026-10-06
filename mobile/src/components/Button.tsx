@@ -109,8 +109,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '500',
   },
   // Variants
   primary: {
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '500',
   },
   secondary: {
     backgroundColor: '#E6F8F0',
