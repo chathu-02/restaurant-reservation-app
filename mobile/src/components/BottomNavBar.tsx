@@ -1,67 +1,75 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icon from './ui/Icon';
+import Icon, { IconName } from './ui/Icon';
 
-export type TabKey = 'dashboard' | 'bookings' | 'reservations' | 'tables' | 'waitlist' | 'alerts';
+export type TabKey = 'dashboard' | 'bookings' | 'reservations' | 'tables' | 'waitlist' | 'alerts' | 'queue';
 
 interface BottomNavBarProps {
   activeTab?: TabKey;
   onSelectTab?: (tab: TabKey) => void;
   waitlistCount?: number;
+  alertsCount?: number;
 }
 
 export function BottomNavBar({
   activeTab = 'dashboard',
   onSelectTab,
-  waitlistCount = 4,
+  waitlistCount = 0,
+  alertsCount = 3,
 }: BottomNavBarProps) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
-  // Screen size adjustments
   const isCompact = width < 360;
-  const isLarge = width >= 500;
 
-  const tabs = [
-    { key: 'dashboard' as TabKey, label: 'Dashboard', icon: 'grid' as const },
-    { key: 'bookings' as TabKey, label: 'Reservations', icon: 'calendar' as const },
-    { key: 'tables' as TabKey, label: 'Tables', icon: 'table' as const },
-    {
-      key: 'waitlist' as TabKey,
-      label: 'Queue',
-      icon: 'users' as const,
-      badge: waitlistCount,
-    },
-    { key: 'alerts' as TabKey, label: 'Alerts', icon: 'bell' as const },
+  // Normalize active tab keys (e.g. reservations -> bookings, waitlist -> queue)
+  const normalizedActiveKey =
+    activeTab === 'reservations'
+      ? 'bookings'
+      : activeTab === 'waitlist'
+      ? 'queue'
+      : activeTab;
+
+  const tabs: { key: TabKey; label: string; icon: IconName; badge?: number }[] = [
+    { key: 'dashboard', label: 'Dashboard', icon: 'grid' },
+    { key: 'bookings', label: 'Bookings', icon: 'calendar' },
+    { key: 'tables', label: 'Tables', icon: 'table' },
+    { key: 'queue', label: 'Queue', icon: 'users', badge: waitlistCount > 0 ? waitlistCount : undefined },
+    { key: 'alerts', label: 'Alerts', icon: 'bell', badge: alertsCount },
   ];
 
   return (
     <View
       style={[
-        styles.container,
+        styles.wrapper,
         {
-          paddingBottom: Math.max(insets.bottom, isCompact ? 6 : 10),
-          paddingTop: isCompact ? 6 : 8,
-          paddingHorizontal: isCompact ? 4 : isLarge ? 24 : 8,
+          paddingBottom: Math.max(insets.bottom, 8),
         },
       ]}>
-      <View style={styles.tabsRow}>
+      <View style={styles.floatingCapsule}>
         {tabs.map((tab) => {
-          const isActive = activeTab === tab.key;
-          const tintColor = isActive ? '#009669' : '#9CA3AF';
-          const iconSize = isCompact ? 20 : 22;
+          const isActive = normalizedActiveKey === tab.key;
+          const activeIconColor = '#34D399'; // Mint green highlight icon
+          const inactiveIconColor = '#64748B'; // Slate gray inactive icon
 
           return (
             <Pressable
               key={tab.key}
               onPress={() => onSelectTab?.(tab.key)}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-              style={styles.tabItem}>
+              style={({ pressed }) => [
+                styles.tabItem,
+                isActive && styles.activeTabItem,
+                pressed && styles.pressed,
+              ]}>
               <View style={styles.iconContainer}>
-                <Icon name={tab.icon} size={iconSize} color={tintColor} />
+                <Icon
+                  name={tab.icon}
+                  size={isCompact ? 19 : 21}
+                  color={isActive ? activeIconColor : inactiveIconColor}
+                />
                 {typeof tab.badge === 'number' && tab.badge > 0 && (
-                  <View style={styles.badge}>
+                  <View style={[styles.badge, isActive ? styles.badgeActive : styles.badgeInactive]}>
                     <Text style={styles.badgeText}>{tab.badge}</Text>
                   </View>
                 )}
@@ -69,17 +77,13 @@ export function BottomNavBar({
 
               <Text
                 numberOfLines={1}
-                ellipsizeMode="tail"
                 style={[
                   styles.tabLabel,
                   isCompact && styles.tabLabelCompact,
-                  { color: tintColor },
-                  isActive && styles.activeTabLabel,
+                  isActive ? styles.activeTabLabel : styles.inactiveTabLabel,
                 ]}>
                 {tab.label}
               </Text>
-
-              {isActive && <View style={styles.activeDot} />}
             </Pressable>
           );
         })}
@@ -89,71 +93,99 @@ export function BottomNavBar({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#F0F4F2',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 8,
+  wrapper: {
+    paddingHorizontal: 12,
+    paddingTop: 6,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    width: '100%',
   },
-  tabsRow: {
+  floatingCapsule: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 35,
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    borderTopColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 8,
     width: '100%',
+    maxWidth: 520,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 2,
-    minWidth: 0,
+    paddingVertical: 7,
+    paddingHorizontal: 4,
+    borderRadius: 26,
+    marginHorizontal: 1,
+  },
+  activeTabItem: {
+    backgroundColor: '#022C22', // Dark Emerald active capsule matching screenshot
+    shadowColor: '#022C22',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  pressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
   iconContainer: {
     position: 'relative',
-    height: 26,
+    height: 23,
     justifyContent: 'center',
     alignItems: 'center',
   },
   badge: {
     position: 'absolute',
-    top: -3,
+    top: -5,
     right: -10,
-    backgroundColor: '#F59E0B',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 17,
+    height: 17,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 3,
   },
+  badgeActive: {
+    borderWidth: 1.5,
+    borderColor: '#022C22',
+  },
+  badgeInactive: {
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
   badgeText: {
     color: '#FFFFFF',
     fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   tabLabel: {
-    fontSize: 11,
-    marginTop: 2,
-    fontWeight: '500',
+    fontSize: 10.5,
+    marginTop: 3,
     textAlign: 'center',
   },
   tabLabelCompact: {
     fontSize: 9.5,
   },
-  activeTabLabel: {
-    fontWeight: '700',
-    color: '#009669',
+  inactiveTabLabel: {
+    color: '#64748B',
+    fontWeight: '600',
   },
-  activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#009669',
-    marginTop: 2,
+  activeTabLabel: {
+    color: '#FFFFFF',
+    fontWeight: '800',
   },
 });
 

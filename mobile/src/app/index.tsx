@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   Modal,
   Alert,
   RefreshControl,
-  Platform,
   StatusBar,
   Animated,
 } from 'react-native';
@@ -26,87 +25,115 @@ import Input from '@/components/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { useReservations } from '@/hooks/useReservations';
 
-// ── Helpers ────────────────────────────────────────────────────────
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good Morning';
-  if (h < 17) return 'Good Afternoon';
-  return 'Good Evening';
-}
-
-function getLiveTime(): string {
-  const d = new Date();
-  const hh = d.getHours();
-  const mm = d.getMinutes().toString().padStart(2, '0');
-  const ampm = hh >= 12 ? 'PM' : 'AM';
-  const h12 = hh % 12 || 12;
-  return `${h12}:${mm} ${ampm}`;
-}
-
-function getFormattedDate(): string {
-  const d = new Date();
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
-}
-
-// Upcoming reservations mock data for the timeline
+// Sample upcoming reservations timeline
 const UPCOMING_RESERVATIONS = [
-  { id: '1', name: 'Elena Rostova', time: '6:30 PM', party: 4, table: 'T-12', status: 'confirmed' as const, isVip: true },
-  { id: '2', name: 'David Chen', time: '7:00 PM', party: 2, table: 'T-5', status: 'confirmed' as const, isVip: false },
-  { id: '3', name: 'Sophia Laurent', time: '7:30 PM', party: 6, table: 'T-8', status: 'pending' as const, isVip: true },
-  { id: '4', name: 'James Miller', time: '8:00 PM', party: 3, table: 'T-3', status: 'confirmed' as const, isVip: false },
+  {
+    id: 'res-1',
+    name: 'Eleanor Vance',
+    party: 4,
+    time: '6:00 PM',
+    table: 'T-04 • Main Dining',
+    status: 'confirmed',
+    isVip: true,
+  },
+  {
+    id: 'res-2',
+    name: 'Marcus Thorne',
+    party: 2,
+    time: '6:30 PM',
+    table: 'T-12 • Patio Booth',
+    status: 'confirmed',
+    isVip: false,
+  },
+  {
+    id: 'res-3',
+    name: 'Sophia Patel',
+    party: 6,
+    time: '7:15 PM',
+    table: 'T-08 • Window Table',
+    status: 'pending',
+    isVip: true,
+  },
 ];
 
-// Floor zone data
-const FLOOR_ZONES = [
-  { zone: 'Main Dining', tables: 12, occupied: 9, color: '#009669' },
-  { zone: 'Patio', tables: 5, occupied: 3, color: '#0D9488' },
-  { zone: 'Private Bar', tables: 3, occupied: 2, color: '#09055bff' },
-];
-
-// ── Component ──────────────────────────────────────────────────────
 export default function DashboardScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { overview, refreshing, refresh, addBooking, addWalkIn } = useReservations();
 
-  // Active bottom nav tab
+  // Active bottom navigation tab
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
 
-  // Live clock
-  const [liveTime, setLiveTime] = useState(getLiveTime());
-  useEffect(() => {
-    const id = setInterval(() => setLiveTime(getLiveTime()), 15_000);
-    return () => clearInterval(id);
-  }, []);
-
-  // Fade-in animation for header
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(18)).current;
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 650, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 650, useNativeDriver: true }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
-
-  // Modal states
+  // Modals for actions
   const [bookingModalVisible, setBookingModalVisible] = useState(false);
   const [walkInModalVisible, setWalkInModalVisible] = useState(false);
   const [rushModalVisible, setRushModalVisible] = useState(false);
 
-  // Booking form
+  // Form states for New Booking
   const [guestName, setGuestName] = useState('');
   const [partySize, setPartySize] = useState('2');
   const [bookingTime, setBookingTime] = useState('7:30 PM');
   const [tableNumber, setTableNumber] = useState('Table 5');
   const [bookingNotes, setBookingNotes] = useState('');
 
-  // Walk-in form
+  // Form states for Walk-in
   const [walkInName, setWalkInName] = useState('');
   const [walkInSize, setWalkInSize] = useState('2');
   const [walkInPhone, setWalkInPhone] = useState('');
+
+  // Animations
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = useState(new Animated.Value(20))[0];
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 450,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 450,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
+
+  // Live Clock String
+  const [liveTime, setLiveTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const formattedHours = hours % 12 || 12;
+      const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+      setLiveTime(`${formattedHours}:${formattedMinutes} ${ampm}`);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  const getFormattedDate = () => {
+    const now = new Date();
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+    };
+    return now.toLocaleDateString('en-US', options);
+  };
 
   const handleCreateBooking = async () => {
     if (!guestName.trim()) {
@@ -145,9 +172,10 @@ export default function DashboardScreen() {
 
   const handleTabChange = (tab: TabKey) => {
     setActiveTab(tab);
-    if (tab === 'bookings') router.push('/explore');
+    if (tab === 'dashboard') router.push('/');
+    else if (tab === 'bookings' || tab === 'reservations') router.push('/explore');
     else if (tab === 'tables') router.push('/tables');
-    else if (tab === 'waitlist') router.push('/queue');
+    else if (tab === 'queue' || tab === 'waitlist') router.push('/queue');
     else if (tab === 'alerts') router.push('/alerts');
   };
 
@@ -158,7 +186,7 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F3F7EE" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F9EC" />
       <View style={styles.container}>
         <ScrollView
           style={styles.scrollView}
@@ -172,8 +200,7 @@ export default function DashboardScreen() {
               tintColor="#009669"
             />
           }>
-
-          {/* ─── Top Bar ─────────────────────────────────────────── */}
+          {/* Top Bar */}
           <View style={styles.topBar}>
             <View style={styles.topBarLeft}>
               <View style={styles.serviceIconContainer}>
@@ -206,7 +233,7 @@ export default function DashboardScreen() {
             </Pressable>
           </View>
 
-          {/* ─── Hero Greeting Section ───────────────────────────── */}
+          {/* ─── Hero Greeting & Shift Progress Container (#022C22) ─ */}
           <Animated.View
             style={[
               styles.heroSection,
@@ -225,11 +252,11 @@ export default function DashboardScreen() {
               Here's your shift overview — {overview?.reservationsToday ?? 42} covers booked today
             </Text>
 
-            {/* Shift progress mini-bar */}
+            {/* Shift progress bar inside hero container */}
             <View style={styles.shiftProgressContainer}>
               <View style={styles.shiftProgressHeader}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                  <Icon name="chart" size={14} color="#047857" />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Icon name="chart" size={14} color="#34D399" />
                   <Text style={styles.shiftProgressLabel}>Shift Progress</Text>
                 </View>
                 <Text style={styles.shiftProgressValue}>{shiftProgressPercent}% of target</Text>
@@ -301,44 +328,53 @@ export default function DashboardScreen() {
             onPressView={() => setRushModalVisible(true)}
           />
 
-          {/* ─── Quick Actions Row ───────────────────────────────── */}
-          <View style={styles.actionsRow}>
-            <Pressable
-              onPress={() => setWalkInModalVisible(true)}
-              style={({ pressed }) => [styles.actionCard, pressed && styles.actionPressed]}>
-              <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
-                <Icon name="walk" size={20} color="#D97706" />
+          {/* ─── Quick Actions Container ──────────────────────────── */}
+          <View style={styles.lightGreenContainer}>
+            <View style={styles.containerHeaderRow}>
+              <View style={styles.containerHeaderLeft}>
+                <Icon name="flash" size={16} color="#009669" />
+                <Text style={styles.containerTitle}>Quick Actions</Text>
               </View>
-              <Text style={styles.actionCardLabel}>Walk-in</Text>
-              <Text style={styles.actionCardSub}>Add to queue</Text>
-            </Pressable>
+            </View>
 
-            <Pressable
-              onPress={() => setBookingModalVisible(true)}
-              style={({ pressed }) => [styles.newBookingCard, pressed && styles.actionPressed]}>
-              <View style={styles.newBookingIconRing}>
-                <Icon name="plus" size={20} color="#FFFFFF" />
-              </View>
-              <Text style={styles.newBookingLabel}>New Booking</Text>
-              <Text style={styles.newBookingSub}>Reserve table</Text>
-            </Pressable>
+            <View style={styles.actionsRow}>
+              <Pressable
+                onPress={() => router.push('/add-walkin')}
+                style={({ pressed }) => [styles.actionCard, pressed && styles.actionPressed]}>
+                <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
+                  <Icon name="walk" size={22} color="#D97706" />
+                </View>
+                <Text style={styles.actionCardLabel}>Walk-in</Text>
+                <Text style={styles.actionCardSub}>Add to queue</Text>
+              </Pressable>
 
-            <Pressable
-              onPress={() => router.push('/tables')}
-              style={({ pressed }) => [styles.actionCard, pressed && styles.actionPressed]}>
-              <View style={[styles.actionIconCircle, { backgroundColor: '#E0E7FF' }]}>
-                <Icon name="table" size={20} color="#4F46E5" />
-              </View>
-              <Text style={styles.actionCardLabel}>Floor Plan</Text>
-              <Text style={styles.actionCardSub}>Manage tables</Text>
-            </Pressable>
+              <Pressable
+                onPress={() => setBookingModalVisible(true)}
+                style={({ pressed }) => [styles.newBookingCard, pressed && styles.actionPressed]}>
+                <View style={styles.newBookingIconRing}>
+                  <Icon name="plus" size={22} color="#FFFFFF" />
+                </View>
+                <Text style={styles.newBookingLabel}>New Booking</Text>
+                <Text style={styles.newBookingSub}>Reserve table</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => router.push('/tables')}
+                style={({ pressed }) => [styles.actionCard, pressed && styles.actionPressed]}>
+                <View style={[styles.actionIconCircle, { backgroundColor: '#E0E7FF' }]}>
+                  <Icon name="table" size={22} color="#4F46E5" />
+                </View>
+                <Text style={styles.actionCardLabel}>Floor Plan</Text>
+                <Text style={styles.actionCardSub}>Manage tables</Text>
+              </Pressable>
+            </View>
           </View>
 
-          {/* ─── Upcoming Reservations Timeline ──────────────────── */}
-          <View style={styles.sectionBlock}>
-            <View style={styles.sectionHeaderRow}>
-              <View style={styles.sectionHeaderLeft}>
-                <Text style={styles.sectionTitle}>Upcoming</Text>
+          {/* ─── Upcoming Reservations Container ─────────────────── */}
+          <View style={styles.lightGreenContainer}>
+            <View style={styles.containerHeaderRow}>
+              <View style={styles.containerHeaderLeft}>
+                <Text style={styles.containerTitle}>Upcoming</Text>
                 <View style={styles.sectionCountBadge}>
                   <Text style={styles.sectionCountText}>{UPCOMING_RESERVATIONS.length}</Text>
                 </View>
@@ -406,46 +442,10 @@ export default function DashboardScreen() {
             </View>
           </View>
 
-          {/* ─── Floor Zone Heatmap Summary ───────────────────────── */}
-          <View style={styles.sectionBlock}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Floor Zones</Text>
-              <Pressable
-                onPress={() => router.push('/tables')}
-                style={({ pressed }) => [styles.seeAllBtn, pressed && styles.actionPressed]}>
-                <Text style={styles.seeAllText}>View Map</Text>
-                <Icon name="chevron-right" size={14} color="#009669" />
-              </Pressable>
-            </View>
-
-            <View style={styles.floorZonesRow}>
-              {FLOOR_ZONES.map((zone) => {
-                const pct = Math.round((zone.occupied / zone.tables) * 100);
-                return (
-                  <View key={zone.zone} style={styles.floorZoneCard}>
-                    <View style={[styles.floorZoneBar, { backgroundColor: zone.color + '20' }]}>
-                      <View
-                        style={[
-                          styles.floorZoneBarFill,
-                          { width: `${pct}%`, backgroundColor: zone.color },
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.floorZoneName}>{zone.zone}</Text>
-                    <Text style={styles.floorZoneStats}>
-                      {zone.occupied}/{zone.tables}
-                    </Text>
-                    <Text style={[styles.floorZonePct, { color: zone.color }]}>{pct}%</Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* ─── Manager Tools Section ────────────────────────────── */}
-          <View style={styles.sectionBlock}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Manager Tools</Text>
+          {/* ─── Manager Tools Container ─────────────────────────── */}
+          <View style={styles.lightGreenContainer}>
+            <View style={styles.containerHeaderRow}>
+              <Text style={styles.containerTitle}>Manager Tools</Text>
               <Pressable
                 onPress={() => router.push('/profile')}
                 style={({ pressed }) => [styles.seeAllBtn, pressed && styles.actionPressed]}>
@@ -462,12 +462,7 @@ export default function DashboardScreen() {
                 title="Staff Accounts"
                 subtitle={`${overview?.managerTools?.staffOnShift ?? 8} staff currently on shift`}
                 hasActiveDot
-                onPress={() =>
-                  Alert.alert(
-                    'Staff on Duty',
-                    '8 staff members active:\n• 1 Shift Lead\n• 1 Host\n• 4 Servers\n• 2 Kitchen Line'
-                  )
-                }
+                onPress={() => router.push('/profile')}
               />
               <ManagerToolItem
                 icon="gear"
@@ -478,12 +473,7 @@ export default function DashboardScreen() {
                   overview?.managerTools?.settingsSubtitle ??
                   'Hours, kitchen pacing, notifications'
                 }
-                onPress={() =>
-                  Alert.alert(
-                    'Restaurant Settings',
-                    'Kitchen pacing: Standard (15 min interval per 6 covers).'
-                  )
-                }
+                onPress={() => router.push('/restaurant-settings')}
               />
               <ManagerToolItem
                 icon="table"
@@ -506,12 +496,7 @@ export default function DashboardScreen() {
                   'Pacing, table turns & revenue pace'
                 }
                 showDivider={false}
-                onPress={() =>
-                  Alert.alert(
-                    'Shift Analytics',
-                    'Current Table Turn Pace: 1.4×\nProjected Covers: 110\nRevenue pace: $8,240'
-                  )
-                }
+                onPress={() => router.push('/reports')}
               />
             </View>
           </View>
@@ -530,28 +515,24 @@ export default function DashboardScreen() {
 
       {/* ─── New Booking Modal ──────────────────────────────────── */}
       <Modal
-        visible={bookingModalVisible}
         animationType="slide"
-        transparent
+        transparent={true}
+        visible={bookingModalVisible}
         onRequestClose={() => setBookingModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalDragHandle} />
             <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalTitle}>New Reservation</Text>
-                <Text style={styles.modalSubtitle}>Fill in guest details to book a table</Text>
-              </View>
+              <Text style={styles.modalTitle}>New Reservation</Text>
               <Pressable
                 onPress={() => setBookingModalVisible(false)}
-                style={styles.modalCloseBtn}>
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <Icon name="close" size={20} color="#6B7280" />
               </Pressable>
             </View>
 
             <Input
               label="Guest Name"
-              placeholder="e.g. Elena Rostova"
+              placeholder="e.g. William Clark"
               value={guestName}
               onChangeText={setGuestName}
               icon="person"
@@ -570,7 +551,7 @@ export default function DashboardScreen() {
               </View>
               <View style={styles.modalHalfCol}>
                 <Input
-                  label="Reservation Time"
+                  label="Time Slot"
                   placeholder="7:30 PM"
                   value={bookingTime}
                   onChangeText={setBookingTime}
@@ -580,20 +561,18 @@ export default function DashboardScreen() {
             </View>
 
             <Input
-              label="Assign Table (Optional)"
-              placeholder="Table 5"
+              label="Table & Area"
+              placeholder="Table 5 (Dining)"
               value={tableNumber}
               onChangeText={setTableNumber}
               icon="table"
             />
 
             <Input
-              label="Special Notes / Requests"
-              placeholder="Window booth, Anniversary, Allergies..."
+              label="Special Notes / VIP"
+              placeholder="Window seat, Anniversary, Allergies..."
               value={bookingNotes}
               onChangeText={setBookingNotes}
-              multiline
-              numberOfLines={2}
             />
 
             <View style={styles.modalActions}>
@@ -604,7 +583,7 @@ export default function DashboardScreen() {
                 style={styles.modalActionBtn}
               />
               <Button
-                label="Save Booking"
+                label="Confirm Booking"
                 variant="primary"
                 onPress={handleCreateBooking}
                 style={styles.modalActionBtn}
@@ -614,30 +593,26 @@ export default function DashboardScreen() {
         </View>
       </Modal>
 
-      {/* ─── Walk-in Modal ─────────────────────────────────────── */}
+      {/* ─── Walk-in Registration Modal ─────────────────────────── */}
       <Modal
-        visible={walkInModalVisible}
         animationType="slide"
-        transparent
+        transparent={true}
+        visible={walkInModalVisible}
         onRequestClose={() => setWalkInModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalDragHandle} />
             <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalTitle}>Add Walk-in</Text>
-                <Text style={styles.modalSubtitle}>Add guest to the waitlist queue</Text>
-              </View>
+              <Text style={styles.modalTitle}>Add Walk-in Party</Text>
               <Pressable
                 onPress={() => setWalkInModalVisible(false)}
-                style={styles.modalCloseBtn}>
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <Icon name="close" size={20} color="#6B7280" />
               </Pressable>
             </View>
 
             <Input
               label="Guest Name"
-              placeholder="e.g. David Vance"
+              placeholder="e.g. Miller Party"
               value={walkInName}
               onChangeText={setWalkInName}
               icon="person"
@@ -647,7 +622,7 @@ export default function DashboardScreen() {
               <View style={styles.modalHalfCol}>
                 <Input
                   label="Party Size"
-                  placeholder="2"
+                  placeholder="4"
                   keyboardType="numeric"
                   value={walkInSize}
                   onChangeText={setWalkInSize}
@@ -657,22 +632,13 @@ export default function DashboardScreen() {
               <View style={styles.modalHalfCol}>
                 <Input
                   label="Phone Number"
-                  placeholder="+1 555 0192"
+                  placeholder="(555) 019-2834"
                   keyboardType="phone-pad"
                   value={walkInPhone}
                   onChangeText={setWalkInPhone}
                   icon="phone"
                 />
               </View>
-            </View>
-
-            <View style={styles.modalInfoNotice}>
-              <View style={styles.modalInfoIcon}>
-                <Icon name="clock" size={15} color="#D97706" />
-              </View>
-              <Text style={styles.modalInfoText}>
-                Estimated wait time: ~{overview?.queueWaitMinutes ?? 12} minutes based on current turn rate.
-              </Text>
             </View>
 
             <View style={styles.modalActions}>
@@ -693,54 +659,34 @@ export default function DashboardScreen() {
         </View>
       </Modal>
 
-      {/* ─── Rush Details Modal ────────────────────────────────── */}
+      {/* ─── Rush Alert Details Modal ───────────────────────────── */}
       <Modal
-        visible={rushModalVisible}
         animationType="fade"
-        transparent
+        transparent={true}
+        visible={rushModalVisible}
         onRequestClose={() => setRushModalVisible(false)}>
-        <View style={styles.modalOverlayCenter}>
-          <View style={styles.rushModalContent}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalTitle}>Upcoming Dinner Rush</Text>
-                <Text style={styles.modalSubtitle}>Prepare for peak capacity</Text>
-              </View>
-              <Pressable
-                onPress={() => setRushModalVisible(false)}
-                style={styles.modalCloseBtn}>
+              <Text style={styles.modalTitle}>Rush Hour Preparation</Text>
+              <Pressable onPress={() => setRushModalVisible(false)}>
                 <Icon name="close" size={20} color="#6B7280" />
               </Pressable>
             </View>
-
-            <View style={styles.rushDetailBox}>
-              <View style={styles.rushDetailIconRow}>
-                <Icon name="flash" size={18} color="#EA580C" />
-                <Text style={styles.rushDetailTime}>Peak: 7:30 PM – 8:15 PM</Text>
-              </View>
-              <Text style={styles.rushDetailSummary}>
-                18 expected covers arriving across 6 reservations and 2 queue entries.
-              </Text>
+            <Text style={styles.rushModalSub}>
+              Heavy guest volume expected at {overview?.rushAlert?.time ?? '7:30 PM'}.
+            </Text>
+            <View style={styles.rushInfoBox}>
+              <Text style={styles.rushInfoTitle}>Recommended Host Actions:</Text>
+              <Text style={styles.rushInfoBullet}>• Pre-assign 4-top tables in Main Room</Text>
+              <Text style={styles.rushInfoBullet}>• Notify kitchen of 18 covers arriving within 45m</Text>
+              <Text style={styles.rushInfoBullet}>• Prepare waitlist SMS notifications</Text>
             </View>
-
-            <View style={styles.rushTipsContainer}>
-              <Text style={styles.rushTipTitle}>Recommendations:</Text>
-              <Text style={styles.rushTipItem}>
-                • Pre-stage silverware and waters on Tables 4, 7, and 12.
-              </Text>
-              <Text style={styles.rushTipItem}>
-                • Inform kitchen lead of 6-top seating at 7:30 PM.
-              </Text>
-              <Text style={styles.rushTipItem}>
-                • Maintain bar queue seating for 2-tops.
-              </Text>
-            </View>
-
             <Button
-              label="Acknowledge & Prepare"
+              label="Acknowledge & Close"
               variant="primary"
               onPress={() => setRushModalVisible(false)}
-              style={{ marginTop: 16 }}
+              style={{ marginTop: 12 }}
             />
           </View>
         </View>
@@ -753,11 +699,11 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F3F7EE',
+    backgroundColor: '#F4F9EC',
   },
   container: {
     flex: 1,
-    backgroundColor: '#F3F7EE',
+    backgroundColor: '#F4F9EC',
   },
   scrollView: {
     flex: 1,
@@ -773,7 +719,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 14,
     gap: 8,
   },
   topBarLeft: {
@@ -784,16 +730,16 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   serviceIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
+    width: 38,
+    height: 38,
+    borderRadius: 13,
     backgroundColor: '#009669',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#009669',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 6,
+    shadowRadius: 5,
     elevation: 3,
     flexShrink: 0,
   },
@@ -819,192 +765,233 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   avatarImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1.8,
     borderColor: '#FFFFFF',
   },
   onlineBadge: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#10B981',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#FFFFFF',
   },
 
-  // ── Hero Section ─────────────────────────────────
+  // ── Hero Section (Combined #022C22 Dark Emerald Container) ───
   heroSection: {
-    marginBottom: 18,
-    paddingHorizontal: 2,
+    backgroundColor: '#022C22',
+    borderRadius: 24,
+    paddingVertical: 22,
+    paddingHorizontal: 22,
+    marginHorizontal: -6,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: '#065F46',
+    borderTopColor: '#0A7456',
+    shadowColor: '#022C22',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 6,
   },
   dateText: {
     fontSize: 11.5,
-    fontWeight: '600',
-    color: '#94A3B8',
-    letterSpacing: 1,
+    fontWeight: '700',
+    color: '#34D399',
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   greetingText: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#114e3aff',
+    color: '#FFFFFF',
     letterSpacing: -0.5,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   greetingName: {
-    color: '#0b654aff',
+    color: '#34D399',
   },
   greetingSubtitle: {
     fontSize: 13.5,
-    fontWeight: '400',
-    color: '#033e10ff',
+    fontWeight: '500',
+    color: '#A7F3D0',
     lineHeight: 20,
-    marginBottom: 14,
+    marginBottom: 18,
   },
 
-  // Shift progress
+  // Shift progress (Inside #022C22 container)
   shiftProgressContainer: {
-    backgroundColor: '#ECFDF5',
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    padding: 14,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
-    borderTopColor: '#F0FDF4',
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    borderColor: 'rgba(52, 211, 153, 0.25)',
   },
   shiftProgressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 7,
+    marginBottom: 8,
   },
   shiftProgressLabel: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#065F46',
+    color: '#E6F4EA',
   },
   shiftProgressValue: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
-    color: '#047857',
+    color: '#34D399',
   },
   shiftProgressTrack: {
-    height: 7,
-    backgroundColor: '#D1FAE5',
-    borderRadius: 3.5,
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 4,
     overflow: 'hidden',
   },
   shiftProgressFill: {
     height: '100%',
-    backgroundColor: '#10B981',
-    borderRadius: 3.5,
+    backgroundColor: '#34D399',
+    borderRadius: 4,
   },
 
   // ── Metrics Grid ─────────────────────────────────
   metricsGrid: {
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 14,
   },
   metricsRow: {
     flexDirection: 'row',
     gap: 8,
   },
 
+  // ── Light Green Touch Containers ─────────────────
+  lightGreenContainer: {
+    backgroundColor: '#E6F8F0',
+    borderRadius: 22,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1.2,
+    borderColor: '#A7F3D0',
+    borderTopColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  containerHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  containerHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  containerTitle: {
+    fontSize: 18.5,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+
   // ── Quick Actions ────────────────────────────────
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    gap: 8,
-    marginVertical: 10,
+    gap: 10,
+    marginTop: 4,
+    marginBottom: 2,
   },
   actionCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderTopColor: '#FFFFFF',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    elevation: 3,
-    gap: 4,
+    shadowOffset: { width: 0, height: 7 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 5,
+    gap: 6,
   },
   actionIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 1,
+    marginBottom: 2,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   actionCardLabel: {
-    fontSize: 12.5,
+    fontSize: 14,
     fontWeight: '700',
     color: '#1E293B',
   },
   actionCardSub: {
-    fontSize: 10.5,
+    fontSize: 11.5,
     fontWeight: '400',
     color: '#94A3B8',
   },
   newBookingCard: {
-    flex: 1.3,
+    flex: 1.35,
     backgroundColor: '#009669',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#059669',
     borderTopColor: 'rgba(255, 255, 255, 0.4)',
     shadowColor: '#009669',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.32,
-    shadowRadius: 10,
-    elevation: 4,
-    gap: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.38,
+    shadowRadius: 14,
+    elevation: 6,
+    gap: 6,
   },
   newBookingIconRing: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 1,
+    marginBottom: 2,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.35)',
   },
   newBookingLabel: {
     color: '#FFFFFF',
-    fontSize: 12.5,
+    fontSize: 14,
     fontWeight: '700',
   },
   newBookingSub: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 10.5,
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 11.5,
     fontWeight: '400',
   },
   actionPressed: {
@@ -1013,26 +1000,10 @@ const styles = StyleSheet.create({
   },
 
   // ── Section Blocks ───────────────────────────────
-  sectionBlock: {
-    marginBottom: 16,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    paddingHorizontal: 2,
-  },
   sectionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  sectionTitle: {
-    fontSize: 19.5,
-    fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.3,
   },
   sectionCountBadge: {
     backgroundColor: '#009669',
@@ -1165,17 +1136,11 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
 
-  // ── Floor Zones ──────────────────────────────────
-  floorZonesRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  floorZoneCard: {
-    flex: 1,
+  // ── Manager Tools ────────────────────────────────
+  toolsCardContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 14,
-    alignItems: 'center',
+    padding: 6,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderTopColor: '#FFFFFF',
@@ -1185,110 +1150,30 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 4,
   },
-  floorZoneBar: {
-    width: '100%',
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 10,
-  },
-  floorZoneBarFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  floorZoneName: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 3,
-    textAlign: 'center',
-  },
-  floorZoneStats: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: '#94A3B8',
-    marginBottom: 2,
-  },
-  floorZonePct: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-
-  // ── Manager Tools ────────────────────────────────
-  toolsCardContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderTopColor: '#FFFFFF',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.09,
-    shadowRadius: 16,
-    elevation: 5,
-    overflow: 'hidden',
-  },
 
   // ── Modals ───────────────────────────────────────
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
     justifyContent: 'flex-end',
-  },
-  modalOverlayCenter: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 22,
-    maxHeight: '90%',
-  },
-  rushModalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 22,
-    width: '100%',
-    maxWidth: 420,
-  },
-  modalDragHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#D1D5DB',
-    alignSelf: 'center',
-    marginBottom: 14,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 18,
+    marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 2,
-  },
-  modalSubtitle: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: '#64748B',
-  },
-  modalCloseBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   modalRow: {
     flexDirection: 'row',
@@ -1297,84 +1182,36 @@ const styles = StyleSheet.create({
   modalHalfCol: {
     flex: 1,
   },
-  modalInfoNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#FFFBEB',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  modalInfoIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FEF3C7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalInfoText: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: '#92400E',
-    flex: 1,
-    lineHeight: 18,
-  },
   modalActions: {
     flexDirection: 'row',
     gap: 10,
-    marginTop: 8,
+    marginTop: 10,
   },
   modalActionBtn: {
     flex: 1,
   },
-
-  // ── Rush Modal ───────────────────────────────────
-  rushDetailBox: {
-    backgroundColor: '#FFF9F3',
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#FED7AA',
-    marginBottom: 14,
-  },
-  rushDetailIconRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
-  },
-  rushDetailTime: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#C2410C',
-  },
-  rushDetailSummary: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: '#9A3412',
-    lineHeight: 19,
-  },
-  rushTipsContainer: {
-    backgroundColor: '#F8FAFB',
-    padding: 14,
-    borderRadius: 14,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  rushTipTitle: {
+  rushModalSub: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#1E293B',
+    color: '#4B5563',
+    marginBottom: 16,
   },
-  rushTipItem: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: '#475569',
-    lineHeight: 19,
+  rushInfoBox: {
+    backgroundColor: '#FEF2F2',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    gap: 6,
+    marginBottom: 12,
+  },
+  rushInfoTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#991B1B',
+    marginBottom: 4,
+  },
+  rushInfoBullet: {
+    fontSize: 12.5,
+    color: '#B91C1C',
   },
 });

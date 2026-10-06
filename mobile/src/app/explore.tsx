@@ -190,7 +190,7 @@ export default function ReservationsScreen() {
       router.push('/');
     } else if (tab === 'tables') {
       router.push('/tables');
-    } else if (tab === 'waitlist') {
+    } else if (tab === 'queue' || tab === 'waitlist') {
       router.push('/queue');
     } else if (tab === 'alerts') {
       router.push('/alerts');
@@ -248,47 +248,30 @@ export default function ReservationsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
           {/* Tonight's Pacing Strip */}
-          <View style={styles.pacingStrip}>
-            <Text style={styles.pacingLabel}>Tonight's Pacing:</Text>
-
-            <View style={styles.pacingStat}>
-              <Text style={styles.pacingNumber}>{totalCount || 42}</Text>
-              <Text style={styles.pacingStatLabel}>Bookings</Text>
-            </View>
-
-            <View style={styles.pacingStat}>
-              <Text style={styles.pacingNumber}>138</Text>
-              <Text style={styles.pacingStatLabel}>Covers</Text>
-            </View>
-
-            <View style={styles.capBadge}>
-              <View style={styles.capDot} />
-              <Text style={styles.capText}>85% Cap</Text>
-            </View>
-          </View>
+          
 
           {/* Search Bar */}
           <View style={styles.searchBar}>
-            <Icon name="search" size={18} color="#9CA3AF" />
+            <Icon name="search" size={18} color="#475569" />
             <TextInput
               style={styles.searchInput}
               placeholder="Search guest, phone, or table..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#94A3B8"
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
             {searchQuery.length > 0 ? (
               <Pressable onPress={() => setSearchQuery('')}>
-                <Icon name="close" size={16} color="#9CA3AF" />
+                <Icon name="close" size={16} color="#374151" />
               </Pressable>
             ) : (
               <View style={styles.searchRightIcons}>
-                <Icon name="mic" size={18} color="#9CA3AF" />
+                <Icon name="mic" size={19} color="#374151" />
                 <Pressable
                   onPress={() =>
                     Alert.alert('Filters', 'Filter by section, covers, dietary restrictions')
                   }>
-                  <Icon name="filter" size={18} color="#9CA3AF" />
+                  <Icon name="filter" size={19} color="#374151" />
                 </Pressable>
               </View>
             )}
@@ -724,21 +707,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    paddingVertical: 10,
+    paddingVertical: 11,
     paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: '#EEF2F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    borderTopColor: '#FFFFFF',
+    borderBottomColor: '#CBD5E1',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
     gap: 12,
   },
   pacingLabel: {
     fontSize: 13,
-    color: '#6B7280',
-    fontWeight: '500',
+    color: '#475569',
+    fontWeight: '600',
     flex: 1,
   },
   pacingStat: {
@@ -746,22 +731,24 @@ const styles = StyleSheet.create({
   },
   pacingNumber: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: '800',
+    color: '#0F172A',
     lineHeight: 20,
   },
   pacingStatLabel: {
     fontSize: 11,
-    color: '#9CA3AF',
-    fontWeight: '400',
+    color: '#64748B',
+    fontWeight: '500',
   },
   capBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#E6F8F0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
     gap: 4,
   },
   capDot: {
@@ -772,7 +759,7 @@ const styles = StyleSheet.create({
   },
   capText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#00875A',
   },
   searchBar: {
@@ -781,15 +768,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     paddingHorizontal: 12,
-    height: 44,
-    borderWidth: 1,
-    borderColor: '#EEF2F0',
+    height: 46,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    borderTopColor: '#FFFFFF',
+    borderBottomColor: '#CBD5E1',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
     gap: 8,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#111827',
+    color: '#0F172A',
+    fontWeight: '500',
     paddingVertical: 8,
   },
   searchRightIcons: {
@@ -802,41 +797,49 @@ const styles = StyleSheet.create({
   },
   daysContainer: {
     gap: 8,
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
   dayCard: {
-    width: 52,
-    height: 66,
+    width: 54,
+    height: 68,
     borderRadius: 14,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#EEF2F0',
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    borderTopColor: '#FFFFFF',
+    borderBottomColor: '#CBD5E1',
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
+    elevation: 2,
   },
   dayCardSelected: {
     backgroundColor: '#009669',
-    borderColor: '#009669',
+    borderColor: '#007A55',
+    borderTopColor: '#34D399',
+    shadowColor: '#009669',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 4,
   },
   dayName: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#6B7280',
+    fontWeight: '700',
+    color: '#64748B',
     textTransform: 'uppercase',
   },
   dayNameSelected: {
     color: '#FFFFFF',
   },
   dayNum: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
+    fontSize: 16.5,
+    fontWeight: '800',
+    color: '#0F172A',
     marginVertical: 1,
   },
   dayNumSelected: {
@@ -844,40 +847,53 @@ const styles = StyleSheet.create({
   },
   dayPax: {
     fontSize: 10,
-    color: '#9CA3AF',
-    fontWeight: '400',
+    color: '#94A3B8',
+    fontWeight: '500',
   },
   dayPaxSelected: {
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '600',
   },
   statusChipsWrapper: {
     marginTop: 2,
   },
   statusChipsContainer: {
     gap: 8,
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
   filterPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: 1.2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   filterPillText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   // All Pill
   pillAll: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
+    borderTopColor: '#FFFFFF',
   },
   pillAllActive: {
     backgroundColor: '#0F172A',
     borderColor: '#0F172A',
+    borderTopColor: '#334155',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   pillAllText: {
-    color: '#374151',
+    color: '#334155',
   },
   pillAllTextActive: {
     color: '#FFFFFF',
@@ -885,11 +901,16 @@ const styles = StyleSheet.create({
   // Confirmed Pill
   pillConfirmed: {
     backgroundColor: '#E6F8F0',
-    borderColor: '#D1FAE5',
+    borderColor: '#A7F3D0',
   },
   pillConfirmedActive: {
     borderColor: '#009669',
     borderWidth: 1.5,
+    shadowColor: '#009669',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   pillConfirmedText: {
     color: '#00875A',
@@ -897,11 +918,16 @@ const styles = StyleSheet.create({
   // Pending Pill
   pillPending: {
     backgroundColor: '#FFF4E5',
-    borderColor: '#FED7AA',
+    borderColor: '#FDBA74',
   },
   pillPendingActive: {
     borderColor: '#F59E0B',
     borderWidth: 1.5,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   pillPendingText: {
     color: '#D97706',
@@ -914,24 +940,29 @@ const styles = StyleSheet.create({
   pillSeatedActive: {
     borderColor: '#2563EB',
     borderWidth: 1.5,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   pillSeatedText: {
     color: '#1D4ED8',
   },
   // Cancelled Pill
   pillCancelled: {
-    backgroundColor: '#F3F4F6',
-    borderColor: '#E5E7EB',
+    backgroundColor: '#F1F5F9',
+    borderColor: '#CBD5E1',
   },
   pillCancelledActive: {
-    borderColor: '#6B7280',
+    borderColor: '#64748B',
     borderWidth: 1.5,
   },
   pillCancelledText: {
-    color: '#6B7280',
+    color: '#64748B',
   },
   cardsList: {
-    marginTop: 4,
+    marginTop: 6,
     gap: 4,
   },
   emptyContainer: {
@@ -942,20 +973,20 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
+    fontWeight: '700',
+    color: '#334155',
   },
   emptySub: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: '#94A3B8',
     textAlign: 'center',
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
     justifyContent: 'flex-end',
   },
   modalContent: {
@@ -964,6 +995,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 20,
     maxHeight: '85%',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -973,12 +1009,12 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: '700',
+    color: '#0F172A',
   },
   modalSub: {
     fontSize: 13,
-    color: '#6B7280',
+    color: '#64748B',
     marginBottom: 16,
   },
   tableGrid: {
@@ -988,27 +1024,35 @@ const styles = StyleSheet.create({
   },
   tableOption: {
     width: '48%',
-    backgroundColor: '#F8FAF9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 12,
-    borderWidth: 1,
-    borderColor: '#EEF2F0',
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    borderTopColor: '#FFFFFF',
+    borderBottomColor: '#CBD5E1',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
     alignItems: 'center',
     gap: 4,
   },
   tableOptionTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: '800',
+    color: '#0F172A',
   },
   tableOptionArea: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#009669',
   },
   tableOptionCap: {
     fontSize: 11,
-    color: '#9CA3AF',
+    color: '#94A3B8',
+    fontWeight: '500',
   },
   modalRow: {
     flexDirection: 'row',

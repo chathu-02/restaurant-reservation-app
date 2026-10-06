@@ -26,8 +26,11 @@ export default function RootLayout() {
             <Stack.Screen name="reservations" options={{ title: 'Reservations' }} />
             <Stack.Screen name="reservation-detail" options={{ title: 'Reservation Details' }} />
             <Stack.Screen name="queue" options={{ title: 'Queue & Waitlist' }} />
+            <Stack.Screen name="add-walkin" options={{ title: 'Add Walk-in Party' }} />
             <Stack.Screen name="tables" options={{ title: 'Tables Management' }} />
             <Stack.Screen name="alerts" options={{ title: 'Alerts & Notifications' }} />
+            <Stack.Screen name="restaurant-settings" options={{ title: 'Restaurant Settings' }} />
+            <Stack.Screen name="reports" options={{ title: 'Reports & Analytics' }} />
             <Stack.Screen name="profile" options={{ title: 'Staff Profile' }} />
             <Stack.Screen name="login" options={{ title: 'Staff Login' }} />
           </Stack>

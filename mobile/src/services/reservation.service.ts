@@ -226,12 +226,13 @@ class ReservationService {
     }
   }
 
-  async addWalkIn(guest: { guestName: string; partySize: number; phone?: string }): Promise<QueueGuest> {
+  async addWalkIn(guest: { guestName: string; partySize: number; phone?: string; notes?: string }): Promise<QueueGuest> {
     const queueItem: QueueGuest = {
       id: `q-${Date.now()}`,
       guestName: guest.guestName,
       partySize: guest.partySize,
       phone: guest.phone,
+      notes: guest.notes,
       joinedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       estimatedWaitMinutes: 12,
     };

@@ -130,9 +130,9 @@ export default function TablesScreen() {
   const handleTabChange = (tab: TabKey) => {
     if (tab === 'dashboard') {
       router.push('/');
-    } else if (tab === 'bookings') {
+    } else if (tab === 'bookings' || tab === 'reservations') {
       router.push('/explore');
-    } else if (tab === 'waitlist') {
+    } else if (tab === 'queue' || tab === 'waitlist') {
       router.push('/queue');
     } else if (tab === 'alerts') {
       router.push('/alerts');

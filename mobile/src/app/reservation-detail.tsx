@@ -134,7 +134,7 @@ export default function ReservationDetailScreen() {
           <Pressable
             onPress={() => router.back()}
             style={({ pressed }) => [styles.circularBtn, pressed && styles.pressed]}>
-            <Icon name="arrow-back" size={20} color="#111827" />
+            <Icon name="arrow-back" size={20} color="#174825ff" />
           </Pressable>
 
           <View style={styles.headerCenter}>

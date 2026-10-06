@@ -62,7 +62,7 @@ export function useReservations() {
     }
   };
 
-  const addWalkIn = async (guest: { guestName: string; partySize: number; phone?: string }) => {
+  const addWalkIn = async (guest: { guestName: string; partySize: number; phone?: string; notes?: string }) => {
     try {
       const created = await reservationService.addWalkIn(guest);
       setQueue((prev) => [...prev, created]);
