@@ -237,37 +237,35 @@ export default function QueueScreen() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#022C22" />
       <View style={styles.container}>
+        {/* Top Header Bar like other sub-pages */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <View style={styles.titleRow}>
+              <Text style={styles.headerTitle}>Live Queue</Text>
+              <View style={styles.activeCountBadge}>
+                <Text style={styles.activeCountText}>{queueList.length} active</Text>
+              </View>
+            </View>
+            <Text style={styles.headerSubtitle}>• Dinner Rush • Updated 12s ago</Text>
+          </View>
+
+          <View style={styles.headerRight}>
+            <Pressable
+              onPress={() => router.push('/add-walkin')}
+              style={({ pressed }) => [styles.walkInBtn, pressed && styles.pressed]}>
+              <Icon name="plus" size={15} color="#FFFFFF" />
+              <Text style={styles.walkInBtnText}> Walk-in</Text>
+            </Pressable>
+          </View>
+        </View>
+
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
 
-
           {/* ─── Standalone Light Green Live Queue Section ───────────── */}
           <View style={styles.liveQueueSectionCard}>
-            {/* Live Queue Title & Walk-in Row */}
-            <View style={styles.titleRow}>
-              <View style={styles.titleLeft}>
-                <View style={styles.titleTextRow}>
-                  <Text style={styles.titleText}>Live queue</Text>
-                  <View style={styles.activeCountBadge}>
-                    <Text style={styles.activeCountText}>{queueList.length} active</Text>
-                  </View>
-                </View>
-                <View style={styles.subtitleRow}>
-                  <View style={styles.liveGreenDot} />
-                  <Text style={styles.subtitleText}>Updated 12s ago · Dinner Rush</Text>
-                </View>
-              </View>
-
-              {/* Walk-in Button */}
-              <Pressable
-                onPress={() => router.push('/add-walkin')}
-                style={({ pressed }) => [styles.walkInBtn, pressed && styles.pressed]}>
-                <Icon name="plus" size={16} color="#FFFFFF" />
-                <Text style={styles.walkInBtnText}> Walk-in</Text>
-              </Pressable>
-            </View>
 
             {/* Filter Pills Bar (Enlarged Buttons) */}
             <ScrollView
@@ -680,6 +678,76 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 
+  // ── Header Bar (#022C22) ─────────────────────────
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 14,
+    backgroundColor: '#022C22',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    gap: 8,
+  },
+  headerLeft: {
+    flex: 1,
+    minWidth: 0,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  activeCountBadge: {
+    backgroundColor: 'rgba(52, 211, 153, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.3)',
+  },
+  activeCountText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#34D399',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#34D399',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  walkInBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#009669',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    shadowColor: '#009669',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  walkInBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
   // ─── Top Dark Summary Card ─────────────────────────
   topMetricsCard: {
     backgroundColor: '#74948dff',
@@ -781,74 +849,6 @@ const styles = StyleSheet.create({
     elevation: 4,
     marginTop: 6,
     marginBottom: 16,
-  },
-
-  // ─── Title Row ─────────────────────────────────────
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-    paddingHorizontal: 2,
-  },
-  titleLeft: {},
-  titleTextRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  titleText: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#064E3B',
-    letterSpacing: -0.5,
-  },
-  activeCountBadge: {
-    backgroundColor: '#064E3B',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
-  },
-  activeCountText: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  subtitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 3,
-  },
-  liveGreenDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#10B981',
-  },
-  subtitleText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#047857',
-  },
-  walkInBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#044E38',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    gap: 6,
-    shadowColor: '#044E38',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  walkInBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13.5,
-    fontWeight: '800',
   },
 
   // ─── Filter Pills Bar (Enlarged) ───────────────────
