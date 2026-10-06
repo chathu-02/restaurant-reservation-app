@@ -111,7 +111,7 @@ export default function LoginScreen() {
                     staffIdOrEmail.includes('sarah') && styles.quickChipActive,
                     pressed && styles.pressed,
                   ]}>
-                  <Icon name="person" size={13} color={staffIdOrEmail.includes('sarah') ? '#009669' : '#4B5563'} />
+                  <Icon name="person" size={13} color={staffIdOrEmail.includes('sarah') ? '#34D399' : '#FFFFFF'} />
                   <Text style={[styles.quickChipText, staffIdOrEmail.includes('sarah') && styles.quickChipTextActive]}>
                     Sarah M. (Lead)
                   </Text>
@@ -124,7 +124,7 @@ export default function LoginScreen() {
                     staffIdOrEmail.includes('marcus') && styles.quickChipActive,
                     pressed && styles.pressed,
                   ]}>
-                  <Icon name="person" size={13} color={staffIdOrEmail.includes('marcus') ? '#009669' : '#4B5563'} />
+                  <Icon name="person" size={13} color={staffIdOrEmail.includes('marcus') ? '#34D399' : '#FFFFFF'} />
                   <Text style={[styles.quickChipText, staffIdOrEmail.includes('marcus') && styles.quickChipTextActive]}>
                     Marcus D. (Host)
                   </Text>
@@ -467,14 +467,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 27,
     fontWeight: '800',
-    color: '#0e5407ff',
+    color: '#FFFFFF',
     textAlign: 'center',
     letterSpacing: -0.5,
     marginBottom: 8,
   },
   headerSubtitle: {
     fontSize: 13.5,
-    color: '#64748B',
+    color: '#A7F3D0',
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 16,
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   quickAccessLabel: {
     fontSize: 11.5,
     fontWeight: '600',
-    color: '#6B7280',
+    color: '#34D399',
     marginBottom: 8,
     textAlign: 'center',
   },
@@ -500,25 +500,25 @@ const styles = StyleSheet.create({
   quickChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(52, 211, 153, 0.3)',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 20,
     gap: 6,
   },
   quickChipActive: {
-    backgroundColor: '#E6F8F0',
-    borderColor: '#009669',
+    backgroundColor: 'rgba(52, 211, 153, 0.25)',
+    borderColor: '#34D399',
   },
   quickChipText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4B5563',
+    color: '#FFFFFF',
   },
   quickChipTextActive: {
-    color: '#009669',
+    color: '#34D399',
   },
 
   // Main Form Card Container
@@ -697,9 +697,9 @@ const styles = StyleSheet.create({
   footerSupportCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: 'rgba(6, 95, 70, 0.4)',
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.8)',
+    borderColor: 'rgba(52, 211, 153, 0.3)',
     borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E6F8F0',
+    backgroundColor: 'rgba(52, 211, 153, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -720,16 +720,16 @@ const styles = StyleSheet.create({
   footerHelpTitle: {
     fontSize: 11.5,
     fontWeight: '600',
-    color: '#475569',
+    color: '#FFFFFF',
     marginBottom: 2,
   },
   footerHelpSubtitle: {
     fontSize: 11,
-    color: '#64748B',
+    color: '#A7F3D0',
     lineHeight: 16,
   },
   shiftLeadHighlight: {
-    color: '#009669',
+    color: '#34D399',
     fontWeight: '700',
     textDecorationLine: 'underline',
   },
