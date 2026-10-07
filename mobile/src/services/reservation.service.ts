@@ -29,9 +29,12 @@ export interface ShiftOverviewData {
 
 export interface Reservation {
   id: string;
+  bookingId?: string;
   guestName: string;
+  avatarUrl?: string;
   partySize: number;
   time: string;
+  date?: string;
   tableNumber?: string;
   tableArea?: string;
   status: ReservationStatus;
@@ -41,6 +44,10 @@ export interface Reservation {
   tags?: string[];
   seatedInfo?: string;
   actionType?: 'seat' | 'assign' | 'seated-info' | 'waitlist-offer';
+  checkedIn?: boolean;
+  depositStatus?: string;
+  depositAmount?: number;
+  tableIds?: string[];
 }
 
 export interface QueueGuest {
@@ -51,6 +58,7 @@ export interface QueueGuest {
   estimatedWaitMinutes: number;
   phone?: string;
   notes?: string;
+  status?: string;
 }
 
 const DEFAULT_OVERVIEW: ShiftOverviewData = {

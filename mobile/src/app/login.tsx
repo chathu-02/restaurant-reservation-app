@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Icon from '@/components/ui/Icon';
 import { useAuth } from '@/hooks/useAuth';
+import { friendlyError } from '@/lib/auth';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -37,13 +38,18 @@ export default function LoginScreen() {
   };
 
   // Primary Sign In action - navigates directly to Dashboard
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
     const userEmail = staffIdOrEmail.trim() || 'sarah.mitchell@restaurant.com';
-    const userName = staffIdOrEmail.toLowerCase().includes('marcus') 
-      ? 'Marcus Davis' 
-      : 'Sarah Mitchell';
-    login(userEmail, userName);
-    router.replace('/');
+    try {
+      if (password && password !== '••••••••••••') {
+        await login(userEmail, password);
+      } else {
+        await login(userEmail);
+      }
+      router.replace('/');
+    } catch (err: any) {
+      Alert.alert('Sign In Failed', friendlyError(err));
+    }
   };
 
   // Fast Pass PIN sign in

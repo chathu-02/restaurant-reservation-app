@@ -12,6 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Icon from '@/components/ui/Icon';
 import BottomNavBar, { TabKey } from '@/components/BottomNavBar';
+import { useReservations } from '@/hooks/useReservations';
+import { useAuth } from '@/hooks/useAuth';
 
 interface FeedAlertItem {
   id: string;
@@ -33,98 +35,88 @@ interface FeedAlertItem {
 
 export default function AlertsScreen() {
   const router = useRouter();
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'critical' | 'booking' | 'cancellation'>('all');
+  const { user } = useAuth();
+  const {
+    notifications,
+    kitchenAlerts,
+    markNotificationRead,
+    acknowledgeKitchenAlert,
+    unreadNotificationsCount,
+    overview,
+  } = useReservations();
 
-  // Critical Banner state
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'critical' | 'booking' | 'cancellation'>('all');
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
-  const [alerts, setAlerts] = useState<FeedAlertItem[]>([
-    {
-      id: 'a1',
-      category: 'critical',
-      topTags: [{ label: 'URGENT RELEASE', variant: 'red' }],
-      timeAgo: '2m ago',
-      title: 'Cancellation: Table 12',
-      subtitle: 'Booking #RB-20455 • Party of 4 cancelled via SMS',
-      badges: ['Booth Ready', '4 Seats Vacant'],
-      bottomLeftLabel: 'Ready: Miller (4p)',
-      actionButton: {
-        label: 'Seat Next >',
-        variant: 'dark',
-        action: () => {
-          Alert.alert('Party Seated', 'Miller (Party of 4) seated at Table 12.');
-        },
-      },
-      isUnread: true,
-    },
-    {
-      id: 'a2',
-      category: 'booking',
-      topTags: [{ label: 'BOOKING ARRIVAL 🟢', variant: 'green' }],
-      timeAgo: '1m ago',
-      title: 'Party of 6 - 8:00 PM Tonight',
-      subtitle: 'Chen, David • High Lifetime Value Guest',
-      badges: ['Patio / Booth', 'VIP Guest'],
-      bottomLeftLabel: 'Requested: Booth 4 or 6',
-      actionButton: {
-        label: 'Assign Table >',
-        variant: 'green',
-        action: () => {
-          router.push('/explore');
-        },
-      },
-      isUnread: true,
-    },
-    {
-      id: 'a3',
-      category: 'queue',
-      topTags: [
-        { label: 'QUEUE SPIKE', variant: 'amber' },
-        { label: '+22M WAIT', variant: 'orange' },
-      ],
-      timeAgo: '13m ago',
-      title: '5 Groups Waiting in Live Queue',
-      subtitle: 'Average wait time exceeded ~20m target',
-      bottomLeftLabel: 'Kitchen pace: Steady',
-      actionButton: {
-        label: 'Dispatch Queue ->',
-        variant: 'amber',
-        action: () => {
-          router.push('/queue');
-        },
-      },
-    },
-    {
-      id: 'a4',
-      category: 'special',
-      topTags: [
-        { label: 'SPECIAL REQUEST', variant: 'teal' },
-        { label: '🎂 Birthday', variant: 'birthday' },
-      ],
-      timeAgo: '4m ago',
-      title: 'Party of 4 - Table 7 (6:15 PM)',
-      subtitle: 'Reservation #RB-10822',
-      quoteText: '"Quiet booth requested for 60th birthday celebration. Needs dessert candle."',
-      bottomLeftLabel: 'Server: Marcus T.',
-      actionButton: {
-        label: 'Page Host',
-        variant: 'teal',
-        action: () => {
-          Alert.alert('Host Paged', 'Host station notified about Table 7 special request.');
-        },
-      },
-    },
-    {
-      id: 'a5',
-      category: 'completed',
-      topTags: [{ label: 'COMPLETED / SEATED', variant: 'gray' }],
-      timeAgo: '1h ago',
-      title: 'Party of 2 at 7:30 PM',
-      subtitle: 'Indoor Bar High-top • Confirmed & Checked-In',
-    },
-  ]);
+  // Map Firestore notifications & kitchenAlerts into FeedAlertItem format
+  const mappedAlerts: FeedAlertItem[] = React.useMemo(() => {
+    const list: FeedAlertItem[] = [];
 
-  const filteredAlerts = alerts.filter((item) => {
+    // Include relevant kitchen alerts if unacknowledged
+    kitchenAlerts.forEach((k) => {
+      if (!k.acknowledged) {
+        list.push({
+          id: `ka-${k.id}`,
+          category: 'critical',
+          topTags: [{ label: 'KITCHEN ALERT 🚨', variant: 'red' }],
+          timeAgo: 'Live',
+          title: `Kitchen Alert (${k.type})`,
+          subtitle: k.message,
+          actionButton: {
+            label: 'Acknowledge',
+            variant: 'dark',
+            action: async () => {
+              await acknowledgeKitchenAlert(k.id);
+            },
+          },
+          isUnread: true,
+        });
+      }
+    });
+
+    // Map Firestore notifications
+    notifications.forEach((n) => {
+      // Filter by recipientRole or recipientId if set
+      if (n.recipientRole && user?.role && n.recipientRole !== user.role && n.recipientRole !== 'staff') {
+        return;
+      }
+      if (n.recipientId && user?.id && n.recipientId !== user.id) {
+        return;
+      }
+
+      const isCritical = n.type === 'cancellation' || n.category === 'critical';
+      const isQueue = n.type === 'queue' || n.category === 'queue';
+
+      list.push({
+        id: n.id,
+        category: isCritical ? 'critical' : isQueue ? 'queue' : 'booking',
+        topTags: [
+          {
+            label: n.type ? n.type.toUpperCase() : 'NOTIFICATION',
+            variant: isCritical ? 'red' : isQueue ? 'amber' : 'green',
+          },
+        ],
+        timeAgo: 'Recent',
+        title: n.title,
+        subtitle: n.message,
+        isUnread: !n.read,
+        actionButton: {
+          label: n.targetScreen ? 'View Details ->' : 'Mark Read',
+          variant: isCritical ? 'dark' : 'green',
+          action: async () => {
+            await markNotificationRead(n.id);
+            if (n.targetScreen) {
+              router.push(n.targetScreen as any);
+            }
+          },
+        },
+      });
+    });
+
+    return list;
+  }, [notifications, kitchenAlerts, user, acknowledgeKitchenAlert, markNotificationRead, router]);
+
+  const filteredAlerts = mappedAlerts.filter((item) => {
     if (selectedFilter === 'all') return true;
     if (selectedFilter === 'critical') return item.category === 'critical';
     if (selectedFilter === 'booking') return item.category === 'booking';
@@ -493,7 +485,8 @@ export default function AlertsScreen() {
         <BottomNavBar
           activeTab="alerts"
           onSelectTab={handleTabChange}
-          waitlistCount={3}
+          waitlistCount={overview?.guestsInQueue ?? 0}
+          alertsCount={unreadNotificationsCount}
         />
       </View>
     </SafeAreaView>

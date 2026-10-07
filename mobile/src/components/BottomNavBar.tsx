@@ -16,7 +16,7 @@ export function BottomNavBar({
   activeTab = 'dashboard',
   onSelectTab,
   waitlistCount = 0,
-  alertsCount = 3,
+  alertsCount = 0,
 }: BottomNavBarProps) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -51,7 +51,7 @@ export function BottomNavBar({
         {tabs.map((tab) => {
           const isActive = normalizedActiveKey === tab.key;
           const activeIconColor = '#34D399'; // Mint green highlight icon
-          const inactiveIconColor = '#64748B'; // Slate gray inactive icon
+          const inactiveIconColor = '#0F172A'; // Dark slate inactive icon
 
           return (
             <Pressable
@@ -180,8 +180,8 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
   },
   inactiveTabLabel: {
-    color: '#64748B',
-    fontWeight: '600',
+    color: '#0F172A',
+    fontWeight: '700',
   },
   activeTabLabel: {
     color: '#FFFFFF',

@@ -15,6 +15,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from '@/components/ui/Icon';
 import StatusBadge from '@/components/StatusBadge';
 
+import { useReservations } from '@/hooks/useReservations';
+
 interface TableTile {
   id: string;
   name: string;
@@ -38,29 +40,51 @@ const TABLES: TableTile[] = [
 
 export default function ReservationDetailScreen() {
   const router = useRouter();
+  const { reservations, seatReservation, cancelReservation, updateReservationStatus } = useReservations();
+
   const params = useLocalSearchParams<{
     id?: string;
+    bookingId?: string;
     guestName?: string;
+    phone?: string;
+    date?: string;
     time?: string;
     partySize?: string;
     tableNumber?: string;
     tableArea?: string;
     status?: string;
+    notes?: string;
+    avatarUrl?: string;
   }>();
 
-  // Dynamic state with screenshot defaults
-  const reservationNumber = '#RB-20481';
-  const guestName = params.guestName || 'Sarah Johnson';
-  const guestVisitInfo = '3rd visit • Regular Guest';
-  const guestPhone = '+1 (415) 552-0192';
-  const resDate = 'Oct 24, 2024';
-  const resTime = params.time || '6:00 PM';
-  const partySize = params.partySize || '4 Guests';
+  // Find matching reservation from live Firestore store if available
+  const realRes = reservations.find(
+    (r) => r.id === params.id || (params.bookingId && r.bookingId === params.bookingId)
+  );
+
+  // Dynamic fields
+  const reservationNumber = realRes?.bookingId
+    ? `#${realRes.bookingId}`
+    : params.bookingId
+    ? `#${params.bookingId}`
+    : params.id
+    ? `#RB-${params.id.slice(-5)}`
+    : '#RB-20481';
+
+  const guestName = realRes?.guestName || params.guestName || 'Guest Name';
+  const guestVisitInfo = 'Regular Guest';
+  const guestPhone = realRes?.phone || params.phone || 'Contact not specified';
+  const resDate = realRes?.date || params.date || 'Today';
+  const resTime = realRes?.time || params.time || '6:00 PM';
+  const partySize = realRes?.partySize ? `${realRes.partySize} Guests` : (params.partySize || '4 Guests');
+  const guestNotes = realRes?.notes || params.notes || 'No special requests provided.';
+  const avatarUri = realRes?.avatarUrl || params.avatarUrl;
+  const avatarSource = avatarUri ? { uri: avatarUri } : require('@/assets/images/staff_avatar.jpg');
 
   // Table selection state
   const [selectedTableId, setSelectedTableId] = useState('t2');
   const [tableCategoryFilter, setTableCategoryFilter] = useState<'all' | 'main' | 'window' | 'patio'>('all');
-  const [currentStatus, setCurrentStatus] = useState(params.status || 'Confirmed');
+  const [currentStatus, setCurrentStatus] = useState(realRes?.status || params.status || 'Confirmed');
 
   const selectedTable = TABLES.find((t) => t.id === selectedTableId) || TABLES[1];
 
@@ -173,9 +197,9 @@ export default function ReservationDetailScreen() {
               {/* Avatar with online dot */}
               <View style={styles.avatarWrapper}>
                 <Image
-                  source={require('@/assets/images/staff_avatar.jpg')}
+                  source={avatarSource}
                   style={styles.avatar}
-                  defaultSource={require('@/assets/images/icon.png')}
+                  defaultSource={require('@/assets/images/staff_avatar.jpg')}
                 />
                 <View style={styles.guestOnlineDot} />
               </View>
@@ -268,7 +292,7 @@ export default function ReservationDetailScreen() {
             <View style={styles.quoteBox}>
               <Text style={styles.quoteText}>
                 <Text style={styles.quoteBold}>Guest Request: </Text>
-                "Window seat preferred. Celebrating our 5th anniversary — would love a quiet corner booth if possible."
+                "{guestNotes}"
               </Text>
             </View>
 

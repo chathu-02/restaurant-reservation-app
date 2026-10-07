@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Icon from '@/components/ui/Icon';
 import { BottomNavBar, TabKey } from '@/components/BottomNavBar';
+import { useReservations } from '@/hooks/useReservations';
 
 export type TableStatus = 'free' | 'busy' | 'booked' | 'dirty';
 
@@ -47,6 +48,7 @@ const INITIAL_TABLES: FloorTable[] = [
 export default function TablesScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { tables: firestoreTables, updateTableStatus, unreadNotificationsCount, overview } = useReservations();
 
   // Responsive breakpoints
   const isCompact = width < 360;
@@ -63,6 +65,24 @@ export default function TablesScreen() {
   const [tables, setTables] = useState<FloorTable[]>(INITIAL_TABLES);
   const [selectedTableId, setSelectedTableId] = useState<string | null>('t5');
   const [partySize, setPartySize] = useState<number>(4);
+
+  // Sync firestoreTables when available
+  React.useEffect(() => {
+    if (firestoreTables.length > 0) {
+      setTables((prev) =>
+        prev.map((t) => {
+          const match = firestoreTables.find((ft) => ft.id === t.id || ft.name === t.name);
+          if (match) {
+            return {
+              ...t,
+              status: (match.status as TableStatus) || t.status,
+            };
+          }
+          return t;
+        })
+      );
+    }
+  }, [firestoreTables]);
 
   // Active selected table object
   const selectedTable = tables.find((t) => t.id === selectedTableId) || null;
@@ -85,7 +105,7 @@ export default function TablesScreen() {
   const dirtyCount = tables.filter((t) => t.status === 'dirty').length;
 
   // Update table status in real time
-  const handleUpdateTableStatus = (status: TableStatus) => {
+  const handleUpdateTableStatus = async (status: TableStatus) => {
     if (!selectedTableId) return;
 
     setTables((prev) =>
@@ -115,6 +135,12 @@ export default function TablesScreen() {
         return t;
       })
     );
+
+    try {
+      await updateTableStatus(selectedTableId, status);
+    } catch (err) {
+      console.warn('Failed to update table in Firestore:', err);
+    }
 
     const statusNames: Record<TableStatus, string> = {
       free: 'Available (Ready)',
@@ -532,7 +558,8 @@ export default function TablesScreen() {
         <BottomNavBar
           activeTab="tables"
           onSelectTab={handleTabChange}
-          waitlistCount={4}
+          waitlistCount={overview?.guestsInQueue ?? 0}
+          alertsCount={unreadNotificationsCount}
         />
       </View>
     </SafeAreaView>

@@ -25,41 +25,12 @@ import Input from '@/components/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { useReservations } from '@/hooks/useReservations';
 
-// Sample upcoming reservations timeline
-const UPCOMING_RESERVATIONS = [
-  {
-    id: 'res-1',
-    name: 'Eleanor Vance',
-    party: 4,
-    time: '6:00 PM',
-    table: 'T-04 • Main Dining',
-    status: 'confirmed',
-    isVip: true,
-  },
-  {
-    id: 'res-2',
-    name: 'Marcus Thorne',
-    party: 2,
-    time: '6:30 PM',
-    table: 'T-12 • Patio Booth',
-    status: 'confirmed',
-    isVip: false,
-  },
-  {
-    id: 'res-3',
-    name: 'Sophia Patel',
-    party: 6,
-    time: '7:15 PM',
-    table: 'T-08 • Window Table',
-    status: 'pending',
-    isVip: true,
-  },
-];
+
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { overview, refreshing, refresh, addBooking, addWalkIn } = useReservations();
+  const { overview, refreshing, refresh, addBooking, addWalkIn, reservations, unreadNotificationsCount } = useReservations();
 
   // Active bottom navigation tab
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
@@ -378,7 +349,9 @@ export default function DashboardScreen() {
               <View style={styles.containerHeaderLeft}>
                 <Text style={styles.containerTitle}>Upcoming</Text>
                 <View style={styles.sectionCountBadge}>
-                  <Text style={styles.sectionCountText}>{UPCOMING_RESERVATIONS.length}</Text>
+                  <Text style={styles.sectionCountText}>
+                    {reservations.filter((r) => r.status !== 'cancelled').length}
+                  </Text>
                 </View>
               </View>
               <Pressable
@@ -390,57 +363,100 @@ export default function DashboardScreen() {
             </View>
 
             <View style={styles.timelineContainer}>
-              {UPCOMING_RESERVATIONS.map((res, idx) => (
-                <Pressable
-                  key={res.id}
-                  onPress={() => router.push('/explore')}
-                  style={({ pressed }) => [
-                    styles.timelineItem,
-                    idx === UPCOMING_RESERVATIONS.length - 1 && styles.timelineItemLast,
-                    pressed && styles.actionPressed,
-                  ]}>
-                  {/* Timeline dot & line */}
-                  <View style={styles.timelineDotCol}>
-                    <View style={[
-                      styles.timelineDot,
-                      res.status === 'pending' && styles.timelineDotPending,
-                    ]} />
-                    {idx < UPCOMING_RESERVATIONS.length - 1 && (
-                      <View style={styles.timelineLine} />
-                    )}
-                  </View>
+              {reservations.filter((r) => r.status !== 'cancelled').length === 0 ? (
+                <View style={{ paddingVertical: 16, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 13, color: '#6B7280', fontStyle: 'italic' }}>
+                    No upcoming reservations scheduled.
+                  </Text>
+                </View>
+              ) : (
+                reservations
+                  .filter((r) => r.status !== 'cancelled')
+                  .slice(0, 5)
+                  .map((res, idx, arr) => (
+                    <Pressable
+                      key={res.id}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/reservation-detail',
+                          params: {
+                            id: res.id,
+                            bookingId: res.bookingId || res.id,
+                            guestName: res.guestName,
+                            time: res.time,
+                            date: res.date || 'Today',
+                            partySize: `${res.partySize} Guests`,
+                            tableNumber: res.tableNumber || 'Unassigned',
+                            tableArea: res.tableArea || 'Main Room',
+                            phone: res.phone || '',
+                            notes: res.notes || '',
+                            status: res.status,
+                            avatarUrl: res.avatarUrl || '',
+                          },
+                        })
+                      }
+                      style={({ pressed }) => [
+                        styles.timelineItem,
+                        idx === arr.length - 1 && styles.timelineItemLast,
+                        pressed && styles.actionPressed,
+                      ]}>
+                      {/* Timeline dot & line */}
+                      <View style={styles.timelineDotCol}>
+                        <View
+                          style={[
+                            styles.timelineDot,
+                            res.status === 'pending' && styles.timelineDotPending,
+                          ]}
+                        />
+                        {idx < arr.length - 1 && <View style={styles.timelineLine} />}
+                      </View>
 
-                  {/* Card content */}
-                  <View style={styles.timelineCard}>
-                    <View style={styles.timelineCardTop}>
-                      <View style={styles.timelineNameRow}>
-                        <Text style={styles.timelineGuestName}>{res.name}</Text>
-                        {res.isVip && (
-                          <View style={styles.vipBadge}>
-                            <Icon name="star" size={10} color="#D97706" />
-                            <Text style={styles.vipBadgeText}>VIP</Text>
+                      {/* Card content */}
+                      <View style={styles.timelineCard}>
+                        <View style={styles.timelineCardTop}>
+                          <View style={styles.timelineNameRow}>
+                            <Text style={styles.timelineGuestName}>{res.guestName}</Text>
+                            {res.vipBadge && (
+                              <View style={styles.vipBadge}>
+                                <Icon name="star" size={10} color="#D97706" />
+                                <Text style={styles.vipBadgeText}>VIP</Text>
+                              </View>
+                            )}
                           </View>
-                        )}
+                          <Text style={styles.timelineTime}>{res.time}</Text>
+                        </View>
+                        <View style={styles.timelineCardBottom}>
+                          <View style={styles.timelineMetaItem}>
+                            <Icon name="users" size={12} color="#6B7280" />
+                            <Text style={styles.timelineMetaText}>{res.partySize} guests</Text>
+                          </View>
+                          <View style={styles.timelineMetaItem}>
+                            <Icon name="grid" size={12} color="#6B7280" />
+                            <Text style={styles.timelineMetaText}>
+                              {res.tableNumber || 'Unassigned'}
+                            </Text>
+                          </View>
+                          <StatusBadge
+                            label={
+                              res.status === 'confirmed'
+                                ? 'Confirmed'
+                                : res.status === 'seated'
+                                ? 'Seated'
+                                : 'Pending'
+                            }
+                            variant={
+                              res.status === 'confirmed'
+                                ? 'green'
+                                : res.status === 'seated'
+                                ? 'teal'
+                                : 'amber'
+                            }
+                          />
+                        </View>
                       </View>
-                      <Text style={styles.timelineTime}>{res.time}</Text>
-                    </View>
-                    <View style={styles.timelineCardBottom}>
-                      <View style={styles.timelineMetaItem}>
-                        <Icon name="users" size={12} color="#6B7280" />
-                        <Text style={styles.timelineMetaText}>{res.party} guests</Text>
-                      </View>
-                      <View style={styles.timelineMetaItem}>
-                        <Icon name="grid" size={12} color="#6B7280" />
-                        <Text style={styles.timelineMetaText}>{res.table}</Text>
-                      </View>
-                      <StatusBadge
-                        label={res.status === 'confirmed' ? 'Confirmed' : 'Pending'}
-                        variant={res.status === 'confirmed' ? 'green' : 'amber'}
-                      />
-                    </View>
-                  </View>
-                </Pressable>
-              ))}
+                    </Pressable>
+                  ))
+              )}
             </View>
           </View>
 
@@ -511,7 +527,8 @@ export default function DashboardScreen() {
         <BottomNavBar
           activeTab={activeTab}
           onSelectTab={handleTabChange}
-          waitlistCount={overview?.guestsInQueue ?? 4}
+          waitlistCount={overview?.guestsInQueue ?? 0}
+          alertsCount={unreadNotificationsCount}
         />
       </View>
 

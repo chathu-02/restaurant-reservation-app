@@ -23,29 +23,35 @@ import Input from '@/components/Input';
 import { useReservations } from '@/hooks/useReservations';
 import { Reservation } from '@/services/reservation.service';
 import { ReservationStatus } from '@/constants/status';
+import { dateValue, prettyDate } from '@/lib/booking';
 
 interface DayItem {
   id: string;
+  dateStr: string;
   dayName: string;
   dayNum: string;
   pax: string;
+  count: number;
 }
 
-const DAYS_DATA: DayItem[] = [
-  { id: 'mon', dayName: 'MON', dayNum: '10', pax: '40 pax' },
-  { id: 'tue', dayName: 'TUE', dayNum: '11', pax: '36 pax' },
-  { id: 'wed', dayName: 'WED', dayNum: '12', pax: '44 pax' },
-  { id: 'thu', dayName: 'THU', dayNum: '13', pax: '42 pax' },
-  { id: 'fri', dayName: 'FRI', dayNum: '14', pax: '52 pax' },
-  { id: 'sat', dayName: 'SAT', dayNum: '15', pax: '60 pax' },
-];
+const DAYS_SHORT = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 export default function ReservationsScreen() {
   const router = useRouter();
-  const { reservations, addBooking } = useReservations();
+  const {
+    reservations,
+    addBooking,
+    seatReservation,
+    cancelReservation,
+    updateReservationStatus,
+    unreadNotificationsCount,
+    overview,
+  } = useReservations();
 
-  // Selected date
-  const [selectedDayId, setSelectedDayId] = useState('mon');
+  // Selected date filter ('all' or 'YYYY-MM-DD')
+  const [selectedDate, setSelectedDate] = useState<string>('all');
+  const [dateModalVisible, setDateModalVisible] = useState(false);
+  const [customInputDate, setCustomInputDate] = useState('');
 
   // Search query
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,8 +59,81 @@ export default function ReservationsScreen() {
   // Status Filter
   const [activeFilter, setActiveFilter] = useState<'all' | ReservationStatus>('all');
 
-  // Local state for dynamic live interactions
-  const [localReservations, setLocalReservations] = useState<Reservation[]>([]);
+  // Dynamic Date Items for the horizontal date strip
+  const dateItems = useMemo<DayItem[]>(() => {
+    const today = new Date();
+    const todayStr = dateValue(today);
+
+    const totalPaxAll = reservations.reduce((acc, r) => acc + (r.partySize || 0), 0);
+    const items: DayItem[] = [
+      {
+        id: 'all',
+        dateStr: 'all',
+        dayName: 'ALL',
+        dayNum: 'ALL',
+        pax: `${totalPaxAll} pax`,
+        count: reservations.length,
+      },
+    ];
+
+    const generatedDates = new Set<string>();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const ds = dateValue(d);
+      generatedDates.add(ds);
+
+      const dayName = i === 0 ? 'TODAY' : i === 1 ? 'TOM' : DAYS_SHORT[d.getDay()];
+      const dayNum = String(d.getDate()).padStart(2, '0');
+
+      const dateRes = reservations.filter(
+        (r) => (r.date || todayStr) === ds || (i === 0 && r.date === 'Today')
+      );
+      const paxCount = dateRes.reduce((acc, r) => acc + (r.partySize || 0), 0);
+
+      items.push({
+        id: ds,
+        dateStr: ds,
+        dayName,
+        dayNum,
+        pax: `${paxCount} pax`,
+        count: dateRes.length,
+      });
+    }
+
+    // Include any extra unique dates in reservations that are not in next 7 days
+    reservations.forEach((r) => {
+      if (
+        r.date &&
+        r.date !== 'Today' &&
+        !generatedDates.has(r.date) &&
+        r.date.match(/^\d{4}-\d{2}-\d{2}$/)
+      ) {
+        generatedDates.add(r.date);
+        const [y, m, d] = r.date.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const dayName = DAYS_SHORT[dt.getDay()] || 'DATE';
+        const dayNum = String(d).padStart(2, '0');
+
+        const dateRes = reservations.filter((res) => res.date === r.date);
+        const paxCount = dateRes.reduce((acc, res) => acc + (res.partySize || 0), 0);
+
+        items.push({
+          id: r.date,
+          dateStr: r.date,
+          dayName,
+          dayNum,
+          pax: `${paxCount} pax`,
+          count: dateRes.length,
+        });
+      }
+    });
+
+    return items;
+  }, [reservations]);
+
+  // Local display list backed by real-time hook
+  const displayReservations = reservations;
 
   // Assign Table Modal state
   const [assignModalVisible, setAssignModalVisible] = useState(false);
@@ -68,23 +147,28 @@ export default function ReservationsScreen() {
   const [newTable, setNewTable] = useState('Table 5');
   const [newNotes, setNewNotes] = useState('');
 
-  // Sync with hook initially if empty
-  React.useEffect(() => {
-    if (reservations.length > 0 && localReservations.length === 0) {
-      setLocalReservations(reservations);
-    }
-  }, [reservations, localReservations.length]);
-
   // Derived counts
-  const totalCount = localReservations.length;
-  const confirmedCount = localReservations.filter((r) => r.status === 'confirmed').length;
-  const pendingCount = localReservations.filter((r) => r.status === 'pending' || r.status === 'deposit-due').length;
-  const seatedCount = localReservations.filter((r) => r.status === 'seated').length;
-  const cancelledCount = localReservations.filter((r) => r.status === 'cancelled').length;
+  const totalCount = displayReservations.length;
+  const confirmedCount = displayReservations.filter((r) => r.status === 'confirmed').length;
+  const pendingCount = displayReservations.filter((r) => r.status === 'pending' || r.status === 'deposit-due').length;
+  const seatedCount = displayReservations.filter((r) => r.status === 'seated').length;
+  const cancelledCount = displayReservations.filter((r) => r.status === 'cancelled').length;
 
-  // Filtered reservations based on search query and status filter
+  // Filtered reservations based on date filter, search query, and status filter
   const filteredReservations = useMemo(() => {
-    return localReservations.filter((r) => {
+    const todayStr = dateValue(new Date());
+
+    return displayReservations.filter((r) => {
+      // Date filter
+      if (selectedDate !== 'all') {
+        const rDate = r.date || todayStr;
+        if (selectedDate === todayStr) {
+          if (rDate !== todayStr && rDate !== 'Today') return false;
+        } else if (rDate !== selectedDate) {
+          return false;
+        }
+      }
+
       // Status filter
       if (activeFilter !== 'all') {
         if (activeFilter === 'pending') {
@@ -106,23 +190,16 @@ export default function ReservationsScreen() {
 
       return true;
     });
-  }, [localReservations, activeFilter, searchQuery]);
+  }, [displayReservations, selectedDate, activeFilter, searchQuery]);
 
   // Action: Seat guest
-  const handleSeatGuest = (res: Reservation) => {
-    setLocalReservations((prev) =>
-      prev.map((item) =>
-        item.id === res.id
-          ? {
-              ...item,
-              status: 'seated',
-              seatedInfo: 'Seated just now • Starters ordered',
-              actionType: 'seated-info',
-            }
-          : item
-      )
-    );
-    Alert.alert('Guest Seated', `${res.guestName} seated at ${res.tableNumber || 'Table 12'}.`);
+  const handleSeatGuest = async (res: Reservation) => {
+    try {
+      await seatReservation(res.id, res.tableNumber);
+      Alert.alert('Guest Seated', `${res.guestName} seated at ${res.tableNumber || 'Table 12'}.`);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to seat guest');
+    }
   };
 
   // Action: Open Assign Table
@@ -132,30 +209,27 @@ export default function ReservationsScreen() {
   };
 
   // Action: Save assigned table
-  const handleSelectTable = (table: string, area: string) => {
+  const handleSelectTable = async (table: string, area: string) => {
     if (!selectedResForTable) return;
-    setLocalReservations((prev) =>
-      prev.map((item) =>
-        item.id === selectedResForTable.id
-          ? {
-              ...item,
-              tableNumber: table,
-              tableArea: area,
-              status: 'confirmed',
-              actionType: 'seat',
-            }
-          : item
-      )
-    );
-    setAssignModalVisible(false);
-    Alert.alert('Table Assigned', `${selectedResForTable.guestName} assigned to ${table} (${area}).`);
+    try {
+      await updateReservationStatus(selectedResForTable.id, {
+        tableNumber: table,
+        tableNames: [table],
+        tableArea: area,
+        status: 'confirmed',
+      });
+      setAssignModalVisible(false);
+      Alert.alert('Table Assigned', `${selectedResForTable.guestName} assigned to ${table} (${area}).`);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to assign table');
+    }
   };
 
   // Action: Offer to waitlist
   const handleOfferWaitlist = (res: Reservation) => {
     Alert.alert(
       'Offered to Waitlist',
-      `Table released from ${res.guestName}. Automatic SMS notification sent to top waitlist party.`
+      `Table released from ${res.guestName}. Automatic notification sent to waitlist party.`
     );
   };
 
@@ -165,23 +239,23 @@ export default function ReservationsScreen() {
       Alert.alert('Required', 'Please enter guest name');
       return;
     }
-    const newRes: Reservation = {
-      id: `res-${Date.now()}`,
-      guestName: newGuestName.trim(),
-      partySize: parseInt(newPartySize, 10) || 2,
-      time: newTime,
-      tableNumber: newTable,
-      tableArea: 'Dining',
-      status: 'confirmed',
-      notes: newNotes,
-      actionType: 'seat',
-    };
-    await addBooking(newRes);
-    setLocalReservations((prev) => [newRes, ...prev]);
-    setNewGuestName('');
-    setNewNotes('');
-    setNewResModalVisible(false);
-    Alert.alert('Reservation Added', `Booking confirmed for ${newGuestName}`);
+    try {
+      await addBooking({
+        guestName: newGuestName.trim(),
+        partySize: parseInt(newPartySize, 10) || 2,
+        time: newTime,
+        tableNumber: newTable,
+        tableArea: 'Dining',
+        status: 'confirmed',
+        notes: newNotes,
+      });
+      setNewGuestName('');
+      setNewNotes('');
+      setNewResModalVisible(false);
+      Alert.alert('Booking Confirmed', `Reservation added for ${newGuestName}`);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to create reservation');
+    }
   };
 
   // Bottom navigation change
@@ -248,7 +322,7 @@ export default function ReservationsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
           {/* Tonight's Pacing Strip */}
-          
+
 
           {/* Search Bar */}
           <View style={styles.searchBar}>
@@ -268,14 +342,28 @@ export default function ReservationsScreen() {
               <View style={styles.searchRightIcons}>
                 <Icon name="mic" size={19} color="#374151" />
                 <Pressable
-                  onPress={() =>
-                    Alert.alert('Filters', 'Filter by section, covers, dietary restrictions')
-                  }>
+                  onPress={() => setDateModalVisible(true)}>
                   <Icon name="filter" size={19} color="#374151" />
                 </Pressable>
               </View>
             )}
           </View>
+
+          {/* Active Date Filter Banner if specific date selected */}
+          {selectedDate !== 'all' && (
+            <View style={styles.activeDateBanner}>
+              <Icon name="calendar" size={14} color="#009669" />
+              <Text style={styles.activeDateBannerText}>
+                Showing: <Text style={{ fontWeight: '700' }}>{selectedDate === dateValue(new Date()) ? 'Today' : prettyDate(selectedDate)}</Text> ({filteredReservations.length} bookings)
+              </Text>
+              <Pressable
+                onPress={() => setSelectedDate('all')}
+                style={styles.clearDateBtn}>
+                <Text style={styles.clearDateBtnText}>Clear</Text>
+                <Icon name="close" size={12} color="#009669" />
+              </Pressable>
+            </View>
+          )}
 
           {/* Horizontal Date Picker Strip */}
           <View style={styles.daysScrollWrapper}>
@@ -283,12 +371,12 @@ export default function ReservationsScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.daysContainer}>
-              {DAYS_DATA.map((day) => {
-                const isSelected = selectedDayId === day.id;
+              {dateItems.map((day) => {
+                const isSelected = selectedDate === day.dateStr;
                 return (
                   <Pressable
                     key={day.id}
-                    onPress={() => setSelectedDayId(day.id)}
+                    onPress={() => setSelectedDate(day.dateStr)}
                     style={[styles.dayCard, isSelected && styles.dayCardSelected]}>
                     <Text style={[styles.dayName, isSelected && styles.dayNameSelected]}>
                       {day.dayName}
@@ -406,17 +494,17 @@ export default function ReservationsScreen() {
                       pathname: '/reservation-detail',
                       params: {
                         id: res.id,
+                        bookingId: res.bookingId || res.id,
                         guestName: res.guestName,
                         time: res.time,
+                        date: res.date || 'Today',
                         partySize: `${res.partySize} Guests`,
-                        tableNumber: res.tableNumber || 'T2',
-                        tableArea: res.tableArea || 'Window',
-                        status:
-                          res.status === 'confirmed'
-                            ? 'Confirmed'
-                            : res.status === 'seated'
-                            ? 'Seated'
-                            : 'Pending',
+                        tableNumber: res.tableNumber || 'Unassigned',
+                        tableArea: res.tableArea || 'Main Room',
+                        phone: res.phone || '',
+                        notes: res.notes || '',
+                        status: res.status,
+                        avatarUrl: res.avatarUrl || '',
                       },
                     })
                   }
@@ -426,17 +514,17 @@ export default function ReservationsScreen() {
                       pathname: '/reservation-detail',
                       params: {
                         id: res.id,
+                        bookingId: res.bookingId || res.id,
                         guestName: res.guestName,
                         time: res.time,
+                        date: res.date || 'Today',
                         partySize: `${res.partySize} Guests`,
-                        tableNumber: res.tableNumber || 'T2',
-                        tableArea: res.tableArea || 'Window',
-                        status:
-                          res.status === 'confirmed'
-                            ? 'Confirmed'
-                            : res.status === 'seated'
-                            ? 'Seated'
-                            : 'Pending',
+                        tableNumber: res.tableNumber || 'Unassigned',
+                        tableArea: res.tableArea || 'Main Room',
+                        phone: res.phone || '',
+                        notes: res.notes || '',
+                        status: res.status,
+                        avatarUrl: res.avatarUrl || '',
                       },
                     })
                   }
@@ -450,7 +538,8 @@ export default function ReservationsScreen() {
         <BottomNavBar
           activeTab="bookings"
           onSelectTab={handleTabChange}
-          waitlistCount={2}
+          waitlistCount={overview?.guestsInQueue ?? 0}
+          alertsCount={unreadNotificationsCount}
         />
       </View>
 
@@ -570,6 +659,93 @@ export default function ReservationsScreen() {
                 label="Confirm Booking"
                 variant="primary"
                 onPress={handleCreateReservation}
+                style={styles.modalActionBtn}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date Filter Modal */}
+      <Modal
+        visible={dateModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDateModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Filter by Date</Text>
+              <Pressable onPress={() => setDateModalVisible(false)}>
+                <Icon name="close" size={20} color="#6B7280" />
+              </Pressable>
+            </View>
+
+            <Text style={{ fontSize: 13, color: '#4B5563', marginBottom: 12 }}>
+              Select a date to view reservations scheduled for that day:
+            </Text>
+
+            {/* Quick date buttons */}
+            <View style={{ gap: 8, marginBottom: 16 }}>
+              <Pressable
+                onPress={() => {
+                  setSelectedDate('all');
+                  setDateModalVisible(false);
+                }}
+                style={[
+                  styles.quickDateOption,
+                  selectedDate === 'all' && styles.quickDateOptionSelected,
+                ]}>
+                <Icon name="calendar" size={16} color={selectedDate === 'all' ? '#009669' : '#4B5563'} />
+                <Text style={[styles.quickDateOptionText, selectedDate === 'all' && styles.quickDateOptionTextSelected]}>
+                  All Dates ({reservations.length} total reservations)
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  setSelectedDate(dateValue(new Date()));
+                  setDateModalVisible(false);
+                }}
+                style={[
+                  styles.quickDateOption,
+                  selectedDate === dateValue(new Date()) && styles.quickDateOptionSelected,
+                ]}>
+                <Icon name="clock" size={16} color={selectedDate === dateValue(new Date()) ? '#009669' : '#4B5563'} />
+                <Text style={[styles.quickDateOptionText, selectedDate === dateValue(new Date()) && styles.quickDateOptionTextSelected]}>
+                  Today ({dateValue(new Date())})
+                </Text>
+              </Pressable>
+            </View>
+
+            <Input
+              label="Or enter custom Date (YYYY-MM-DD)"
+              placeholder="e.g. 2026-10-12"
+              value={customInputDate}
+              onChangeText={setCustomInputDate}
+              icon="calendar"
+            />
+
+            <View style={styles.modalActions}>
+              <Button
+                label="Reset Filter"
+                variant="white"
+                onPress={() => {
+                  setSelectedDate('all');
+                  setCustomInputDate('');
+                  setDateModalVisible(false);
+                }}
+                style={styles.modalActionBtn}
+              />
+              <Button
+                label="Apply Date"
+                variant="primary"
+                onPress={() => {
+                  if (customInputDate.trim()) {
+                    setSelectedDate(customInputDate.trim());
+                  }
+                  setDateModalVisible(false);
+                }}
                 style={styles.modalActionBtn}
               />
             </View>
@@ -1070,5 +1246,63 @@ const styles = StyleSheet.create({
   },
   modalActionBtn: {
     flex: 1,
+  },
+  activeDateBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E6F8F0',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    marginTop: 6,
+  },
+  activeDateBannerText: {
+    fontSize: 12.5,
+    color: '#047857',
+    flex: 1,
+    marginLeft: 6,
+  },
+  clearDateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    gap: 4,
+  },
+  clearDateBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#009669',
+  },
+  quickDateOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 10,
+  },
+  quickDateOptionSelected: {
+    backgroundColor: '#E6F8F0',
+    borderColor: '#A7F3D0',
+  },
+  quickDateOptionText: {
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  quickDateOptionTextSelected: {
+    color: '#047857',
+    fontWeight: '700',
   },
 });

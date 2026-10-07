@@ -16,6 +16,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from '@/components/ui/Icon';
 import StatusBadge from '@/components/StatusBadge';
 import { BottomNavBar, TabKey } from '@/components/BottomNavBar';
+import { useReservations } from '@/hooks/useReservations';
 
 // Types
 export type QueueFilter = 'all' | 'inside' | 'patio' | 'large';
@@ -146,6 +147,34 @@ export default function QueueScreen() {
     },
   ]);
 
+  const { queue: firestoreQueue, addWalkIn, notifyNextGuest, unreadNotificationsCount, overview } = useReservations();
+
+  // Sync Firestore queue items into queueList, appending new walk-in entries at the BOTTOM
+  useEffect(() => {
+    if (firestoreQueue && firestoreQueue.length > 0) {
+      setQueueList((prev) => {
+        const existingIds = new Set(prev.map((item) => item.id));
+        const newItems: QueueParty[] = firestoreQueue
+          .filter((item) => !existingIds.has(item.id))
+          .map((item, idx) => ({
+            id: item.id,
+            number: prev.length + idx + 1,
+            name: item.guestName,
+            type: 'WALK-IN',
+            statusTag: 'Just Added',
+            statusTagVariant: 'info',
+            guests: item.partySize,
+            waitTime: `${item.estimatedWaitMinutes || 12} min wait`,
+            waitType: 'normal',
+            prefTags: item.notes ? [item.notes] : ['Indoor'],
+          }));
+
+        if (newItems.length === 0) return prev;
+        return [...prev, ...newItems]; // Appends new walk-in guests to the BOTTOM of the queue
+      });
+    }
+  }, [firestoreQueue]);
+
   // Featured Ready Party (top highlight card)
   const featuredParty = queueList.find((item) => item.isFeaturedReady) || queueList[0];
 
@@ -164,7 +193,7 @@ export default function QueueScreen() {
   });
 
   // Handle Add Walk-in
-  const handleAddWalkIn = () => {
+  const handleAddWalkIn = async () => {
     if (!guestName.trim()) {
       Alert.alert('Required', 'Please enter guest name');
       return;
@@ -183,13 +212,26 @@ export default function QueueScreen() {
       prefTags: [pref],
     };
 
+    // Always place newly added guests at the bottom of the queue
     setQueueList((prev) => [...prev, newParty]);
+
+    try {
+      await addWalkIn({
+        guestName: guestName.trim(),
+        partySize,
+        phone,
+        notes: pref,
+      });
+    } catch (err) {
+      console.warn('Failed to save queue item to Firestore:', err);
+    }
+
     setWalkInModalVisible(false);
     setGuestName('');
     setPhone('');
     setPartySize(2);
 
-    Alert.alert('Added to Queue', `${newParty.name} (Party of ${partySize}) added to waitlist!`);
+    Alert.alert('Added to Queue 🟢', `${newParty.name} (Party of ${partySize}) added to the bottom of the waitlist!`);
   };
 
   // Handle Seating Action
@@ -211,8 +253,13 @@ export default function QueueScreen() {
   };
 
   // Handle Buzzer Action
-  const handleBuzzGuest = (name: string) => {
-    Alert.alert('Buzzer Triggered 🔔', `Paging ${name}'s buzzer device... SMS alert sent!`);
+  const handleBuzzGuest = async (name: string, phone?: string) => {
+    try {
+      await notifyNextGuest(name, phone);
+      Alert.alert('Notification Sent 🔔', `Sent "Your Table is Next" notification to ${name}!`);
+    } catch (err) {
+      Alert.alert('Buzzer Triggered 🔔', `Paging ${name}'s buzzer device...`);
+    }
   };
 
   // Handle Call Action
