@@ -6,8 +6,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '@/hooks/useAuth';
 
-
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
