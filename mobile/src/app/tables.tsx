@@ -31,6 +31,7 @@ export interface FloorTable {
 }
 
 const INITIAL_TABLES: FloorTable[] = [
+  // ── Main Floor (12 Tables) ─────────────────────
   { id: 't1', name: 'T1', seats: 2, status: 'free', badgeText: 'Ready', subText: 'Available', area: 'main' },
   { id: 't2', name: 'T2', seats: 4, status: 'busy', badgeText: '35m', subText: '4 Guests', area: 'main' },
   { id: 't3', name: 'T3', seats: 4, status: 'booked', badgeText: '8:00p', subText: 'Miller (4)', area: 'main', nextBookingTime: '8:00 PM', nextBookingParty: 4 },
@@ -43,6 +44,24 @@ const INITIAL_TABLES: FloorTable[] = [
   { id: 't10', name: 'T10', seats: 4, status: 'busy', badgeText: '24m', subText: '3 Guests', area: 'main' },
   { id: 't11', name: 'T11', seats: 2, status: 'free', badgeText: 'Ready', subText: 'Available', area: 'main' },
   { id: 't12', name: 'T12', seats: 8, status: 'free', badgeText: 'Ready', subText: 'Available', area: 'main' },
+
+  // ── Patio Terrace (6 Tables) ───────────────────
+  { id: 'p1', name: 'P1', seats: 2, status: 'free', badgeText: 'Ready 🌿', subText: 'Garden Duo', area: 'patio' },
+  { id: 'p2', name: 'P2', seats: 4, status: 'busy', badgeText: '42m ⛱️', subText: 'Umbrella Booth', area: 'patio' },
+  { id: 'p3', name: 'P3', seats: 4, status: 'booked', badgeText: '7:45p 🌅', subText: 'Sunset Terrace', area: 'patio', nextBookingTime: '7:45 PM', nextBookingParty: 4 },
+  { id: 'p4', name: 'P4', seats: 2, status: 'free', badgeText: 'Ready 🌸', subText: 'Patio Corner', area: 'patio' },
+  { id: 'p5', name: 'P5', seats: 6, status: 'busy', badgeText: '1h 05m 🛋️', subText: 'Outdoor Lounge', area: 'patio' },
+  { id: 'p6', name: 'P6', seats: 8, status: 'dirty', badgeText: 'Dirty 🍇', subText: 'Pergola Deck', area: 'patio' },
+
+  // ── Bar & High-tops (8 Tables/Stools) ──────────
+  { id: 'b1', name: 'B1', seats: 2, status: 'free', badgeText: 'Ready 🍸', subText: 'High Stool', area: 'bar' },
+  { id: 'b2', name: 'B2', seats: 2, status: 'busy', badgeText: '18m 🍹', subText: 'Cocktail High', area: 'bar' },
+  { id: 'b3', name: 'B3', seats: 4, status: 'booked', badgeText: '8:15p 🥃', subText: 'Raised Booth', area: 'bar', nextBookingTime: '8:15 PM', nextBookingParty: 4 },
+  { id: 'b4', name: 'B4', seats: 2, status: 'free', badgeText: 'Ready 🍸', subText: 'High Stool', area: 'bar' },
+  { id: 'b5', name: 'B5', seats: 2, status: 'busy', badgeText: '50m 🥂', subText: 'Bar Counter', area: 'bar' },
+  { id: 'b6', name: 'B6', seats: 2, status: 'free', badgeText: 'Ready 🥂', subText: 'Bar Counter', area: 'bar' },
+  { id: 'b7', name: 'B7', seats: 4, status: 'dirty', badgeText: 'Dirty 🍾', subText: 'Corner High', area: 'bar' },
+  { id: 'b8', name: 'B8', seats: 6, status: 'booked', badgeText: '9:00p 👑', subText: 'VIP Bar High', area: 'bar', nextBookingTime: '9:00 PM', nextBookingParty: 6 },
 ];
 
 export default function TablesScreen() {
@@ -178,7 +197,13 @@ export default function TablesScreen() {
                 <Text style={styles.peakBadgeText}>DINNER PEAK</Text>
               </View>
             </View>
-            <Text style={styles.headerSubtitle}>Main Dining Room • 12 tables</Text>
+            <Text style={styles.headerSubtitle}>
+              {selectedArea === 'main'
+                ? `Main Dining Room • ${tables.filter((t) => t.area === 'main').length} tables`
+                : selectedArea === 'patio'
+                ? `Outdoor Patio Terrace • ${tables.filter((t) => t.area === 'patio').length} tables`
+                : `Bar & High-tops Lounge • ${tables.filter((t) => t.area === 'bar').length} tables`}
+            </Text>
           </View>
 
           <View style={styles.headerRight}>
@@ -211,9 +236,9 @@ export default function TablesScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.areaTabsContainer}>
             {[
-              { key: 'main' as const, label: 'Main Floor (12)' },
-              { key: 'patio' as const, label: 'Patio Terrace (6)' },
-              { key: 'bar' as const, label: 'Bar & High-tops (8)' },
+              { key: 'main' as const, label: `Main Floor (${tables.filter((t) => t.area === 'main').length})` },
+              { key: 'patio' as const, label: `Patio Terrace (${tables.filter((t) => t.area === 'patio').length})` },
+              { key: 'bar' as const, label: `Bar & High-tops (${tables.filter((t) => t.area === 'bar').length})` },
             ].map((tab) => {
               const isSelected = selectedArea === tab.key;
               return (
@@ -311,7 +336,13 @@ export default function TablesScreen() {
           {/* Section Heading & Capacity Badge */}
           <View style={styles.sectionHeaderRow}>
             <View style={styles.sectionHeaderLeft}>
-              <Text style={styles.sectionTitle}>Main Floor Layout</Text>
+              <Text style={styles.sectionTitle}>
+                {selectedArea === 'main'
+                  ? 'Main Floor Layout'
+                  : selectedArea === 'patio'
+                  ? 'Patio Terrace Garden Layout 🌿'
+                  : 'Bar & High-Tops Layout 🍸'}
+              </Text>
               <View style={styles.capacityBadge}>
                 <Text style={styles.capacityText}>68% Capacity</Text>
               </View>
@@ -704,64 +735,74 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 3,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 1.2,
+    borderTopColor: '#FFFFFF',
     alignItems: 'center',
     minWidth: 0,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
   },
   kpiCardFree: {
     backgroundColor: '#E6F8F0',
     borderColor: '#A7F3D0',
+    borderBottomColor: '#34D399',
   },
   kpiCardBusy: {
     backgroundColor: '#EFF6FF',
     borderColor: '#BFDBFE',
+    borderBottomColor: '#60A5FA',
   },
   kpiCardRes: {
     backgroundColor: '#FEF9EE',
     borderColor: '#FDE68A',
+    borderBottomColor: '#FBBF24',
   },
   kpiCardDirty: {
     backgroundColor: '#F3F4F6',
     borderColor: '#E5E7EB',
+    borderBottomColor: '#9CA3AF',
   },
   kpiCardActiveFree: {
     borderColor: '#059669',
     borderWidth: 2,
     shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
     transform: [{ scale: 1.02 }],
   },
   kpiCardActiveBusy: {
     borderColor: '#2563EB',
     borderWidth: 2,
     shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
     transform: [{ scale: 1.02 }],
   },
   kpiCardActiveRes: {
     borderColor: '#D97706',
     borderWidth: 2,
     shadowColor: '#D97706',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
     transform: [{ scale: 1.02 }],
   },
   kpiCardActiveDirty: {
     borderColor: '#4B5563',
     borderWidth: 2,
     shadowColor: '#4B5563',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
     transform: [{ scale: 1.02 }],
   },
   kpiCardDimmed: {
@@ -875,17 +916,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     borderWidth: 1.5,
+    borderTopColor: '#FFFFFF',
+    borderBottomColor: '#CBD5E1',
     paddingVertical: 10,
     paddingHorizontal: 4,
     alignItems: 'center',
     position: 'relative',
     minHeight: 88,
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cardFreeBorder: {
     borderColor: '#A7F3D0',
