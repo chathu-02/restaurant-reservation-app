@@ -185,11 +185,16 @@ export default function DashboardScreen() {
             <>
               {/* ─── Unified Dark Emerald Header & Greeting Section (#022C22) ─ */}
               <Animated.View
-            style={[
-              styles.heroSection,
-              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
-            ]}>
-            {/* Top Bar */}
+                style={[
+                  styles.heroSection,
+                  { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+                ]}>
+                {/* Background Ambient Decorative Light Orbs */}
+                <View style={styles.heroGlowTopRight} pointerEvents="none" />
+                <View style={styles.heroGlowBottomLeft} pointerEvents="none" />
+                <View style={styles.heroGlowCenter} pointerEvents="none" />
+
+                {/* Top Bar */}
             <View style={styles.topBar}>
               <View style={styles.topBarLeft}>
                 <View style={styles.serviceIconContainer}>
@@ -823,8 +828,8 @@ const styles = StyleSheet.create({
   // ── Hero Section (Combined #022C22 Dark Emerald Container) ───
   heroSection: {
     backgroundColor: '#022C22',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
     paddingTop: 16,
@@ -833,14 +838,46 @@ const styles = StyleSheet.create({
     marginHorizontal: -16,
     marginTop: -8,
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#065F46',
+    borderWidth: 1.5,
+    borderColor: 'rgba(52, 211, 153, 0.22)',
     borderTopWidth: 0,
     shadowColor: '#022C22',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.38,
-    shadowRadius: 18,
-    elevation: 7,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.42,
+    shadowRadius: 20,
+    elevation: 8,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  heroGlowTopRight: {
+    position: 'absolute',
+    top: -50,
+    right: -40,
+    width: 230,
+    height: 230,
+    borderRadius: 115,
+    backgroundColor: '#059669',
+    opacity: 0.24,
+  },
+  heroGlowBottomLeft: {
+    position: 'absolute',
+    bottom: -60,
+    left: -50,
+    width: 210,
+    height: 210,
+    borderRadius: 105,
+    backgroundColor: '#34D399',
+    opacity: 0.12,
+  },
+  heroGlowCenter: {
+    position: 'absolute',
+    top: 40,
+    left: 70,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#0284C7',
+    opacity: 0.08,
   },
   dateText: {
     fontSize: 12,
