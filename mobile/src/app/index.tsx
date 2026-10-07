@@ -24,13 +24,21 @@ import Button from '@/components/Button';
 import Input from '@/components/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { useReservations } from '@/hooks/useReservations';
-
-
+import { DashboardSkeleton } from '@/components/SkeletonLoader';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { overview, refreshing, refresh, addBooking, addWalkIn, reservations, unreadNotificationsCount } = useReservations();
+  const {
+    overview,
+    refreshing,
+    refresh,
+    addBooking,
+    addWalkIn,
+    reservations,
+    unreadNotificationsCount,
+    loading,
+  } = useReservations();
 
   // Active bottom navigation tab
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
@@ -171,8 +179,12 @@ export default function DashboardScreen() {
               tintColor="#009669"
             />
           }>
-          {/* ─── Unified Dark Emerald Header & Greeting Section (#022C22) ─ */}
-          <Animated.View
+          {loading ? (
+            <DashboardSkeleton />
+          ) : (
+            <>
+              {/* ─── Unified Dark Emerald Header & Greeting Section (#022C22) ─ */}
+              <Animated.View
             style={[
               styles.heroSection,
               { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
@@ -519,6 +531,8 @@ export default function DashboardScreen() {
 
           {/* Bottom spacer */}
           <View style={{ height: 8 }} />
+            </>
+          )}
         </ScrollView>
 
         {/* ─── Bottom Navigation Bar ─────────────────────────────── */}
@@ -736,7 +750,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 12,
+    paddingBottom: 16,
     gap: 8,
   },
   headerDivider: {
@@ -809,50 +823,50 @@ const styles = StyleSheet.create({
   // ── Hero Section (Combined #022C22 Dark Emerald Container) ───
   heroSection: {
     backgroundColor: '#022C22',
-    borderBottomLeftRadius: 26,
-    borderBottomRightRadius: 26,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
-    paddingTop: 10,
-    paddingBottom: 22,
-    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 28,
+    paddingHorizontal: 20,
     marginHorizontal: -16,
     marginTop: -8,
-    marginBottom: 16,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: '#065F46',
     borderTopWidth: 0,
     shadowColor: '#022C22',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.38,
+    shadowRadius: 18,
+    elevation: 7,
   },
   dateText: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '700',
     color: '#34D399',
-    letterSpacing: 1.2,
+    letterSpacing: 1.3,
     textTransform: 'uppercase',
-    marginTop: 10,
-    marginBottom: 6,
+    marginTop: 14,
+    marginBottom: 8,
   },
   greetingText: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: -0.5,
-    marginBottom: 6,
+    letterSpacing: -0.6,
+    marginBottom: 8,
   },
   greetingName: {
     color: '#34D399',
   },
   greetingSubtitle: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '500',
     color: '#A7F3D0',
-    lineHeight: 20,
-    marginBottom: 18,
+    lineHeight: 21,
+    marginBottom: 22,
   },
 
   // Shift progress (Inside #022C22 container)

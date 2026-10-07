@@ -9,6 +9,7 @@ import {
   Platform,
   StatusBar,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -131,6 +132,34 @@ export default function ReservationDetailScreen() {
     );
   };
 
+  const handleOpenWhatsApp = () => {
+    if (!guestPhone || guestPhone === 'Contact not specified') {
+      Alert.alert('No Phone Number', 'No valid phone number available for this guest.');
+      return;
+    }
+    let cleanPhone = guestPhone.replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '94' + cleanPhone.slice(1);
+    }
+    const textMsg = encodeURIComponent(
+      `Hello ${guestName}, this is regarding your table reservation ${reservationNumber} at our restaurant.`
+    );
+    const waUrl = `whatsapp://send?phone=${cleanPhone}&text=${textMsg}`;
+    const webUrl = `https://wa.me/${cleanPhone}?text=${textMsg}`;
+
+    Linking.canOpenURL(waUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(waUrl);
+        } else {
+          return Linking.openURL(webUrl);
+        }
+      })
+      .catch(() => {
+        Linking.openURL(webUrl);
+      });
+  };
+
   const handleCancelReservation = () => {
     Alert.alert(
       'Cancel Reservation',
@@ -217,9 +246,14 @@ export default function ReservationDetailScreen() {
                 <Text style={styles.guestVisitText} numberOfLines={1}>
                   {guestVisitInfo}
                 </Text>
-                <Text style={styles.guestPhoneText} numberOfLines={1}>
-                  {guestPhone}
-                </Text>
+                <Pressable onPress={handleOpenWhatsApp} style={styles.phoneWhatsAppRow}>
+                  <Text style={styles.guestPhoneText} numberOfLines={1}>
+                    {guestPhone}
+                  </Text>
+                  <View style={styles.phoneWaBadge}>
+                    <Icon name="whatsapp" size={12} color="#25D366" />
+                  </View>
+                </Pressable>
               </View>
 
               {/* Status & Quick Action Buttons */}
@@ -227,6 +261,12 @@ export default function ReservationDetailScreen() {
                 <StatusBadge label={currentStatus} variant="green" dot />
 
                 <View style={styles.contactActionsRow}>
+                  <Pressable
+                    onPress={handleOpenWhatsApp}
+                    style={({ pressed }) => [styles.whatsAppBtn, pressed && styles.pressed]}>
+                    <Icon name="whatsapp" size={15} color="#FFFFFF" />
+                  </Pressable>
+
                   <Pressable
                     onPress={() => Alert.alert('Calling Guest', `Dialing ${guestPhone}...`)}
                     style={({ pressed }) => [styles.callBtn, pressed && styles.pressed]}>
@@ -632,6 +672,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
+  whatsAppBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#25D366',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   callBtn: {
     width: 30,
     height: 30,
@@ -647,6 +695,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  phoneWhatsAppRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 1,
+  },
+  phoneWaBadge: {
+    backgroundColor: 'rgba(37, 211, 102, 0.12)',
+    borderRadius: 8,
+    padding: 2,
+    paddingHorizontal: 4,
   },
   metricRow: {
     flexDirection: 'row',

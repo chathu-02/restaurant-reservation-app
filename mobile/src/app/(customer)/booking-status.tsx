@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Alert, Text } from "react-native";
+import { Alert, Linking, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Badge, Button, Card, colors, LinkText, Message, Screen } from "@/components/form-ui";
 import {
   ReservationDoc,
+  WHATSAPP_NUMBER,
   cancelReservation,
   dateValue,
   prettyDate,
@@ -58,6 +59,14 @@ export default function BookingStatus() {
     );
   };
 
+  const openWhatsAppHost = () => {
+    const cleanPhone = (WHATSAPP_NUMBER || '+94774483581').replace(/[^0-9]/g, '');
+    const msg = encodeURIComponent(`Hello! I have a question regarding my booking ${res?.bookingId ? '#' + res.bookingId : ''}.`);
+    Linking.openURL(`https://wa.me/${cleanPhone}?text=${msg}`).catch(() => {
+      Alert.alert('WhatsApp Error', 'Could not launch WhatsApp.');
+    });
+  };
+
   return (
     <Screen top>
       <Text style={{ fontSize: 26, fontWeight: "700", color: colors.text, marginBottom: 16 }}>
@@ -84,7 +93,7 @@ export default function BookingStatus() {
               onPress={() => router.push({ pathname: "/pay-deposit", params: { id: res.id } } as never)}
             />
           )}
-                    {res.status === "confirmed" && res.date === dateValue(new Date()) && (
+          {res.status === "confirmed" && res.date === dateValue(new Date()) && (
             <>
               <Text />
               {res.checkedIn ? (
@@ -114,6 +123,14 @@ export default function BookingStatus() {
               <LinkText title="Cancel booking" onPress={askCancel} />
             </>
           )}
+
+          <View style={{ marginTop: 12 }}>
+            <Button
+              title="💬 Chat with Host on WhatsApp"
+              secondary
+              onPress={openWhatsAppHost}
+            />
+          </View>
         </>
       )}
       <LinkText title="Back to my bookings" onPress={() => router.navigate("/bookings" as never)} />

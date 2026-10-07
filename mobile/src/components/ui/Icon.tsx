@@ -45,7 +45,8 @@ export type IconName =
   | 'pencil'
   | 'flash'
   | 'sun'
-  | 'wine';
+  | 'wine'
+  | 'whatsapp';
 
 interface IconProps {
   name: IconName;
@@ -136,6 +137,8 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="sunny-outline" size={size} color={color} style={style} />;
     case 'wine':
       return <Ionicons name="wine-outline" size={size} color={color} style={style} />;
+    case 'whatsapp':
+      return <Ionicons name="logo-whatsapp" size={size} color={color} style={style} />;
     default:
       return <Ionicons name="ellipse" size={size} color={color} style={style} />;
   }

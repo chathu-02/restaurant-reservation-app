@@ -7,6 +7,7 @@ import {
   Pressable,
   StatusBar,
   Alert,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -47,6 +48,7 @@ export default function AlertsScreen() {
   } = useReservations();
 
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'critical' | 'booking' | 'cancellation'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // Map Firestore notifications & kitchenAlerts into FeedAlertItem format
@@ -149,6 +151,19 @@ export default function AlertsScreen() {
     return true;
   });
 
+  const searchedAlerts = React.useMemo(() => {
+    if (!searchQuery.trim()) return filteredAlerts;
+    const q = searchQuery.toLowerCase().trim();
+    return filteredAlerts.filter((item) => {
+      return (
+        item.title.toLowerCase().includes(q) ||
+        item.subtitle.toLowerCase().includes(q) ||
+        item.id.toLowerCase().includes(q) ||
+        item.topTags.some((t) => t.label.toLowerCase().includes(q))
+      );
+    });
+  }, [filteredAlerts, searchQuery]);
+
   const handleTabChange = (tab: TabKey) => {
     if (tab === 'dashboard') {
       router.push('/');
@@ -188,6 +203,30 @@ export default function AlertsScreen() {
               <View style={styles.liveDispatchDot} />
               <Text style={styles.liveDispatchText}>Live Dispatch</Text>
             </View>
+          </View>
+        </View>
+
+        {/* Search Bar Container */}
+        <View style={styles.searchBarWrapper}>
+          <View style={styles.searchBarInner}>
+            <Icon name="search" size={17} color="#64748B" />
+            <TextInput
+              style={styles.searchInputText}
+              placeholder="Search guest name, booking ID, tag..."
+              placeholderTextColor="#94A3B8"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {searchQuery.length > 0 && (
+              <Pressable
+                onPress={() => setSearchQuery('')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={styles.clearSearchBtn}>
+                <Icon name="close" size={15} color="#64748B" />
+              </Pressable>
+            )}
           </View>
         </View>
 
@@ -305,13 +344,35 @@ export default function AlertsScreen() {
           </View>
 
           {/* Alert Feed Cards */}
-          {filteredAlerts.length === 0 ? (
+          {searchedAlerts.length === 0 ? (
             <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 8 }}>
-              <Icon name="bell" size={38} color="#94A3B8" />
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#1E293B' }}>No Active Notifications</Text>
-              <Text style={{ fontSize: 13, color: '#64748B' }}>Your alert feed is completely up to date.</Text>
+              <Icon name="search" size={36} color="#94A3B8" />
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#1E293B' }}>
+                {searchQuery ? `No alerts match "${searchQuery}"` : 'No Active Notifications'}
+              </Text>
+              <Text style={{ fontSize: 13, color: '#64748B' }}>
+                {searchQuery
+                  ? 'Try searching with a different guest name, booking ID, or keyword.'
+                  : 'Your alert feed is completely up to date.'}
+              </Text>
+              {searchQuery.length > 0 && (
+                <Pressable
+                  onPress={() => setSearchQuery('')}
+                  style={({ pressed }) => [
+                    {
+                      marginTop: 8,
+                      backgroundColor: '#022C22',
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 12,
+                    },
+                    pressed && styles.pressed,
+                  ]}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>Clear Search</Text>
+                </Pressable>
+              )}
             </View>
-          ) : filteredAlerts.map((item) => (
+          ) : searchedAlerts.map((item) => (
             <View key={item.id} style={styles.cardWrapper}>
               {/* Left Accent Stripe */}
               <View
@@ -563,8 +624,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 8,
   },
+  searchBarWrapper: {
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
+  searchBarInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+    gap: 8,
+  },
+  searchInputText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1E293B',
+    paddingVertical: 0,
+  },
+  clearSearchBtn: {
+    padding: 2,
+  },
   filterRow: {
-    marginTop: 14,
+    marginTop: 10,
     marginBottom: 12,
   },
   filterContainer: {
