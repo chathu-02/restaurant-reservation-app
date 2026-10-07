@@ -193,11 +193,17 @@ export default function QueueTrackerScreen() {
 
       {/* Customer Bottom Navigation Bar */}
       <View style={styles.bottomNav}>
-        <Pressable style={styles.navItem} onPress={() => router.push('/join-queue')}>
+        <Pressable
+          style={styles.navItem}
+          onPress={() => router.push('/(customer)/(tabs)/home' as never)}
+        >
           <Icon name="utensils" size={20} color="#9CA3AF" />
           <Text style={styles.navText}>Home</Text>
         </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/alerts')}>
+        <Pressable
+          style={styles.navItem}
+          onPress={() => router.push('/(customer)/(tabs)/bookings' as never)}
+        >
           <Icon name="calendar" size={20} color="#9CA3AF" />
           <Text style={styles.navText}>Bookings</Text>
         </Pressable>

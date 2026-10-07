@@ -44,7 +44,13 @@ export default function JoinQueueScreen() {
         <View style={styles.header}>
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.pressed]}
-            onPress={() => router.back()}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(customer)/(tabs)/home' as never);
+              }
+            }}
           >
             <Icon name="chevron-left" size={20} color="#111827" />
           </Pressable>
