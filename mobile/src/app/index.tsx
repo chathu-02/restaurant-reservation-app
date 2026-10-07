@@ -260,8 +260,12 @@ export default function DashboardScreen() {
             <View style={styles.metricsRow}>
               <MetricCard
                 icon="calendar"
-                iconBgColor="#E6F8F0"
-                iconColor="#009669"
+                cardBgColor="#ECFDF5"
+                borderColor="#A7F3D0"
+                iconBgColor="#10B981"
+                iconColor="#FFFFFF"
+                valueColor="#065F46"
+                labelColor="#047857"
                 badgeLabel={`+${overview?.newReservations ?? 4} new`}
                 badgeVariant="green"
                 badgeDot
@@ -271,8 +275,12 @@ export default function DashboardScreen() {
               />
               <MetricCard
                 icon="users"
-                iconBgColor="#FEF3C7"
-                iconColor="#D97706"
+                cardBgColor="#FFFBEB"
+                borderColor="#FDE68A"
+                iconBgColor="#F59E0B"
+                iconColor="#FFFFFF"
+                valueColor="#92400E"
+                labelColor="#B45309"
                 badgeLabel={`~${overview?.queueWaitMinutes ?? 12} min`}
                 badgeVariant="amber"
                 value={overview?.guestsInQueue ?? 6}
@@ -283,8 +291,12 @@ export default function DashboardScreen() {
             <View style={styles.metricsRow}>
               <MetricCard
                 icon="grid"
-                iconBgColor="#CCFBF1"
-                iconColor="#0D9488"
+                cardBgColor="#F0FDFA"
+                borderColor="#99F6E4"
+                iconBgColor="#0D9488"
+                iconColor="#FFFFFF"
+                valueColor="#115E59"
+                labelColor="#0F766E"
                 badgeLabel={`${occupancyRate}%`}
                 badgeVariant="teal"
                 value={overview?.occupiedTables ?? 14}
@@ -295,8 +307,12 @@ export default function DashboardScreen() {
               />
               <MetricCard
                 icon="target"
-                iconBgColor="#FFE4E6"
-                iconColor="#E11D48"
+                cardBgColor="#EFF6FF"
+                borderColor="#BFDBFE"
+                iconBgColor="#3B82F6"
+                iconColor="#FFFFFF"
+                valueColor="#1E40AF"
+                labelColor="#1D4ED8"
                 badgeLabel={overview?.noShowRateLabel ?? 'Low rate'}
                 badgeVariant="gray"
                 value={overview?.noShowsToday ?? 2}
@@ -380,7 +396,7 @@ export default function DashboardScreen() {
             <View style={styles.timelineContainer}>
               {reservations.filter((r) => r.status !== 'cancelled').length === 0 ? (
                 <View style={{ paddingVertical: 16, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 13, color: '#6B7280', fontStyle: 'italic' }}>
+                  <Text style={{ fontSize: 13, color: '#333a49ff', fontStyle: 'italic' }}>
                     No upcoming reservations scheduled.
                   </Text>
                 </View>
@@ -442,11 +458,11 @@ export default function DashboardScreen() {
                         </View>
                         <View style={styles.timelineCardBottom}>
                           <View style={styles.timelineMetaItem}>
-                            <Icon name="users" size={12} color="#6B7280" />
+                            <Icon name="users" size={12} color="#030914ff" />
                             <Text style={styles.timelineMetaText}>{res.partySize} guests</Text>
                           </View>
                           <View style={styles.timelineMetaItem}>
-                            <Icon name="grid" size={12} color="#6B7280" />
+                            <Icon name="grid" size={12} color="#080b12ff" />
                             <Text style={styles.timelineMetaText}>
                               {res.tableNumber || 'Unassigned'}
                             </Text>
@@ -954,7 +970,7 @@ const styles = StyleSheet.create({
 
   // ── Light Green Touch Containers ─────────────────
   lightGreenContainer: {
-    backgroundColor: '#E6F8F0',
+    backgroundColor: '#d0e8d0ff',
     borderRadius: 22,
     padding: 14,
     marginBottom: 14,
@@ -1033,7 +1049,7 @@ const styles = StyleSheet.create({
   actionCardSub: {
     fontSize: 11.5,
     fontWeight: '400',
-    color: '#94A3B8',
+    color: '#0a192deb',
   },
   newBookingCard: {
     flex: 1.35,

@@ -14,6 +14,10 @@ export interface MetricCardProps {
   subValue?: string;
   progressPercentage?: number;
   label: string;
+  cardBgColor?: string;
+  borderColor?: string;
+  valueColor?: string;
+  labelColor?: string;
   onPress?: () => void;
 }
 
@@ -28,12 +32,21 @@ export function MetricCard({
   subValue,
   progressPercentage,
   label,
+  cardBgColor,
+  borderColor,
+  valueColor,
+  labelColor,
   onPress,
 }: MetricCardProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+      style={({ pressed }) => [
+        styles.card,
+        cardBgColor ? { backgroundColor: cardBgColor } : null,
+        borderColor ? { borderColor } : null,
+        pressed && styles.pressed,
+      ]}>
       {/* Top row with icon & badge */}
       <View style={styles.topRow}>
         <View style={[styles.iconContainer, { backgroundColor: iconBgColor }]}>
@@ -44,8 +57,8 @@ export function MetricCard({
 
       {/* Value & subValue */}
       <View style={styles.valueRow}>
-        <Text style={styles.value}>{value}</Text>
-        {subValue && <Text style={styles.subValue}>{subValue}</Text>}
+        <Text style={[styles.value, valueColor ? { color: valueColor } : null]}>{value}</Text>
+        {subValue && <Text style={[styles.subValue, labelColor ? { color: labelColor } : null]}>{subValue}</Text>}
       </View>
 
       {/* Progress bar if present */}
@@ -61,7 +74,7 @@ export function MetricCard({
       )}
 
       {/* Label */}
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, labelColor ? { color: labelColor } : null]}>{label}</Text>
     </Pressable>
   );
 }
