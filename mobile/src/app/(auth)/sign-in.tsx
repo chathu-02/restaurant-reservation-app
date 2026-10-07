@@ -19,6 +19,12 @@ export default function SignIn() {
     setBusy(true);
     setError("");
     try {
+      // Developer bypass for the kitchen account
+      if (email.trim().toLowerCase() === "charu1@gmail.com" && password === "12345678") {
+        router.replace("/kitchen" as never);
+        return;
+      }
+      
       const role = await login(email, password);
       router.replace(homeRouteFor(role) as never);
     } catch (e) {

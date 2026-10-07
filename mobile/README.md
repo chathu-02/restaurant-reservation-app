@@ -2,21 +2,36 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-## Get started
+## Run in Expo Go
 
-1. Install dependencies
+1. Install dependencies from this directory:
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. Start the development server:
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. Install **Expo Go** on your Android or iOS device.
+4. Connect the device and computer to the same Wi-Fi network.
+5. Scan the QR code shown by the development server from Expo Go. On iOS,
+   use the Camera app to scan it; on Android, use the QR scanner in Expo Go.
+
+If the device cannot connect over the local network, use a tunnel:
+
+```bash
+npx expo start --tunnel
+```
+
+The app routes are stored in `src/app`, which Expo Router detects automatically.
+The Firebase-backed sign-in and booking features require an internet connection
+when running in Expo Go.
+
+In the output, you'll also find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
 - [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
