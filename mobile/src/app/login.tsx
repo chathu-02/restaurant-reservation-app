@@ -38,16 +38,7 @@ export default function StaffLoginScreen() {
     }
 
     setErrorMsg('');
-    Alert.alert(
-      'Signed In Successfully',
-      `Welcome back, ${emailOrId.toLowerCase().includes('jane') ? 'Jane Doe (Head Hostess)' : 'Kaweerna Sneha (Manager)'}!`,
-      [
-        {
-          text: 'Go to Dashboard',
-          onPress: () => router.push('/dashboard'),
-        },
-      ]
-    );
+    router.push('/dashboard');
   };
 
   const handleQuickFill = (role: 'manager' | 'staff') => {
@@ -72,7 +63,13 @@ export default function StaffLoginScreen() {
         <View style={styles.statusBarRow}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.push('/')}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.push('/customer-profile');
+              }
+            }}
             activeOpacity={0.7}
           >
             <Icon name="chevron-left" size={22} color="#374151" />

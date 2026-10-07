@@ -8,6 +8,7 @@ import {
   Switch,
   Alert,
   Image,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -42,6 +43,10 @@ export default function CustomerProfileScreen() {
   };
 
   const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      router.push('/login');
+      return;
+    }
     Alert.alert(
       'Log Out of Account',
       'Are you sure you want to log out, Amara? Your active queue position will remain saved.',
@@ -51,8 +56,7 @@ export default function CustomerProfileScreen() {
           text: 'Log Out',
           style: 'destructive',
           onPress: () => {
-            Alert.alert('Logged Out', 'You have been safely signed out.');
-            router.replace('/join-queue');
+            router.push('/login');
           },
         },
       ]

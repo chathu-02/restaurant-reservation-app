@@ -7,6 +7,7 @@ import {
   TextInput,
   Pressable,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -26,11 +27,7 @@ export default function JoinQueueScreen() {
       Alert.alert('Required', 'Please enter your full name');
       return;
     }
-    Alert.alert(
-      'Joined Queue!',
-      `You are now in line at The Green Terrace for a party of ${partySize} (${seatingPref}). Your estimated wait is ~15 min.`,
-      [{ text: 'View Queue Tracker', onPress: () => router.push('/queue') }]
-    );
+    router.push('/queue');
   };
 
   return (
