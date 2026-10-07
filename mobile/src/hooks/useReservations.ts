@@ -356,6 +356,22 @@ export function useReservations() {
 
     const ref = await addDoc(collection(db, 'reservations'), docData);
 
+    // Send new booking notification
+    try {
+      await addDoc(collection(db, 'notifications'), {
+        title: 'New Booking Created 📅',
+        message: `New reservation #${bookingId} by ${docData.guestName} (${docData.partySize} guests) for ${docData.date} at ${docData.time} assigned to ${docData.tableNumber}.`,
+        type: 'booking',
+        category: 'booking',
+        recipientRole: 'staff',
+        targetScreen: '/explore',
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn('Failed to post booking notification:', err);
+    }
+
     if (newRes.partySize >= LARGE_GROUP) {
       await postKitchenAlert(
         'large_group',
@@ -432,11 +448,35 @@ export function useReservations() {
     });
   };
 
-  const cancelReservation = async (id: string) => {
+  const cancelReservation = async (
+    id: string,
+    details?: { guestName?: string; bookingId?: string; partySize?: number; tableNumber?: string }
+  ) => {
     await updateDoc(doc(db, 'reservations', id), {
       status: 'cancelled',
       cancelledAt: serverTimestamp(),
     });
+
+    try {
+      const resDoc = reservations.find((r) => r.id === id);
+      const gName = details?.guestName || resDoc?.guestName || 'Guest';
+      const bId = details?.bookingId || resDoc?.bookingId || id.slice(-5);
+      const table = details?.tableNumber || resDoc?.tableNumber || 'Assigned table';
+      const party = details?.partySize || resDoc?.partySize || 2;
+
+      await addDoc(collection(db, 'notifications'), {
+        title: 'CRITICAL: Reservation Cancelled 🚨',
+        message: `Reservation #${bId} for ${gName} (${party} guests) was cancelled! Table ${table} released to inventory.`,
+        type: 'cancellation',
+        category: 'critical',
+        recipientRole: 'staff',
+        targetScreen: '/explore',
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn('Failed to send cancellation notification:', err);
+    }
   };
 
   const markNoShow = async (id: string) => {
@@ -449,8 +489,27 @@ export function useReservations() {
     await updateDoc(doc(db, 'queue', id), { status });
   };
 
-  const updateTableStatus = async (id: string, status: string) => {
+  const updateTableStatus = async (id: string, status: string, tableName?: string) => {
     await updateDoc(doc(db, 'tables', id), { status });
+
+    if (status === 'free' || status === 'dirty') {
+      try {
+        const tName = tableName || id;
+        const statusLabel = status === 'free' ? 'AVAILABLE (Ready) 🟢' : 'NEEDS CLEANING 🧹';
+        await addDoc(collection(db, 'notifications'), {
+          title: 'Guest Left / Table Status Update 🍽️',
+          message: `Guest has left ${tName}. Table status updated to: ${statusLabel}.`,
+          type: 'table_status',
+          category: 'booking',
+          recipientRole: 'staff',
+          targetScreen: '/tables',
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      } catch (err) {
+        console.warn('Failed to post table status notification:', err);
+      }
+    }
   };
 
   const markNotificationRead = async (id: string) => {
@@ -470,6 +529,44 @@ export function useReservations() {
 
   const acknowledgeKitchenAlert = async (id: string) => {
     await updateDoc(doc(db, 'kitchenAlerts', id), { acknowledged: true });
+  };
+
+  const sendTestNotification = async (type: 'booking' | 'cancellation' | 'critical') => {
+    const randomId = Math.floor(1000 + Math.random() * 9000);
+    if (type === 'booking') {
+      await addDoc(collection(db, 'notifications'), {
+        title: 'New Guest Booking Received 📅',
+        message: `Guest Alex Morgan booked Table 4 for 4 guests (#BK-${randomId}) tonight at 7:30 PM.`,
+        type: 'booking',
+        category: 'booking',
+        recipientRole: 'staff',
+        targetScreen: '/explore',
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } else if (type === 'cancellation') {
+      await addDoc(collection(db, 'notifications'), {
+        title: 'CRITICAL: Booking Cancelled 🚨',
+        message: `Reservation #BK-${randomId} for Guest Sarah Jenkins (6 guests) was cancelled! Table 12 released.`,
+        type: 'cancellation',
+        category: 'critical',
+        recipientRole: 'staff',
+        targetScreen: '/explore',
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } else if (type === 'critical') {
+      await addDoc(collection(db, 'notifications'), {
+        title: 'CRITICAL: Large Party Booking 🚨',
+        message: `VIP Party of 12 guests (#BK-${randomId}) booked for 8:00 PM. High priority kitchen prep needed!`,
+        type: 'critical_booking',
+        category: 'critical',
+        recipientRole: 'staff',
+        targetScreen: '/explore',
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    }
   };
 
   return {
@@ -496,5 +593,6 @@ export function useReservations() {
     updateTableStatus,
     markNotificationRead,
     acknowledgeKitchenAlert,
+    sendTestNotification,
   };
 }

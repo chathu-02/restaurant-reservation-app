@@ -203,6 +203,26 @@ export async function createReservation(input: {
     createdAt: serverTimestamp(),
   });
   
+  // Post booking notification for staff
+  try {
+    const tableStr = input.tables && input.tables.length ? input.tables.map((t) => t.name).join(", ") : "Assigned Table";
+    const isCritical = input.party >= 8 || input.depositRequired;
+    const notifTitle = isCritical ? "CRITICAL: Large Party Booking Received 🚨" : "New Booking Received 📅";
+
+    await addDoc(collection(db, "notifications"), {
+      title: notifTitle,
+      message: `New reservation #${bookingId} by ${input.userName} (${input.party} guests) for ${prettyDate(input.date)} at ${formatTime(input.minutes)} (${tableStr}).`,
+      type: isCritical ? "critical_booking" : "booking",
+      category: isCritical ? "critical" : "booking",
+      recipientRole: "staff",
+      targetScreen: "/explore",
+      read: false,
+      createdAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn("Failed to post booking notification:", err);
+  }
+
   if (input.party >= LARGE_GROUP) {
     await postKitchenAlert(
       "large_group",
@@ -255,6 +275,24 @@ export async function cancelReservation(r: ReservationDoc) {
     status: "cancelled",
     cancelledAt: serverTimestamp(),
   });
+
+  // Post CRITICAL cancellation notification for staff
+  try {
+    const tNames = Array.isArray(r.tableNames) && r.tableNames.length ? r.tableNames.join(", ") : "assigned table";
+    await addDoc(collection(db, "notifications"), {
+      title: "CRITICAL: Reservation Cancelled 🚨",
+      message: `Reservation #${r.bookingId || r.id.slice(-5)} for ${r.userName} (${r.partySize} guests) on ${prettyDate(r.date)} was cancelled! Table ${tNames} released.`,
+      type: "cancellation",
+      category: "critical",
+      recipientRole: "staff",
+      targetScreen: "/explore",
+      read: false,
+      createdAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn("Failed to post cancellation notification:", err);
+  }
+
   if (r.partySize >= LARGE_GROUP) {
     await postKitchenAlert(
       "cancelled",

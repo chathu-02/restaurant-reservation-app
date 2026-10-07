@@ -43,6 +43,7 @@ export default function AlertsScreen() {
     acknowledgeKitchenAlert,
     unreadNotificationsCount,
     overview,
+    sendTestNotification,
   } = useReservations();
 
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'critical' | 'booking' | 'cancellation'>('all');
@@ -84,16 +85,31 @@ export default function AlertsScreen() {
         return;
       }
 
-      const isCritical = n.type === 'cancellation' || n.category === 'critical';
+      const isCancellation = n.type === 'cancellation' || (n.title && n.title.toLowerCase().includes('cancel'));
+      const isCritical = isCancellation || n.category === 'critical' || n.type === 'critical_booking';
       const isQueue = n.type === 'queue' || n.category === 'queue';
+
+      let tagLabel = 'NEW BOOKING 📅';
+      let tagVariant: 'red' | 'green' | 'amber' | 'teal' = 'green';
+
+      if (isCancellation) {
+        tagLabel = 'CANCELLATION 🚨';
+        tagVariant = 'red';
+      } else if (isCritical) {
+        tagLabel = 'CRITICAL ALERT 🚨';
+        tagVariant = 'red';
+      } else if (isQueue) {
+        tagLabel = 'QUEUE UPDATE ⏱️';
+        tagVariant = 'amber';
+      }
 
       list.push({
         id: n.id,
-        category: isCritical ? 'critical' : isQueue ? 'queue' : 'booking',
+        category: isCancellation ? 'critical' : isCritical ? 'critical' : isQueue ? 'queue' : 'booking',
         topTags: [
           {
-            label: n.type ? n.type.toUpperCase() : 'NOTIFICATION',
-            variant: isCritical ? 'red' : isQueue ? 'amber' : 'green',
+            label: tagLabel,
+            variant: tagVariant,
           },
         ],
         timeAgo: 'Recent',
@@ -116,11 +132,20 @@ export default function AlertsScreen() {
     return list;
   }, [notifications, kitchenAlerts, user, acknowledgeKitchenAlert, markNotificationRead, router]);
 
+  const totalAllCount = mappedAlerts.length;
+  const criticalCount = mappedAlerts.filter((a) => a.category === 'critical' && !a.topTags.some(t => t.label.includes('CANCELLATION'))).length;
+  const bookingCount = mappedAlerts.filter((a) => a.category === 'booking').length;
+  const cancellationCount = mappedAlerts.filter((a) => a.topTags.some(t => t.label.includes('CANCELLATION')) || a.title.toLowerCase().includes('cancel')).length;
+
   const filteredAlerts = mappedAlerts.filter((item) => {
     if (selectedFilter === 'all') return true;
-    if (selectedFilter === 'critical') return item.category === 'critical';
+    if (selectedFilter === 'cancellation') {
+      return item.topTags.some(t => t.label.includes('CANCELLATION')) || item.title.toLowerCase().includes('cancel');
+    }
+    if (selectedFilter === 'critical') {
+      return item.category === 'critical' && !item.topTags.some(t => t.label.includes('CANCELLATION'));
+    }
     if (selectedFilter === 'booking') return item.category === 'booking';
-    if (selectedFilter === 'cancellation') return item.category === 'critical';
     return true;
   });
 
@@ -164,26 +189,7 @@ export default function AlertsScreen() {
               <Text style={styles.liveDispatchText}>Live Dispatch</Text>
             </View>
           </View>
-
-          {/* Right Actions Header */}
-          <View style={styles.headerRightActions}>
-            <Pressable style={styles.headerIconBtn}>
-              <Icon name="bell" size={17} color="#FFFFFF" />
-            </Pressable>
-            <Pressable style={styles.headerIconBtn}>
-              <Icon name="clock" size={17} color="#FFFFFF" />
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/profile')}
-              style={styles.headerIconBtn}>
-              <Icon name="person" size={17} color="#FFFFFF" />
-            </Pressable>
-          </View>
         </View>
-
-        <Text style={styles.headerSubtitle}>
-          3 active floor alerts requiring action
-        </Text>
 
         {/* Filter Chips Bar */}
         <View style={styles.filterRow}>
@@ -194,115 +200,98 @@ export default function AlertsScreen() {
             {/* All */}
             <Pressable
               onPress={() => setSelectedFilter('all')}
-              style={[
+              style={({ pressed }) => [
                 styles.filterChip,
-                selectedFilter === 'all' && styles.filterChipActiveAll,
+                selectedFilter === 'all' ? styles.filterChipActiveAll : styles.filterChipDefaultAll,
+                pressed && styles.pressed,
               ]}>
               <Text
                 style={[
                   styles.filterChipText,
-                  selectedFilter === 'all' && styles.filterChipTextActiveAll,
+                  selectedFilter === 'all' ? styles.chipTextWhite : styles.chipTextDark,
                 ]}>
-                All <Text style={styles.countBadgeText}>5</Text>
+                All
               </Text>
+              <View style={[styles.countBadgePill, selectedFilter === 'all' ? styles.countPillWhite : styles.countPillDark]}>
+                <Text style={[styles.countBadgeText, selectedFilter === 'all' ? styles.countTextDark : styles.countTextWhite]}>{totalAllCount}</Text>
+              </View>
             </Pressable>
 
             {/* Critical */}
             <Pressable
               onPress={() => setSelectedFilter('critical')}
-              style={[
+              style={({ pressed }) => [
                 styles.filterChip,
                 styles.filterChipCritical,
                 selectedFilter === 'critical' && styles.filterChipActiveCritical,
+                pressed && styles.pressed,
               ]}>
               <Text
                 style={[
                   styles.filterChipText,
                   styles.filterChipTextCritical,
+                  selectedFilter === 'critical' && styles.chipTextWhite,
                 ]}>
-                Critical <Text style={styles.countBadgeTextRed}>1</Text>
+                Critical 🚨
               </Text>
+              <View style={[styles.countBadgePill, selectedFilter === 'critical' ? styles.countPillWhite : styles.countPillRed]}>
+                <Text style={[styles.countBadgeText, selectedFilter === 'critical' ? styles.countTextRed : styles.countTextWhite]}>{criticalCount}</Text>
+              </View>
             </Pressable>
 
             {/* Bookings */}
             <Pressable
               onPress={() => setSelectedFilter('booking')}
-              style={[
+              style={({ pressed }) => [
                 styles.filterChip,
-                styles.filterChipGray,
-                selectedFilter === 'booking' && styles.filterChipActiveGray,
+                styles.filterChipBooking,
+                selectedFilter === 'booking' && styles.filterChipActiveBooking,
+                pressed && styles.pressed,
               ]}>
-              <Text style={styles.filterChipTextGray}>
-                Bookings <Text style={styles.countBadgeTextGray}>2</Text>
+              <Text
+                style={[
+                  styles.filterChipText,
+                  styles.filterChipTextBooking,
+                  selectedFilter === 'booking' && styles.chipTextWhite,
+                ]}>
+                Bookings 📅
               </Text>
+              <View style={[styles.countBadgePill, selectedFilter === 'booking' ? styles.countPillWhite : styles.countPillGreen]}>
+                <Text style={[styles.countBadgeText, selectedFilter === 'booking' ? styles.countTextGreen : styles.countTextWhite]}>{bookingCount}</Text>
+              </View>
             </Pressable>
 
             {/* Cancellations */}
             <Pressable
               onPress={() => setSelectedFilter('cancellation')}
-              style={[
+              style={({ pressed }) => [
                 styles.filterChip,
-                styles.filterChipGray,
-                selectedFilter === 'cancellation' && styles.filterChipActiveGray,
+                styles.filterChipCancel,
+                selectedFilter === 'cancellation' && styles.filterChipActiveCancel,
+                pressed && styles.pressed,
               ]}>
-              <Text style={styles.filterChipTextGray}>
-                Cancellations <Text style={styles.countBadgeTextGray}>1</Text>
+              <Text
+                style={[
+                  styles.filterChipText,
+                  styles.filterChipTextCancel,
+                  selectedFilter === 'cancellation' && styles.chipTextWhite,
+                ]}>
+                Cancellations ❌
               </Text>
+              <View style={[styles.countBadgePill, selectedFilter === 'cancellation' ? styles.countPillWhite : styles.countPillSlate]}>
+                <Text style={[styles.countBadgeText, selectedFilter === 'cancellation' ? styles.countTextSlate : styles.countTextWhite]}>{cancellationCount}</Text>
+              </View>
             </Pressable>
           </ScrollView>
         </View>
+
+        
 
         {/* Main Feed Content ScrollView */}
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
-          {/* Top Featured Dark Critical Banner */}
-          {!bannerDismissed && (
-            <View style={styles.criticalBanner}>
-              {/* Left Accent Stripe */}
-              <View style={styles.criticalStripe} />
-
-              <View style={styles.criticalBannerContent}>
-                {/* Header Tag Row */}
-                <View style={styles.criticalTagRow}>
-                  <View style={styles.criticalDispatchBadge}>
-                    <Text style={styles.criticalDispatchText}>CRITICAL DISPATCH</Text>
-                  </View>
-                  <Text style={styles.tableReleasedText}>Table 12 Released</Text>
-                  <Text style={styles.justNowText}>Just Now</Text>
-                </View>
-
-                {/* Main Headline */}
-                <Text style={styles.criticalMainText}>
-                  Table 12 cancelled • Party of 4 walk-ins waiting at the host stand
-                </Text>
-
-                {/* Subtext */}
-                <Text style={styles.nextQueuedText}>
-                  Next queued: <Text style={styles.nextQueuedBold}>Miller, Party of 4</Text> (waited 26m)
-                </Text>
-
-                {/* Action Buttons */}
-                <View style={styles.criticalActionRow}>
-                  <Pressable
-                    onPress={() => {
-                      Alert.alert('Immediate Seat', 'Miller (Party of 4) seated at Table 12.');
-                    }}
-                    style={({ pressed }) => [styles.immediateSeatBtn, pressed && styles.pressed]}>
-                    <Icon name="check" size={15} color="#FFFFFF" />
-                    <Text style={styles.immediateSeatText}>Immediate Seat (Miller 4p)</Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => setBannerDismissed(true)}
-                    style={({ pressed }) => [styles.releaseBtn, pressed && styles.pressed]}>
-                    <Text style={styles.releaseText}>Release</Text>
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-          )}
 
           {/* Section Sub-Header */}
           <View style={styles.feedSubHeader}>
@@ -316,7 +305,13 @@ export default function AlertsScreen() {
           </View>
 
           {/* Alert Feed Cards */}
-          {filteredAlerts.map((item) => (
+          {filteredAlerts.length === 0 ? (
+            <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 8 }}>
+              <Icon name="bell" size={38} color="#94A3B8" />
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#1E293B' }}>No Active Notifications</Text>
+              <Text style={{ fontSize: 13, color: '#64748B' }}>Your alert feed is completely up to date.</Text>
+            </View>
+          ) : filteredAlerts.map((item) => (
             <View key={item.id} style={styles.cardWrapper}>
               {/* Left Accent Stripe */}
               <View
@@ -569,72 +564,120 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   filterRow: {
-    marginBottom: 8,
+    marginTop: 14,
+    marginBottom: 12,
   },
   filterContainer: {
     paddingHorizontal: 16,
-    gap: 8,
+    gap: 10,
   },
   filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6.5,
-    borderRadius: 16,
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 9.5,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    gap: 8,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  filterChipDefaultAll: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#022C22',
   },
   filterChipActiveAll: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
+    backgroundColor: '#022C22',
+    borderColor: '#022C22',
   },
   filterChipCritical: {
-    backgroundColor: '#FFE4E6',
+    backgroundColor: '#FEF2F2',
     borderColor: '#FECDD3',
   },
   filterChipActiveCritical: {
-    backgroundColor: '#E11D48',
-    borderColor: '#BE123C',
+    backgroundColor: '#EF4444',
+    borderColor: '#DC2626',
   },
-  filterChipGray: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#E2E8F0',
+  filterChipBooking: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
   },
-  filterChipActiveGray: {
+  filterChipActiveBooking: {
+    backgroundColor: '#10B981',
+    borderColor: '#059669',
+  },
+  filterChipCancel: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+  },
+  filterChipActiveCancel: {
     backgroundColor: '#334155',
-    borderColor: '#334155',
+    borderColor: '#1E293B',
   },
   filterChipText: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: '#334155',
+    fontSize: 14.5,
+    fontWeight: '800',
+    letterSpacing: -0.2,
   },
-  filterChipTextActiveAll: {
+  chipTextDark: {
+    color: '#022C22',
+  },
+  chipTextWhite: {
     color: '#FFFFFF',
   },
   filterChipTextCritical: {
-    color: '#BE123C',
+    color: '#DC2626',
   },
-  filterChipTextGray: {
-    color: '#475569',
-    fontSize: 12.5,
-    fontWeight: '700',
+  filterChipTextBooking: {
+    color: '#059669',
+  },
+  filterChipTextCancel: {
+    color: '#334155',
+  },
+  countBadgePill: {
+    paddingHorizontal: 7.5,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countPillDark: {
+    backgroundColor: '#022C22',
+  },
+  countPillWhite: {
+    backgroundColor: '#FFFFFF',
+  },
+  countPillRed: {
+    backgroundColor: '#EF4444',
+  },
+  countPillGreen: {
+    backgroundColor: '#10B981',
+  },
+  countPillSlate: {
+    backgroundColor: '#334155',
   },
   countBadgeText: {
-    fontSize: 11,
-    opacity: 0.8,
+    fontSize: 12,
+    fontWeight: '900',
   },
-  countBadgeTextRed: {
-    color: '#BE123C',
-    fontSize: 11,
+  countTextDark: {
+    color: '#022C22',
   },
-  countBadgeTextGray: {
-    color: '#64748B',
-    fontSize: 11,
+  countTextWhite: {
+    color: '#FFFFFF',
+  },
+  countTextRed: {
+    color: '#DC2626',
+  },
+  countTextGreen: {
+    color: '#059669',
+  },
+  countTextSlate: {
+    color: '#334155',
   },
   scrollView: {
     flex: 1,
@@ -1060,5 +1103,46 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.88,
     transform: [{ scale: 0.985 }],
+  },
+  testDispatchBanner: {
+    backgroundColor: '#022C22',
+    marginHorizontal: 16,
+    marginBottom: 10,
+    borderRadius: 14,
+    padding: 10,
+    paddingHorizontal: 12,
+  },
+  testDispatchTitle: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#34D399',
+    letterSpacing: 0.8,
+    marginBottom: 6,
+  },
+  testDispatchBtnRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  testBtn: {
+    flex: 1,
+    paddingVertical: 7,
+    paddingHorizontal: 6,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  testBtnGreen: {
+    backgroundColor: '#065F46',
+  },
+  testBtnRed: {
+    backgroundColor: '#991B1B',
+  },
+  testBtnAmber: {
+    backgroundColor: '#92400E',
+  },
+  testBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
   },
 });

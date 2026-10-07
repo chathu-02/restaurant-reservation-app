@@ -164,22 +164,7 @@ const DEFAULT_RESERVATIONS: Reservation[] = [
   },
 ];
 
-const DEFAULT_QUEUE: QueueGuest[] = [
-  {
-    id: 'q-1',
-    guestName: 'Chloe Bennett',
-    partySize: 2,
-    joinedAt: '7:05 PM',
-    estimatedWaitMinutes: 10,
-  },
-  {
-    id: 'q-2',
-    guestName: 'Liam O’Connor',
-    partySize: 4,
-    joinedAt: '7:12 PM',
-    estimatedWaitMinutes: 15,
-  },
-];
+const DEFAULT_QUEUE: QueueGuest[] = [];
 
 class ReservationService {
   private overviewData: ShiftOverviewData = { ...DEFAULT_OVERVIEW };

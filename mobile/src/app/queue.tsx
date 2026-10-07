@@ -74,105 +74,27 @@ export default function QueueScreen() {
   const [partySize, setPartySize] = useState(2);
   const [pref, setPref] = useState<'Inside' | 'Patio' | 'Booth'>('Inside');
 
-  // Interactive Queue Data matching screenshot exactly
-  const [queueList, setQueueList] = useState<QueueParty[]>([
-    {
-      id: 'q-1',
-      number: 1,
-      name: 'Perera',
-      type: 'REMOTE',
-      statusTag: 'READY - T-7',
-      statusTagVariant: 'ready',
-      guests: 4,
-      waitTime: '0 min (Due)',
-      waitType: 'due',
-      prefTags: ['Booth'],
-      isFeaturedReady: true,
-    },
-    {
-      id: 'q-2',
-      number: 2,
-      name: 'Fernando',
-      type: 'WALK-IN',
-      statusTag: 'Next 5m',
-      statusTagVariant: 'next',
-      guests: 2,
-      waitTime: '5 min wait',
-      waitType: 'normal',
-      prefTags: ['High-top ok'],
-    },
-    {
-      id: 'q-3',
-      number: 3,
-      name: 'Silva Family',
-      type: 'REMOTE',
-      statusTag: 'Party of 6',
-      statusTagVariant: 'info',
-      guests: 6,
-      waitTime: '8 min',
-      waitType: 'normal',
-      prefTags: ['Highchair req.'],
-    },
-    {
-      id: 'q-4',
-      number: 4,
-      name: 'Jayasuriya',
-      type: 'WALK-IN',
-      statusTag: '🎂 Birthday',
-      statusTagVariant: 'birthday',
-      guests: 3,
-      waitTime: '12 min',
-      waitType: 'normal',
-      prefTags: ['Inside only'],
-    },
-    {
-      id: 'q-5',
-      number: 5,
-      name: 'De Silva',
-      type: 'REMOTE',
-      statusTag: '🍃 Patio',
-      statusTagVariant: 'info',
-      guests: 2,
-      waitTime: '15 min',
-      waitType: 'normal',
-    },
-    {
-      id: 'q-6',
-      number: 6,
-      name: 'Wickramasinghe',
-      type: 'REMOTE',
-      guests: 5,
-      waitTime: '22 min',
-      waitType: 'normal',
-    },
-  ]);
+  const { queue: firestoreQueue, addWalkIn, notifyNextGuest, updateQueueStatus, unreadNotificationsCount, overview } = useReservations();
 
-  const { queue: firestoreQueue, addWalkIn, notifyNextGuest, unreadNotificationsCount, overview } = useReservations();
-
-  // Sync Firestore queue items into queueList, appending new walk-in entries at the BOTTOM
-  useEffect(() => {
-    if (firestoreQueue && firestoreQueue.length > 0) {
-      setQueueList((prev) => {
-        const existingIds = new Set(prev.map((item) => item.id));
-        const newItems: QueueParty[] = firestoreQueue
-          .filter((item) => !existingIds.has(item.id))
-          .map((item, idx) => ({
-            id: item.id,
-            number: prev.length + idx + 1,
-            name: item.guestName,
-            type: 'WALK-IN',
-            statusTag: 'Just Added',
-            statusTagVariant: 'info',
-            guests: item.partySize,
-            waitTime: `${item.estimatedWaitMinutes || 12} min wait`,
-            waitType: 'normal',
-            prefTags: item.notes ? [item.notes] : ['Indoor'],
-          }));
-
-        if (newItems.length === 0) return prev;
-        return [...prev, ...newItems]; // Appends new walk-in guests to the BOTTOM of the queue
-      });
-    }
+  // Live Queue Data mapped directly from Firestore database
+  const queueList: QueueParty[] = React.useMemo(() => {
+    const activeQueue = (firestoreQueue || []).filter((q) => q.status !== 'seated' && q.status !== 'cancelled');
+    return activeQueue.map((item, idx) => {
+      const isNext = idx === 0 || item.status === 'next';
+      return {
+        id: item.id,
+        number: idx + 1,
+        name: item.guestName,
+        type: 'WALK-IN',
+        statusTag: isNext ? 'READY / NEXT' : `${item.estimatedWaitMinutes || 12}m wait`,
+        statusTagVariant: isNext ? 'ready' : 'info',
+        guests: item.partySize,
+        waitTime: `${item.estimatedWaitMinutes || 12} min wait`,
+        waitType: isNext ? 'due' : 'normal',
+        prefTags: item.notes ? [item.notes] : ['Indoor'],
+        isFeaturedReady: isNext,
+      };
+    });
   }, [firestoreQueue]);
 
   // Featured Ready Party (top highlight card)
@@ -212,9 +134,6 @@ export default function QueueScreen() {
       prefTags: [pref],
     };
 
-    // Always place newly added guests at the bottom of the queue
-    setQueueList((prev) => [...prev, newParty]);
-
     try {
       await addWalkIn({
         guestName: guestName.trim(),
@@ -236,6 +155,7 @@ export default function QueueScreen() {
 
   // Handle Seating Action
   const handleSeatNow = (name: string, table: string) => {
+    const target = queueList.find((q) => q.name === name);
     Alert.alert(
       'Seat Party Now',
       `Confirm seating ${name} at Table ${table}?`,
@@ -243,8 +163,10 @@ export default function QueueScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Seat Guest',
-          onPress: () => {
-            setQueueList((prev) => prev.filter((p) => p.name !== name));
+          onPress: async () => {
+            if (target?.id) {
+              await updateQueueStatus(target.id, 'seated');
+            }
             Alert.alert('Seated!', `${name} has been seated at Table ${table}.`);
           },
         },
@@ -604,7 +526,7 @@ export default function QueueScreen() {
                       Alert.alert('Queue Actions', `Options for ${item.name}`, [
                         { text: 'Notify Table Ready', onPress: () => handleBuzzGuest(item.name) },
                         { text: 'Call Guest', onPress: () => handleCallGuest(item.name) },
-                        { text: 'Remove from Queue', style: 'destructive', onPress: () => setQueueList((prev) => prev.filter((p) => p.id !== item.id)) },
+                        { text: 'Remove from Queue', style: 'destructive', onPress: async () => { if (item.id) await updateQueueStatus(item.id, 'cancelled'); } },
                         { text: 'Cancel', style: 'cancel' },
                       ])
                     }

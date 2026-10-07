@@ -157,7 +157,7 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
+      <StatusBar barStyle="light-content" backgroundColor="#072c23ff" />
       <View style={styles.container}>
         <ScrollView
           style={styles.scrollView}
@@ -210,8 +210,6 @@ export default function DashboardScreen() {
               </Pressable>
             </View>
 
-            <View style={styles.headerDivider} />
-
             <Text style={styles.dateText}>
               {overview?.date || getFormattedDate().toUpperCase()}
             </Text>
@@ -229,7 +227,7 @@ export default function DashboardScreen() {
             <View style={styles.shiftProgressContainer}>
               <View style={styles.shiftProgressHeader}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Icon name="chart" size={14} color="#34D399" />
+                  <Icon name="chart" size={14} color="#d3345eff" />
                   <Text style={styles.shiftProgressLabel}>Shift Progress</Text>
                 </View>
                 <Text style={styles.shiftProgressValue}>{shiftProgressPercent}% of target</Text>
@@ -836,6 +834,7 @@ const styles = StyleSheet.create({
     color: '#34D399',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
+    marginTop: 10,
     marginBottom: 6,
   },
   greetingText: {
