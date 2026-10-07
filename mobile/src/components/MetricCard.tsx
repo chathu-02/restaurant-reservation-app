@@ -50,7 +50,7 @@ export function MetricCard({
       {/* Top row with icon & badge */}
       <View style={styles.topRow}>
         <View style={[styles.iconContainer, { backgroundColor: iconBgColor }]}>
-          <Icon name={icon} size={18} color={iconColor} />
+          <Icon name={icon} size={20} color={iconColor} />
         </View>
         <StatusBadge label={badgeLabel} variant={badgeVariant} dot={badgeDot} />
       </View>
@@ -83,19 +83,19 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 10,
-    minHeight: 96,
+    borderRadius: 20,
+    padding: 14,
+    minHeight: 114,
     justifyContent: 'space-between',
     borderWidth: 1.2,
     borderColor: '#CBD5E1',
     borderTopColor: '#FFFFFF',
     borderBottomColor: '#94A3B8',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 7 },
     shadowOpacity: 0.14,
     shadowRadius: 10,
-    elevation: 5,
+    elevation: 6,
     minWidth: 0,
   },
   pressed: {
@@ -106,13 +106,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 6,
     gap: 4,
   },
   iconContainer: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
@@ -121,37 +121,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 4,
-    marginTop: 1,
+    marginTop: 2,
     flexWrap: 'wrap',
   },
   value: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 26,
+    fontWeight: '800',
     color: '#111827',
     letterSpacing: -0.5,
   },
   subValue: {
-    fontSize: 12,
-    fontWeight: '400',
+    fontSize: 13,
+    fontWeight: '600',
     color: '#9CA3AF',
   },
   progressBarTrack: {
-    height: 3.5,
+    height: 5,
     backgroundColor: '#E5E7EB',
-    borderRadius: 2,
+    borderRadius: 3,
     overflow: 'hidden',
-    marginTop: 4,
-    marginBottom: 4,
+    marginTop: 6,
+    marginBottom: 6,
   },
   progressBarFill: {
     height: '100%',
     backgroundColor: '#0D9488',
-    borderRadius: 2,
+    borderRadius: 3,
   },
   label: {
-    fontSize: 11.5,
-    color: '#6B7280',
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#4B5563',
+    fontWeight: '600',
     marginTop: 2,
   },
 });

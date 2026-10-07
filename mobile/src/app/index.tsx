@@ -240,14 +240,16 @@ export default function DashboardScreen() {
               Here's your shift overview — {overview?.reservationsToday ?? 42} covers booked today
             </Text>
 
-            {/* Shift progress bar inside hero container */}
+            {/* Shift progress card inside hero container */}
             <View style={styles.shiftProgressContainer}>
-              <View style={styles.shiftProgressHeader}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Icon name="chart" size={14} color="#d3345eff" />
-                  <Text style={styles.shiftProgressLabel}>Shift Progress</Text>
+              <View style={styles.shiftProgressTopRow}>
+                <View style={styles.progressCircleBadge}>
+                  <Text style={styles.progressCircleText}>{shiftProgressPercent}%</Text>
                 </View>
-                <Text style={styles.shiftProgressValue}>{shiftProgressPercent}% of target</Text>
+                <View style={styles.shiftProgressTextCol}>
+                  <Text style={styles.shiftProgressLabel}>Shift progress</Text>
+                  <Text style={styles.shiftProgressValue}>{shiftProgressPercent}% of target</Text>
+                </View>
               </View>
               <View style={styles.shiftProgressTrack}>
                 <View style={[styles.shiftProgressFill, { width: `${shiftProgressPercent}%` }]} />
@@ -331,40 +333,50 @@ export default function DashboardScreen() {
             <View style={styles.containerHeaderRow}>
               <View style={styles.containerHeaderLeft}>
                 <Icon name="flash" size={16} color="#009669" />
-                <Text style={styles.containerTitle}>Quick Actions</Text>
+                <Text style={styles.containerTitle}>Quick actions</Text>
               </View>
             </View>
 
-            <View style={styles.actionsRow}>
-              <Pressable
-                onPress={() => router.push('/add-walkin')}
-                style={({ pressed }) => [styles.actionCard, pressed && styles.actionPressed]}>
-                <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
-                  <Icon name="walk" size={22} color="#D97706" />
-                </View>
-                <Text style={styles.actionCardLabel}>Walk-in</Text>
-                <Text style={styles.actionCardSub}>Add to queue</Text>
-              </Pressable>
-
+            <View style={styles.quickActionsContainer}>
+              {/* Full-width New Booking card on top */}
               <Pressable
                 onPress={() => setBookingModalVisible(true)}
-                style={({ pressed }) => [styles.newBookingCard, pressed && styles.actionPressed]}>
+                style={({ pressed }) => [styles.fullWidthNewBookingCard, pressed && styles.actionPressed]}>
                 <View style={styles.newBookingIconRing}>
                   <Icon name="plus" size={22} color="#FFFFFF" />
                 </View>
-                <Text style={styles.newBookingLabel}>New Booking</Text>
-                <Text style={styles.newBookingSub}>Reserve table</Text>
+                <View style={styles.fullBookingTextCol}>
+                  <Text style={styles.newBookingLabel}>New booking</Text>
+                  <Text style={styles.newBookingSub}>Reserve table</Text>
+                </View>
               </Pressable>
 
-              <Pressable
-                onPress={() => router.push('/tables')}
-                style={({ pressed }) => [styles.actionCard, pressed && styles.actionPressed]}>
-                <View style={[styles.actionIconCircle, { backgroundColor: '#E0E7FF' }]}>
-                  <Icon name="table" size={22} color="#4F46E5" />
-                </View>
-                <Text style={styles.actionCardLabel}>Floor Plan</Text>
-                <Text style={styles.actionCardSub}>Manage tables</Text>
-              </Pressable>
+              {/* Bottom 2 side-by-side cards */}
+              <View style={styles.bottomActionsRow}>
+                <Pressable
+                  onPress={() => router.push('/add-walkin')}
+                  style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
+                  <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
+                    <Icon name="walk" size={20} color="#D97706" />
+                  </View>
+                  <View style={styles.actionTextCol}>
+                    <Text style={styles.actionCardLabel}>Walk-in</Text>
+                    <Text style={styles.actionCardSub}>Add to queue</Text>
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => router.push('/tables')}
+                  style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
+                  <View style={[styles.actionIconCircle, { backgroundColor: '#E0E7FF' }]}>
+                    <Icon name="table" size={20} color="#4F46E5" />
+                  </View>
+                  <View style={styles.actionTextCol}>
+                    <Text style={styles.actionCardLabel}>Floor plan</Text>
+                    <Text style={styles.actionCardSub}>Manage tables</Text>
+                  </View>
+                </Pressable>
+              </View>
             </View>
           </View>
 
@@ -749,7 +761,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#F4F9EC',
+    backgroundColor: '#FFFFFF',
   },
   scrollView: {
     flex: 1,
@@ -919,29 +931,49 @@ const styles = StyleSheet.create({
   // Shift progress (Inside #022C22 container)
   shiftProgressContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 14,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.25)',
   },
-  shiftProgressHeader: {
+  shiftProgressTopRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    gap: 12,
+    marginBottom: 12,
   },
-  shiftProgressLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#E6F4EA',
+  progressCircleBadge: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 3,
+    borderColor: '#34D399',
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  shiftProgressValue: {
-    fontSize: 13,
+  progressCircleText: {
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#34D399',
   },
+  shiftProgressTextCol: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  shiftProgressLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  shiftProgressValue: {
+    fontSize: 12.5,
+    fontWeight: '500',
+    color: '#A7F3D0',
+  },
   shiftProgressTrack: {
-    height: 8,
+    height: 7,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 4,
     overflow: 'hidden',
@@ -962,21 +994,21 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
-  // ── Light Green Touch Containers ─────────────────
+  // ── Light Touch Containers ─────────────────
   lightGreenContainer: {
-    backgroundColor: '#d0e8d0ff',
+    backgroundColor: '#d0dbb8ff',
     borderRadius: 22,
-    padding: 14,
+    padding: 16,
     marginBottom: 14,
-    borderWidth: 1.5,
-    borderColor: '#86EFAC',
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
     borderTopColor: '#FFFFFF',
-    borderBottomColor: '#4ADE80',
+    borderBottomColor: '#CBD5E1',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 4,
   },
   containerHeaderRow: {
     flexDirection: 'row',
@@ -998,44 +1030,66 @@ const styles = StyleSheet.create({
   },
 
   // ── Quick Actions ────────────────────────────────
-  actionsRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
+  quickActionsContainer: {
     gap: 10,
     marginTop: 4,
-    marginBottom: 2,
   },
-  actionCard: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 10,
+  fullWidthNewBookingCard: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#009669',
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1.2,
+    borderColor: '#059669',
+    borderTopColor: 'rgba(255, 255, 255, 0.45)',
+    borderBottomColor: '#064E3B',
+    shadowColor: '#009669',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
+    gap: 14,
+  },
+  fullBookingTextCol: {
+    flex: 1,
     justifyContent: 'center',
+  },
+  bottomActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  actionCardHalf: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderWidth: 1.2,
     borderColor: '#CBD5E1',
     borderTopColor: '#FFFFFF',
     borderBottomColor: '#94A3B8',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 7 },
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    elevation: 6,
-    gap: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+    gap: 10,
   },
   actionIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+  },
+  actionTextCol: {
+    flex: 1,
+    justifyContent: 'center',
   },
   actionCardLabel: {
     fontSize: 14,
@@ -1045,46 +1099,26 @@ const styles = StyleSheet.create({
   actionCardSub: {
     fontSize: 11.5,
     fontWeight: '400',
-    color: '#0a192deb',
-  },
-  newBookingCard: {
-    flex: 1.35,
-    backgroundColor: '#009669',
-    borderRadius: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.2,
-    borderColor: '#059669',
-    borderTopColor: 'rgba(255, 255, 255, 0.45)',
-    borderBottomColor: '#064E3B',
-    shadowColor: '#009669',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 14,
-    elevation: 7,
-    gap: 6,
+    color: '#64748B',
   },
   newBookingIconRing: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 42,
+    height: 42,
+    borderRadius: 13,
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 2,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.35)',
   },
   newBookingLabel: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
   newBookingSub: {
     color: 'rgba(255, 255, 255, 0.85)',
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '400',
   },
   actionPressed: {
