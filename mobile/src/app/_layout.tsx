@@ -15,11 +15,13 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" />
+
         {/* Customer Screens */}
         <Stack.Screen name="join-queue" />
         <Stack.Screen name="queue" />
         <Stack.Screen name="alerts" />
         <Stack.Screen name="customer-profile" />
+
         {/* Staff Screens */}
         <Stack.Screen name="login" />
         <Stack.Screen name="dashboard" />
