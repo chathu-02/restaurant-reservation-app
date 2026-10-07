@@ -19,12 +19,6 @@ export default function SignIn() {
     setBusy(true);
     setError("");
     try {
-      // Developer bypass for the kitchen account
-      if (email.trim().toLowerCase() === "charu1@gmail.com" && password === "12345678") {
-        router.replace("/kitchen" as never);
-        return;
-      }
-      
       const role = await login(email, password);
       router.replace(homeRouteFor(role) as never);
     } catch (e) {
@@ -48,6 +42,7 @@ export default function SignIn() {
       <Button title={busy ? "Please wait…" : "Log in"} onPress={submit} disabled={busy} />
       <LinkText title="Forgot password?" onPress={() => router.push("/forgot-password" as never)} />
       <LinkText title="New here? Create an account" onPress={() => router.push("/sign-up" as never)} />
+      <LinkText title="Staff Login →" onPress={() => router.push("/staff-sign-in" as never)} />
     </Screen>
   );
 }

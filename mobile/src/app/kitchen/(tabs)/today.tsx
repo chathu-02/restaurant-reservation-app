@@ -1,118 +1,112 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/components/form-ui";
+import { ReservationDoc, dateValue, formatTime } from "@/lib/booking";
+import { loadKitchenReservations, markSeated } from "@/lib/kitchen";
 
 export default function KitchenTodayScreen() {
+  const [time, setTime] = useState(new Date());
+  const [reservations, setReservations] = useState<ReservationDoc[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = async () => {
+    try {
+      const data = await loadKitchenReservations(dateValue(new Date()));
+      setReservations(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+    const t = setInterval(() => setTime(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  const handleSeat = async (id: string) => {
+    try {
+      await markSeated(id);
+      loadData();
+    } catch (e) {
+      Alert.alert("Error", "Could not mark as seated.");
+    }
+  };
+
+  const currentMins = time.getHours() * 60 + time.getMinutes();
+  const upcoming = reservations.filter(r => r.timeMinutes >= currentMins - 30);
+  const totalGuests = upcoming.reduce((acc, r) => acc + (r.partySize || 0), 0);
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <View style={styles.dot} />
-            <Text style={styles.headerTitle}>Next hour</Text>
+      {loading ? (
+        <ActivityIndicator style={{ marginTop: 40 }} color={colors.green} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <View style={styles.dot} />
+              <Text style={styles.headerTitle}>Next hour</Text>
+            </View>
+            <View style={styles.headerRight}>
+              <Ionicons name="time-outline" size={16} color={colors.text} />
+              <Text style={styles.currentTime}>
+                {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            </View>
           </View>
-          <View style={styles.headerRight}>
-            <Ionicons name="time-outline" size={16} color={colors.text} />
-            <Text style={styles.currentTime}>18:45</Text>
-          </View>
-        </View>
-        <Text style={styles.subtitle}>Live arrivals for your kitchen staff</Text>
+          <Text style={styles.subtitle}>Live arrivals for your kitchen staff</Text>
 
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryTop}>
-            <Text style={styles.summaryLabel}>TOTAL EXPECTED</Text>
-            <View style={styles.iconBox}>
-              <Ionicons name="people" size={20} color="#fff" />
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryTop}>
+              <Text style={styles.summaryLabel}>TOTAL EXPECTED</Text>
+              <View style={styles.iconBox}>
+                <Ionicons name="people" size={20} color="#fff" />
+              </View>
+            </View>
+            <View style={styles.summaryBottom}>
+              <Text style={styles.summaryNumber}>{totalGuests}</Text>
+              <Text style={styles.summaryText}>Guests arriving</Text>
             </View>
           </View>
-          <View style={styles.summaryBottom}>
-            <Text style={styles.summaryNumber}>18</Text>
-            <Text style={styles.summaryText}>Guests arriving</Text>
-          </View>
-        </View>
 
-        <View style={styles.arrivalCard}>
-          <View style={styles.arrivalHeader}>
-            <View style={styles.partyAvatar}>
-              <Text style={styles.partyAvatarText}>P4</Text>
-            </View>
-            <View style={styles.arrivalInfo}>
-              <Text style={styles.arrivalName}>The Thompson Party</Text>
-              <Text style={styles.arrivalTable}>Table 12 • 4 Guests</Text>
-            </View>
-            <View style={styles.timeInfo}>
-              <Text style={styles.inTime}>in 12 min</Text>
-              <Text style={styles.etaTime}>ETA 18:57</Text>
-            </View>
-          </View>
-          <View style={styles.tagsContainer}>
-            <View style={styles.tag}>
-              <Text style={styles.tagIcon}>🌱</Text>
-              <Text style={styles.tagText}>GLUTEN FREE</Text>
-            </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagIcon}>🎂</Text>
-              <Text style={styles.tagText}>BIRTHDAY</Text>
-            </View>
-          </View>
-        </View>
+          {upcoming.map(r => {
+            const diff = r.timeMinutes - currentMins;
+            return (
+              <View key={r.id} style={styles.arrivalCard}>
+                <View style={styles.arrivalHeader}>
+                  <View style={styles.partyAvatar}>
+                    <Text style={styles.partyAvatarText}>{r.userName.substring(0,2).toUpperCase()}</Text>
+                  </View>
+                  <View style={styles.arrivalInfo}>
+                    <Text style={styles.arrivalName}>{r.userName}</Text>
+                    <Text style={styles.arrivalTable}>{(r.tableNames || []).join(", ")} • {r.partySize} Guests</Text>
+                  </View>
+                  <View style={styles.timeInfo}>
+                    <Text style={diff < 30 ? styles.inTime : styles.inTimeWarning}>
+                      {diff > 0 ? `in ${diff} min` : 'due now'}
+                    </Text>
+                    <Text style={styles.etaTime}>ETA {formatTime(r.timeMinutes)}</Text>
+                  </View>
+                </View>
 
-        <View style={styles.arrivalCard}>
-          <View style={styles.arrivalHeader}>
-            <View style={styles.partyAvatar}>
-              <Text style={styles.partyAvatarText}>P8</Text>
-            </View>
-            <View style={styles.arrivalInfo}>
-              <Text style={styles.arrivalName}>Sarah Jenkins</Text>
-              <Text style={styles.arrivalTable}>Table 24 • 8 Guests</Text>
-            </View>
-            <View style={styles.timeInfo}>
-              <Text style={styles.inTimeWarning}>in 28 min</Text>
-              <Text style={styles.etaTime}>ETA 19:13</Text>
-            </View>
-          </View>
-          <View style={styles.tagsContainer}>
-            <View style={styles.tag}>
-              <Text style={styles.tagIcon}>🪑</Text>
-              <Text style={styles.tagText}>2 HIGH CHAIRS</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.arrivalCard}>
-          <View style={styles.arrivalHeader}>
-            <View style={styles.partyAvatar}>
-              <Text style={styles.partyAvatarText}>P2</Text>
-            </View>
-            <View style={styles.arrivalInfo}>
-              <Text style={styles.arrivalName}>Mark Robinson</Text>
-              <Text style={styles.arrivalTable}>Window 02 • 2 Guests</Text>
-            </View>
-            <View style={styles.timeInfo}>
-              <Text style={styles.inTimeWarning}>in 45 min</Text>
-              <Text style={styles.etaTime}>ETA 19:30</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={[styles.arrivalCard, { marginBottom: 100 }]}>
-          <View style={styles.arrivalHeader}>
-            <View style={styles.partyAvatar}>
-              <Text style={styles.partyAvatarText}>C4</Text>
-            </View>
-            <View style={styles.arrivalInfo}>
-              <Text style={styles.arrivalName}>Chen Family</Text>
-              <Text style={styles.arrivalTable}>Table 8 • 4 Guests</Text>
-            </View>
-            <View style={styles.timeInfo}>
-              <Text style={styles.inTimeWarning}>in 58 min</Text>
-              <Text style={styles.etaTime}>ETA 19:43</Text>
-            </View>
-          </View>
-        </View>
-
-      </ScrollView>
+                {r.status === "confirmed" && (
+                  <Pressable style={styles.seatBtn} onPress={() => handleSeat(r.id)}>
+                    <Text style={styles.seatBtnText}>Mark as Seated</Text>
+                  </Pressable>
+                )}
+                {r.status === "seated" && (
+                  <View style={styles.seatedChip}><Text style={styles.seatedChipText}>Seated</Text></View>
+                )}
+              </View>
+            );
+          })}
+        </ScrollView>
+      )}
 
       <View style={styles.floatingContainer}>
         <Pressable style={styles.floatingButton}>
@@ -126,7 +120,7 @@ export default function KitchenTodayScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: 24 },
+  content: { padding: 24, paddingBottom: 100 },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.green },
@@ -155,10 +149,10 @@ const styles = StyleSheet.create({
   inTimeWarning: { fontSize: 15, fontWeight: "700", color: colors.muted, marginBottom: 2 },
   etaTime: { fontSize: 11, color: colors.muted },
   
-  tagsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingLeft: 52, marginTop: 12 },
-  tag: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: colors.bg, borderRadius: 4 },
-  tagIcon: { fontSize: 10 },
-  tagText: { fontSize: 10, fontWeight: "600", color: colors.muted, textTransform: "uppercase" },
+  seatBtn: { marginTop: 12, backgroundColor: colors.bg, padding: 10, borderRadius: 8, alignItems: "center" },
+  seatBtnText: { color: colors.text, fontWeight: "600", fontSize: 13 },
+  seatedChip: { marginTop: 12, alignSelf: "flex-start", backgroundColor: "#D5EDE3", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 16 },
+  seatedChipText: { color: "#14503E", fontSize: 12, fontWeight: "700" },
 
   floatingContainer: { position: "absolute", bottom: 16, left: 0, right: 0, alignItems: "center" },
   floatingButton: { flexDirection: "row", alignItems: "center", backgroundColor: colors.text, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 30, gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 5 },
