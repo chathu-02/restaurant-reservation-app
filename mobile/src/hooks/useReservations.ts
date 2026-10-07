@@ -45,6 +45,21 @@ export type KitchenAlertItem = {
   createdAt?: any;
 };
 
+function parseTimeToMinutes(timeStr: string): number {
+  if (!timeStr) return 1170; // Default 7:30 PM
+  const cleaned = timeStr.trim();
+  const match = cleaned.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (!match) return 1170;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const period = match[3]?.toUpperCase();
+
+  if (period === 'PM' && hours < 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+
+  return hours * 60 + minutes;
+}
+
 export function useReservations() {
   const [overview, setOverview] = useState<ShiftOverviewData | null>(null);
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -91,6 +106,47 @@ export function useReservations() {
       const options: Intl.DateTimeFormatOptions = { weekday: 'long', month: 'short', day: 'numeric' };
       const formattedDate = now.toLocaleDateString('en-US', options).toUpperCase();
 
+      // Dynamic Rush Hour calculation from actual reservations
+      const activeTodayRes = todayRes.filter((r) => r.status !== 'cancelled' && (r.status as string) !== 'no_show');
+
+      let peakRushTime = '7:30 PM';
+      let peakExpectedGuests = 18;
+      let peakWithinMinutes = 45;
+
+      if (activeTodayRes.length > 0) {
+        const timeSlotMap: Record<string, { guests: number; count: number; timeMinutes: number }> = {};
+
+        activeTodayRes.forEach((res) => {
+          const rawTime = res.time || '7:30 PM';
+          const tMinutes = res.timeMinutes ?? parseTimeToMinutes(rawTime);
+          if (!timeSlotMap[rawTime]) {
+            timeSlotMap[rawTime] = { guests: 0, count: 0, timeMinutes: tMinutes };
+          }
+          timeSlotMap[rawTime].guests += res.partySize || 2;
+          timeSlotMap[rawTime].count += 1;
+        });
+
+        let maxGuests = 0;
+        let peakMinutes = 1170;
+
+        Object.entries(timeSlotMap).forEach(([timeSlot, data]) => {
+          if (data.guests > maxGuests) {
+            maxGuests = data.guests;
+            peakRushTime = timeSlot;
+            peakMinutes = data.timeMinutes;
+          }
+        });
+
+        peakExpectedGuests = maxGuests;
+
+        const nowMinutes = now.getHours() * 60 + now.getMinutes();
+        let diffMinutes = peakMinutes - nowMinutes;
+        if (diffMinutes < 0) {
+          diffMinutes = Math.max(0, 1440 + diffMinutes);
+        }
+        peakWithinMinutes = diffMinutes;
+      }
+
       return {
         date: formattedDate,
         service: 'DINNER SERVICE',
@@ -105,9 +161,9 @@ export function useReservations() {
         noShowsToday,
         noShowRateLabel,
         rushAlert: {
-          time: '7:30 PM',
-          expectedGuests: 18,
-          withinMinutes: 45,
+          time: peakRushTime,
+          expectedGuests: peakExpectedGuests,
+          withinMinutes: peakWithinMinutes,
         },
         managerTools: {
           staffOnShift: staffCount || 8,
@@ -308,6 +364,33 @@ export function useReservations() {
     const updatedOverview = calculateOverview(reservations, queue, tables, usersCount);
     setOverview(updatedOverview);
   }, [reservations, queue, tables, usersCount, calculateOverview]);
+
+  // Auto-trigger Rush Hour Imminent Alert notification when peak rush time arrives/approaches
+  useEffect(() => {
+    if (!overview?.rushAlert) return;
+    const { time, expectedGuests, withinMinutes } = overview.rushAlert;
+
+    if (expectedGuests >= 6 && withinMinutes <= 60) {
+      const alertTitle = `⚡ RUSH HOUR IMMINENT ALERT (${time})`;
+
+      const alreadyAlerted = notifications.some(
+        (n) => n.title.includes('RUSH HOUR IMMINENT') && n.message.includes(time)
+      );
+
+      if (!alreadyAlerted) {
+        addDoc(collection(db, 'notifications'), {
+          title: alertTitle,
+          message: `Rush Hour expected at ${time}! ${expectedGuests} guests arriving within ${withinMinutes} mins. Prepare host stand & kitchen pacing.`,
+          type: 'critical',
+          category: 'critical',
+          recipientRole: 'staff',
+          targetScreen: '/',
+          read: false,
+          createdAt: serverTimestamp(),
+        }).catch((err) => console.warn('Failed to auto-trigger rush hour notification:', err));
+      }
+    }
+  }, [overview?.rushAlert, notifications]);
 
   // Unread notification count for current user
   const currentUid = auth.currentUser?.uid;

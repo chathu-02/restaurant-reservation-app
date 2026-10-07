@@ -34,6 +34,7 @@ export interface Reservation {
   avatarUrl?: string;
   partySize: number;
   time: string;
+  timeMinutes?: number;
   date?: string;
   tableNumber?: string;
   tableArea?: string;
