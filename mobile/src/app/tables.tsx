@@ -201,8 +201,8 @@ export default function TablesScreen() {
               {selectedArea === 'main'
                 ? `Main Dining Room • ${tables.filter((t) => t.area === 'main').length} tables`
                 : selectedArea === 'patio'
-                ? `Outdoor Patio Terrace • ${tables.filter((t) => t.area === 'patio').length} tables`
-                : `Bar & High-tops Lounge • ${tables.filter((t) => t.area === 'bar').length} tables`}
+                  ? `Outdoor Patio Terrace • ${tables.filter((t) => t.area === 'patio').length} tables`
+                  : `Bar & High-tops Lounge • ${tables.filter((t) => t.area === 'bar').length} tables`}
             </Text>
           </View>
 
@@ -340,8 +340,8 @@ export default function TablesScreen() {
                 {selectedArea === 'main'
                   ? 'Main Floor Layout'
                   : selectedArea === 'patio'
-                  ? 'Patio Terrace Garden Layout 🌿'
-                  : 'Bar & High-Tops Layout 🍸'}
+                    ? 'Patio Terrace Garden Layout 🌿'
+                    : 'Bar & High-Tops Layout 🍸'}
               </Text>
               <View style={styles.capacityBadge}>
                 <Text style={styles.capacityText}>68% Capacity</Text>
@@ -356,10 +356,10 @@ export default function TablesScreen() {
                   {statusFilter === 'free'
                     ? 'Available'
                     : statusFilter === 'busy'
-                    ? 'Seated'
-                    : statusFilter === 'booked'
-                    ? 'Booked'
-                    : 'Cleaning'}{' '}
+                      ? 'Seated'
+                      : statusFilter === 'booked'
+                        ? 'Booked'
+                        : 'Cleaning'}{' '}
                   ✕
                 </Text>
               </Pressable>
@@ -407,28 +407,59 @@ export default function TablesScreen() {
                       isDirty && styles.cardDirtyBorder,
                       isSelected && styles.cardSelected,
                     ]}>
-                  {/* Selected check badge */}
-                  {isSelected && (
-                    <View style={styles.checkBadge}>
-                      <Icon name="check" size={11} color="#009669" />
-                    </View>
-                  )}
+                    {/* Selected check badge */}
+                    {isSelected && (
+                      <View style={styles.checkBadge}>
+                        <Icon name="check" size={11} color="#009669" />
+                      </View>
+                    )}
 
-                  {/* Top Status & Badge */}
-                  <View style={styles.cardTopRow}>
-                    <View
-                      style={[
-                        styles.tableStatusDot,
-                        isFree && { backgroundColor: '#10B981' },
-                        isBusy && { backgroundColor: '#3B82F6' },
-                        isBooked && { backgroundColor: '#F59E0B' },
-                        isDirty && { backgroundColor: '#9CA3AF' },
-                        isSelected && { backgroundColor: '#34D399' },
-                      ]}
-                    />
+                    {/* Top Status & Badge */}
+                    <View style={styles.cardTopRow}>
+                      <View
+                        style={[
+                          styles.tableStatusDot,
+                          isFree && { backgroundColor: '#10B981' },
+                          isBusy && { backgroundColor: '#3B82F6' },
+                          isBooked && { backgroundColor: '#F59E0B' },
+                          isDirty && { backgroundColor: '#9CA3AF' },
+                          isSelected && { backgroundColor: '#34D399' },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.cardBadgeText,
+                          isFree && styles.textFree,
+                          isBusy && styles.textBusy,
+                          isBooked && styles.textBooked,
+                          isDirty && styles.textDirty,
+                          isSelected && styles.textSelected,
+                        ]}
+                        numberOfLines={1}>
+                        {t.badgeText}
+                      </Text>
+                    </View>
+
+                    {/* Table Name & Seats */}
                     <Text
                       style={[
-                        styles.cardBadgeText,
+                        styles.tableName,
+                        isSelected && styles.textSelected,
+                      ]}>
+                      {t.name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableSeats,
+                        isSelected && styles.textSelectedDim,
+                      ]}>
+                      {t.seats} seats
+                    </Text>
+
+                    {/* Subtext info */}
+                    <Text
+                      style={[
+                        styles.cardSubText,
                         isFree && styles.textFree,
                         isBusy && styles.textBusy,
                         isBooked && styles.textBooked,
@@ -436,44 +467,13 @@ export default function TablesScreen() {
                         isSelected && styles.textSelected,
                       ]}
                       numberOfLines={1}>
-                      {t.badgeText}
+                      {isSelected ? 'Selected' : t.subText}
                     </Text>
-                  </View>
-
-                  {/* Table Name & Seats */}
-                  <Text
-                    style={[
-                      styles.tableName,
-                      isSelected && styles.textSelected,
-                    ]}>
-                    {t.name}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.tableSeats,
-                      isSelected && styles.textSelectedDim,
-                    ]}>
-                    {t.seats} seats
-                  </Text>
-
-                  {/* Subtext info */}
-                  <Text
-                    style={[
-                      styles.cardSubText,
-                      isFree && styles.textFree,
-                      isBusy && styles.textBusy,
-                      isBooked && styles.textBooked,
-                      isDirty && styles.textDirty,
-                      isSelected && styles.textSelected,
-                    ]}
-                    numberOfLines={1}>
-                    {isSelected ? 'Selected' : t.subText}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
 
           {/* Interactive Floating Table Management Sheet */}
           {selectedTable && (

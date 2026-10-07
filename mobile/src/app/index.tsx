@@ -271,7 +271,6 @@ export default function DashboardScreen() {
                 badgeDot
                 value={overview?.reservationsToday ?? 42}
                 label="Reservations today"
-                onPress={() => router.push('/explore')}
               />
               <MetricCard
                 icon="users"
@@ -285,7 +284,6 @@ export default function DashboardScreen() {
                 badgeVariant="amber"
                 value={overview?.guestsInQueue ?? 6}
                 label="Guests in queue"
-                onPress={() => router.push('/queue')}
               />
             </View>
             <View style={styles.metricsRow}>
@@ -303,7 +301,6 @@ export default function DashboardScreen() {
                 subValue={`/ ${overview?.totalTables ?? 20}`}
                 progressPercentage={occupancyRate}
                 label="Tables occupied"
-                onPress={() => router.push('/tables')}
               />
               <MetricCard
                 icon="target"
@@ -317,9 +314,6 @@ export default function DashboardScreen() {
                 badgeVariant="gray"
                 value={overview?.noShowsToday ?? 2}
                 label="No-shows today"
-                onPress={() =>
-                  Alert.alert('No-Show Rate', '2 no-shows recorded during lunch shift.')
-                }
               />
             </View>
           </View>
