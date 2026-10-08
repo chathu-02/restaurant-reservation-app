@@ -1,39 +1,32 @@
-import { useState, useEffect, useCallback } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, ActivityIndicator } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/components/form-ui";
 import { ReservationDoc, formatTime, dateValue, nextDays } from "@/lib/booking";
-import { loadKitchenReservations } from "@/lib/kitchen";
+import { subscribeKitchenReservations } from "@/lib/kitchen";
 
 export default function KitchenUpcomingScreen() {
-  const [dates, setDates] = useState(nextDays(7));
+  const [dates] = useState(nextDays(7));
   const [selectedDate, setSelectedDate] = useState(dates[0].value);
   const [reservations, setReservations] = useState<ReservationDoc[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const loadData = useCallback(async (date: string) => {
-    try {
-      const data = await loadKitchenReservations(date);
-      setReservations(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
 
   useEffect(() => {
     setLoading(true);
-    loadData(selectedDate);
-  }, [selectedDate, loadData]);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadData(selectedDate);
-  };
+    const stop = subscribeKitchenReservations(
+      selectedDate,
+      (data) => {
+        setReservations(data);
+        setLoading(false);
+      },
+      () => {
+        setReservations([]);
+        setLoading(false);
+      }
+    );
+    return stop;
+  }, [selectedDate]);
 
   const grouped = reservations.reduce((acc, r) => {
     const t = formatTime(r.timeMinutes);
@@ -70,7 +63,6 @@ export default function KitchenUpcomingScreen() {
       ) : (
         <ScrollView 
           contentContainerStyle={styles.content}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
           {Object.keys(grouped).length === 0 && (
             <View style={{ alignItems: "center", marginTop: 60 }}>

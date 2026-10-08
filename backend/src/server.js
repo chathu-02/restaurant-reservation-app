@@ -85,6 +85,7 @@ let userProfile = {
 
 let bookings = [];
 let queue = [];
+const RESERVATION_STATUSES = ["pending", "confirmed", "seated", "preparing", "ready", "served", "cancelled", "no_show"];
 
 // Health endpoint
 app.get("/api/health", (req, res) => {
@@ -203,9 +204,45 @@ app.get("/api/dashboard/metrics", (req, res) => {
 });
 
 app.post("/api/reservations", (req, res) => {
-  const booking = { id: `res-${Date.now()}`, ...req.body, createdAt: new Date().toISOString() };
+  const { date, time, partySize, userName, phone } = req.body;
+  if (!date || !time || !Number.isInteger(Number(partySize)) || Number(partySize) < 1 || !userName) {
+    return res.status(400).json({ message: "Date, time, party size, and guest name are required" });
+  }
+  const booking = {
+    id: `res-${Date.now()}`,
+    ...req.body,
+    partySize: Number(partySize),
+    status: req.body.status || "confirmed",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
   bookings.push(booking);
   res.status(201).json({ message: "Reservation recorded", data: booking });
+});
+
+app.get("/api/reservations", (req, res) => {
+  const result = bookings
+    .filter((booking) => !req.query.date || booking.date === req.query.date)
+    .filter((booking) => !req.query.status || booking.status === req.query.status)
+    .sort((a, b) => String(a.timeMinutes || a.time || "").localeCompare(String(b.timeMinutes || b.time || "")));
+  res.json({ data: result });
+});
+
+app.patch("/api/reservations/:id/status", (req, res) => {
+  const { status } = req.body;
+  if (!RESERVATION_STATUSES.includes(status)) {
+    return res.status(400).json({ message: `Status must be one of: ${RESERVATION_STATUSES.join(", ")}` });
+  }
+  const booking = bookings.find((item) => item.id === req.params.id);
+  if (!booking) return res.status(404).json({ message: "Reservation not found" });
+
+  booking.status = status;
+  booking.updatedAt = new Date().toISOString();
+  if (status === "seated") booking.seatedAt = booking.updatedAt;
+  if (status === "preparing") booking.preparingAt = booking.updatedAt;
+  if (status === "ready") booking.readyAt = booking.updatedAt;
+  if (status === "served") booking.servedAt = booking.updatedAt;
+  res.json({ message: "Reservation status updated", data: booking });
 });
 
 app.post("/api/queue", (req, res) => {

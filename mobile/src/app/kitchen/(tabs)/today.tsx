@@ -4,36 +4,30 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/components/form-ui";
 import { ReservationDoc, dateValue, formatTime } from "@/lib/booking";
-import { loadKitchenReservations, markSeated } from "@/lib/kitchen";
+import { subscribeKitchenReservations, updateReservationStatus, KitchenStatus } from "@/lib/kitchen";
 
 export default function KitchenTodayScreen() {
   const [time, setTime] = useState(new Date());
   const [reservations, setReservations] = useState<ReservationDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadData = async () => {
-    try {
-      const data = await loadKitchenReservations(dateValue(new Date()));
-      setReservations(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadData();
+    const stop = subscribeKitchenReservations(dateValue(new Date()), (data) => {
+      setReservations(data);
+      setLoading(false);
+    }, () => setLoading(false));
     const t = setInterval(() => setTime(new Date()), 60000);
-    return () => clearInterval(t);
+    return () => {
+      stop();
+      clearInterval(t);
+    };
   }, []);
 
-  const handleSeat = async (id: string) => {
+  const handleStatus = async (id: string, status: KitchenStatus) => {
     try {
-      await markSeated(id);
-      loadData();
+      await updateReservationStatus(id, status);
     } catch (e) {
-      Alert.alert("Error", "Could not mark as seated.");
+      Alert.alert("Update failed", "Could not update this booking. Please try again.");
     }
   };
 
@@ -94,14 +88,36 @@ export default function KitchenTodayScreen() {
                   </View>
                 </View>
 
-                {r.status === "confirmed" && (
-                  <Pressable style={styles.seatBtn} onPress={() => handleSeat(r.id)}>
-                    <Text style={styles.seatBtnText}>Mark as Seated</Text>
-                  </Pressable>
-                )}
-                {r.status === "seated" && (
-                  <View style={styles.seatedChip}><Text style={styles.seatedChipText}>Seated</Text></View>
-                )}
+                <View style={styles.actions}>
+                  {r.status === "pending" && (
+                    <Pressable style={styles.confirmBtn} onPress={() => handleStatus(r.id, "confirmed")}>
+                      <Text style={styles.confirmBtnText}>Confirm booking</Text>
+                    </Pressable>
+                  )}
+                  {r.status === "confirmed" && (
+                    <Pressable style={styles.seatBtn} onPress={() => handleStatus(r.id, "seated")}>
+                      <Text style={styles.seatBtnText}>Mark as seated</Text>
+                    </Pressable>
+                  )}
+                  {r.status === "seated" && (
+                    <Pressable style={styles.prepBtn} onPress={() => handleStatus(r.id, "preparing")}>
+                      <Text style={styles.prepBtnText}>Start prep</Text>
+                    </Pressable>
+                  )}
+                  {r.status === "preparing" && (
+                    <Pressable style={styles.readyBtn} onPress={() => handleStatus(r.id, "ready")}>
+                      <Text style={styles.readyBtnText}>Mark ready</Text>
+                    </Pressable>
+                  )}
+                  {r.status === "ready" && (
+                    <Pressable style={styles.readyBtn} onPress={() => handleStatus(r.id, "served")}>
+                      <Text style={styles.readyBtnText}>Served</Text>
+                    </Pressable>
+                  )}
+                  {["seated", "preparing", "ready", "served"].includes(r.status) && (
+                    <View style={styles.seatedChip}><Text style={styles.seatedChipText}>{r.status}</Text></View>
+                  )}
+                </View>
               </View>
             );
           })}
@@ -151,6 +167,13 @@ const styles = StyleSheet.create({
   
   seatBtn: { marginTop: 12, backgroundColor: colors.bg, padding: 10, borderRadius: 8, alignItems: "center" },
   seatBtnText: { color: colors.text, fontWeight: "600", fontSize: 13 },
+  confirmBtn: { backgroundColor: "#D5EDE3", padding: 10, borderRadius: 8, alignItems: "center" },
+  confirmBtnText: { color: "#14503E", fontWeight: "700", fontSize: 13 },
+  actions: { marginTop: 12, gap: 8 },
+  prepBtn: { backgroundColor: "#E9F2FF", padding: 10, borderRadius: 8, alignItems: "center" },
+  prepBtnText: { color: "#1D4ED8", fontWeight: "700", fontSize: 13 },
+  readyBtn: { backgroundColor: "#D5EDE3", padding: 10, borderRadius: 8, alignItems: "center" },
+  readyBtnText: { color: "#14503E", fontWeight: "700", fontSize: 13 },
   seatedChip: { marginTop: 12, alignSelf: "flex-start", backgroundColor: "#D5EDE3", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 16 },
   seatedChipText: { color: "#14503E", fontSize: 12, fontWeight: "700" },
 

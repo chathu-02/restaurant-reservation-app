@@ -39,10 +39,9 @@ export default function SignIn() {
       <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" />
       <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry />
       <Message text={error} />
-      <Button title={busy ? "Please wait…" : "Log in"} onPress={submit} disabled={busy} />
+      <Button title={busy ? "Please wait..." : "Log in"} onPress={submit} disabled={busy} />
       <LinkText title="Forgot password?" onPress={() => router.push("/forgot-password" as never)} />
       <LinkText title="New here? Create an account" onPress={() => router.push("/sign-up" as never)} />
-      <LinkText title="Staff Login →" onPress={() => router.push("/staff-sign-in" as never)} />
     </Screen>
   );
 }

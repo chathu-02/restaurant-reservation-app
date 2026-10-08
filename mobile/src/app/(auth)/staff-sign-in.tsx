@@ -43,15 +43,15 @@ export default function StaffSignIn() {
   return (
     <Screen>
       <Text style={{ fontSize: 28, fontWeight: "700", color: colors.text, marginBottom: 6 }}>
-        Staff log in
+        Kitchen staff log in
       </Text>
       <Text style={{ fontSize: 16, color: colors.muted, marginBottom: 24 }}>
-        Use the username and password your manager gave you.
+        Use your staff username and password to open the kitchen dashboard.
       </Text>
       <Field label="Username" value={username} onChangeText={setUsername} autoComplete="username" />
       <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry />
       <Message text={error} />
-      <Button title={busy ? "Please wait…" : "Log in"} onPress={submit} disabled={busy} />
+      <Button title={busy ? "Please wait..." : "Log in"} onPress={submit} disabled={busy} />
       <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginVertical: 8 }}>
         Forgot your password? Ask your manager.
       </Text>

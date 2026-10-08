@@ -77,7 +77,9 @@ export default function Bookings() {
   const today = dateValue(new Date());
   const key = (r: ReservationDoc) => r.date + String(r.timeMinutes).padStart(4, "0");
   const isUpcoming = (r: ReservationDoc) =>
-    ["pending", "confirmed"].includes(r.status) && r.date >= today && !r.checkedIn;
+    ["pending", "confirmed", "seated", "preparing", "ready"].includes(r.status) &&
+    r.date >= today &&
+    !r.checkedIn;
   const visited = (r: ReservationDoc) =>
     !!r.checkedIn || ["seated", "completed"].includes(r.status);
   const upcoming = items.filter(isUpcoming).sort((a, b) => key(a).localeCompare(key(b)));
