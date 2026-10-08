@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { Text } from "react-native";
-import { useRouter } from "expo-router";
+import { useState, useCallback } from "react";
+import { Text, View } from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Button, colors, Field, LinkText, Message, Screen } from "@/components/form-ui";
 import { friendlyError, homeRouteFor, login } from "@/lib/auth";
+import { Logo } from "@/components/logo";
 
 export default function SignIn() {
   const router = useRouter();
@@ -10,6 +11,14 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setEmail("");
+      setPassword("");
+      setError("");
+    }, [])
+  );
 
   const submit = async () => {
     if (!email.trim() || !password) {
@@ -30,10 +39,13 @@ export default function SignIn() {
 
   return (
     <Screen>
-      <Text style={{ fontSize: 28, fontWeight: "700", color: colors.text, marginBottom: 6 }}>
+      <View style={{ alignItems: "center", marginBottom: 32 }}>
+        <Logo size={120} color={colors.text} />
+      </View>
+      <Text style={{ fontSize: 28, fontWeight: "800", color: colors.text, marginBottom: 6, textAlign: "center" }}>
         Welcome back
       </Text>
-      <Text style={{ fontSize: 16, color: colors.muted, marginBottom: 24 }}>
+      <Text style={{ fontSize: 16, color: colors.muted, marginBottom: 24, textAlign: "center" }}>
         Log in to book a table or join the queue.
       </Text>
       <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" />

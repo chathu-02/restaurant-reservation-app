@@ -25,6 +25,9 @@ import Input from '@/components/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { useReservations } from '@/hooks/useReservations';
 import { DashboardSkeleton } from '@/components/SkeletonLoader';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Logo } from '@/components/logo';
+import { BRAND } from '@/lib/brand';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -42,6 +45,16 @@ export default function DashboardScreen() {
 
   // Active bottom navigation tab
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
+
+  const [profilePic, setProfilePic] = useState('https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=256');
+
+  useEffect(() => {
+    if (user?.id) {
+      AsyncStorage.getItem(`@profile_pic_${user.id}`).then(pic => {
+        if (pic) setProfilePic(pic);
+      });
+    }
+  }, [user?.id]);
 
   // Modals for actions
   const [bookingModalVisible, setBookingModalVisible] = useState(false);
@@ -189,372 +202,367 @@ export default function DashboardScreen() {
                   styles.heroSection,
                   { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
                 ]}>
-                {/* Background Ambient Decorative Light Orbs */}
-                <View style={styles.heroGlowTopRight} pointerEvents="none" />
-                <View style={styles.heroGlowBottomLeft} pointerEvents="none" />
-                <View style={styles.heroGlowCenter} pointerEvents="none" />
+
 
                 {/* Top Bar */}
-            <View style={styles.topBar}>
-              <View style={styles.topBarLeft}>
-                <View style={styles.serviceIconContainer}>
-                  <Icon name="utensils" size={18} color="#FFFFFF" />
-                </View>
-                <StatusBadge
-                  label={overview?.service || user?.service || 'DINNER SERVICE'}
-                  variant="green"
-                  dot
-                  size="medium"
-                />
-              </View>
-
-              {/* Live clock pill */}
-              <View style={styles.clockPill}>
-                <Icon name="clock" size={13} color="#34D399" />
-                <Text style={styles.clockText}>{liveTime}</Text>
-              </View>
-
-              {/* Profile Initial "C" */}
-              <Pressable
-                onPress={() => router.push('/(staff)/manager/profile' as never)}
-                style={styles.avatarWrapper}>
-                <View style={styles.avatarIconCircle}>
-                  <Text style={styles.avatarInitialText}>C</Text>
-                </View>
-                <View style={styles.onlineBadge} />
-              </Pressable>
-            </View>
-
-            <Text style={styles.dateText}>
-              {overview?.date || getFormattedDate().toUpperCase()}
-            </Text>
-            <Text style={styles.greetingText}>
-              {getGreeting()},{' '}
-              <Text style={styles.greetingName}>
-                {user?.name?.split(' ')[0] || 'Sarah'}
-              </Text>
-            </Text>
-            <Text style={styles.greetingSubtitle}>
-              Here's your shift overview — {overview?.reservationsToday ?? 42} covers booked today
-            </Text>
-
-            {/* Shift progress card inside hero container */}
-            <View style={styles.shiftProgressContainer}>
-              <View style={styles.shiftProgressTopRow}>
-                <View style={styles.progressCircleBadge}>
-                  <Text style={styles.progressCircleText}>{shiftProgressPercent}%</Text>
-                </View>
-                <View style={styles.shiftProgressTextCol}>
-                  <Text style={styles.shiftProgressLabel}>Shift progress</Text>
-                  <Text style={styles.shiftProgressValue}>{shiftProgressPercent}% of target</Text>
-                </View>
-              </View>
-              <View style={styles.shiftProgressTrack}>
-                <View style={[styles.shiftProgressFill, { width: `${shiftProgressPercent}%` }]} />
-              </View>
-            </View>
-          </Animated.View>
-
-          {/* ─── 2×2 Metric Cards Grid ───────────────────────────── */}
-          <View style={styles.metricsGrid}>
-            <View style={styles.metricsRow}>
-              <MetricCard
-                icon="calendar"
-                cardBgColor="#ECFDF5"
-                borderColor="#A7F3D0"
-                iconBgColor="#10B981"
-                iconColor="#FFFFFF"
-                valueColor="#065F46"
-                labelColor="#047857"
-                badgeLabel={`+${overview?.newReservations ?? 4} new`}
-                badgeVariant="green"
-                badgeDot
-                value={overview?.reservationsToday ?? 42}
-                label="Reservations today"
-              />
-              <MetricCard
-                icon="users"
-                cardBgColor="#FFFBEB"
-                borderColor="#FDE68A"
-                iconBgColor="#F59E0B"
-                iconColor="#FFFFFF"
-                valueColor="#92400E"
-                labelColor="#B45309"
-                badgeLabel={`~${overview?.queueWaitMinutes ?? 12} min`}
-                badgeVariant="amber"
-                value={overview?.guestsInQueue ?? 6}
-                label="Guests in queue"
-              />
-            </View>
-            <View style={styles.metricsRow}>
-              <MetricCard
-                icon="grid"
-                cardBgColor="#F0FDFA"
-                borderColor="#99F6E4"
-                iconBgColor="#0D9488"
-                iconColor="#FFFFFF"
-                valueColor="#115E59"
-                labelColor="#0F766E"
-                badgeLabel={`${occupancyRate}%`}
-                badgeVariant="teal"
-                value={overview?.occupiedTables ?? 14}
-                subValue={`/ ${overview?.totalTables ?? 20}`}
-                progressPercentage={occupancyRate}
-                label="Tables occupied"
-              />
-              <MetricCard
-                icon="target"
-                cardBgColor="#EFF6FF"
-                borderColor="#BFDBFE"
-                iconBgColor="#3B82F6"
-                iconColor="#FFFFFF"
-                valueColor="#1E40AF"
-                labelColor="#1D4ED8"
-                badgeLabel={overview?.noShowRateLabel ?? 'Low rate'}
-                badgeVariant="gray"
-                value={overview?.noShowsToday ?? 2}
-                label="No-shows today"
-              />
-            </View>
-          </View>
-
-          {/* ─── Rush Alert Card ─────────────────────────────────── */}
-          <RushAlertCard
-            time={overview?.rushAlert?.time ?? '7:30 PM'}
-            expectedGuests={overview?.rushAlert?.expectedGuests ?? 18}
-            withinMinutes={overview?.rushAlert?.withinMinutes ?? 45}
-            onPressView={() => setRushModalVisible(true)}
-          />
-
-          {/* ─── Quick Actions Container ──────────────────────────── */}
-          <View style={styles.lightGreenContainer}>
-            <View style={styles.containerHeaderRow}>
-              <View style={styles.containerHeaderLeft}>
-                <Text style={styles.containerTitle}>Quick actions</Text>
-              </View>
-            </View>
-
-            <View style={styles.quickActionsContainer}>
-              {/* Full-width New Booking card on top */}
-              <Pressable
-                onPress={() => setBookingModalVisible(true)}
-                style={({ pressed }) => [styles.fullWidthNewBookingCard, pressed && styles.actionPressed]}>
-                <View style={styles.newBookingIconRing}>
-                  <Icon name="plus" size={22} color="#FFFFFF" />
-                </View>
-                <View style={styles.fullBookingTextCol}>
-                  <Text style={styles.newBookingLabel}>New booking</Text>
-                  <Text style={styles.newBookingSub}>Reserve table</Text>
-                </View>
-              </Pressable>
-
-              {/* Bottom 2 side-by-side cards */}
-              <View style={styles.bottomActionsRow}>
-                <Pressable
-                  onPress={() => router.push('/(staff)/manager/add-walkin' as never)}
-                  style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
-                  <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
-                    <Icon name="walk" size={20} color="#D97706" />
+                <View style={styles.topBar}>
+                  <View style={[styles.topBarLeft, { flex: 1, flexDirection: 'column', alignItems: 'flex-start' }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                      <Logo size={32} badge />
+                    </View>
+                    <StatusBadge
+                      label={overview?.service || user?.service || 'DINNER SERVICE'}
+                      variant="green"
+                      dot
+                      size="medium"
+                    />
                   </View>
-                  <View style={styles.actionTextCol}>
-                    <Text style={styles.actionCardLabel}>Walk-in</Text>
-                    <Text style={styles.actionCardSub}>Add to queue</Text>
-                  </View>
-                </Pressable>
 
-                <Pressable
-                  onPress={() => router.push('/(staff)/manager/floor-layout' as never)}
-                  style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
-                  <View style={[styles.actionIconCircle, { backgroundColor: '#E0E7FF' }]}>
-                    <Icon name="table" size={20} color="#4F46E5" />
+                  {/* Live clock pill */}
+                  <View style={styles.clockPill}>
+                    <Icon name="clock" size={13} color="#34D399" />
+                    <Text style={styles.clockText}>{liveTime}</Text>
                   </View>
-                  <View style={styles.actionTextCol}>
-                    <Text style={styles.actionCardLabel}>Floor plan</Text>
-                    <Text style={styles.actionCardSub}>Manage tables</Text>
-                  </View>
-                </Pressable>
-              </View>
-            </View>
-          </View>
 
-          {/* ─── Upcoming Reservations Container ─────────────────── */}
-          <View style={styles.lightGreenContainer}>
-            <View style={styles.containerHeaderRow}>
-              <View style={styles.containerHeaderLeft}>
-                <Text style={styles.containerTitle}>Upcoming</Text>
-                <View style={styles.sectionCountBadge}>
-                  <Text style={styles.sectionCountText}>
-                    {reservations.filter((r) => r.status !== 'cancelled').length}
+                  {/* Profile Initial "C" */}
+                  <Pressable
+                    onPress={() => router.push('/(staff)/manager/profile' as never)}
+                    style={styles.avatarWrapper}>
+                    <Image source={{ uri: profilePic }} style={styles.avatarIconCircle} />
+                    <View style={styles.onlineBadge} />
+                  </Pressable>
+                </View>
+
+                <Text style={styles.dateText}>
+                  {overview?.date || getFormattedDate().toUpperCase()}
+                </Text>
+                <Text style={styles.greetingText}>
+                  {getGreeting()},{' '}
+                  <Text style={styles.greetingName}>
+                    {user?.name?.split(' ')[0] || 'Sarah'}
                   </Text>
+                </Text>
+                <Text style={styles.greetingSubtitle}>
+                  Here's your shift overview — {overview?.reservationsToday ?? 42} covers booked today
+                </Text>
+
+                {/* Shift progress card inside hero container */}
+                <View style={styles.shiftProgressContainer}>
+                  <View style={styles.shiftProgressTopRow}>
+                    <View style={styles.progressCircleBadge}>
+                      <Text style={styles.progressCircleText}>{shiftProgressPercent}%</Text>
+                    </View>
+                    <View style={styles.shiftProgressTextCol}>
+                      <Text style={styles.shiftProgressLabel}>Shift progress</Text>
+                      <Text style={styles.shiftProgressValue}>{shiftProgressPercent}% of target</Text>
+                    </View>
+                  </View>
+                  <View style={styles.shiftProgressTrack}>
+                    <View style={[styles.shiftProgressFill, { width: `${shiftProgressPercent}%` }]} />
+                  </View>
+                </View>
+              </Animated.View>
+
+              {/* ─── 2×2 Metric Cards Grid ───────────────────────────── */}
+              <View style={styles.metricsGrid}>
+                <View style={styles.metricsRow}>
+                  <MetricCard
+                    icon="calendar"
+                    cardBgColor="#ECFDF5"
+                    borderColor="#A7F3D0"
+                    iconBgColor="#10B981"
+                    iconColor="#FFFFFF"
+                    valueColor="#065F46"
+                    labelColor="#047857"
+                    badgeLabel={`+${overview?.newReservations ?? 4} new`}
+                    badgeVariant="green"
+                    badgeDot
+                    value={overview?.reservationsToday ?? 42}
+                    label="Reservations today"
+                  />
+                  <MetricCard
+                    icon="users"
+                    cardBgColor="#FFFBEB"
+                    borderColor="#FDE68A"
+                    iconBgColor="#F59E0B"
+                    iconColor="#FFFFFF"
+                    valueColor="#92400E"
+                    labelColor="#B45309"
+                    badgeLabel={`~${overview?.queueWaitMinutes ?? 12} min`}
+                    badgeVariant="amber"
+                    value={overview?.guestsInQueue ?? 6}
+                    label="Guests in queue"
+                  />
+                </View>
+                <View style={styles.metricsRow}>
+                  <MetricCard
+                    icon="grid"
+                    cardBgColor="#F0FDFA"
+                    borderColor="#99F6E4"
+                    iconBgColor="#0D9488"
+                    iconColor="#FFFFFF"
+                    valueColor="#115E59"
+                    labelColor="#0F766E"
+                    badgeLabel={`${occupancyRate}%`}
+                    badgeVariant="teal"
+                    value={overview?.occupiedTables ?? 14}
+                    subValue={`/ ${overview?.totalTables ?? 20}`}
+                    progressPercentage={occupancyRate}
+                    label="Tables occupied"
+                  />
+                  <MetricCard
+                    icon="target"
+                    cardBgColor="#EFF6FF"
+                    borderColor="#BFDBFE"
+                    iconBgColor="#3B82F6"
+                    iconColor="#FFFFFF"
+                    valueColor="#1E40AF"
+                    labelColor="#1D4ED8"
+                    badgeLabel={overview?.noShowRateLabel ?? 'Low rate'}
+                    badgeVariant="gray"
+                    value={overview?.noShowsToday ?? 2}
+                    label="No-shows today"
+                  />
                 </View>
               </View>
-              <Pressable
-                onPress={() => router.push('/(staff)/manager/explore' as never)}
-                style={({ pressed }) => [styles.seeAllBtn, pressed && styles.actionPressed]}>
-                <Text style={styles.seeAllText}>See All</Text>
-                <Icon name="chevron-right" size={14} color="#009669" />
-              </Pressable>
-            </View>
 
-            <View style={styles.timelineContainer}>
-              {reservations.filter((r) => r.status !== 'cancelled').length === 0 ? (
-                <View style={{ paddingVertical: 16, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 13, color: '#333a49ff', fontStyle: 'italic' }}>
-                    No upcoming reservations scheduled.
-                  </Text>
+              {/* ─── Rush Alert Card ─────────────────────────────────── */}
+              <RushAlertCard
+                time={overview?.rushAlert?.time ?? '7:30 PM'}
+                expectedGuests={overview?.rushAlert?.expectedGuests ?? 18}
+                withinMinutes={overview?.rushAlert?.withinMinutes ?? 45}
+                onPressView={() => setRushModalVisible(true)}
+              />
+
+              {/* ─── Quick Actions Container ──────────────────────────── */}
+              <View style={styles.lightGreenContainer}>
+                <View style={styles.containerHeaderRow}>
+                  <View style={styles.containerHeaderLeft}>
+                    <Text style={styles.containerTitle}>Quick actions</Text>
+                  </View>
                 </View>
-              ) : (
-                reservations
-                  .filter((r) => r.status !== 'cancelled')
-                  .slice(0, 5)
-                  .map((res, idx, arr) => (
+
+                <View style={styles.quickActionsContainer}>
+                  {/* Full-width New Booking card on top */}
+                  <Pressable
+                    onPress={() => setBookingModalVisible(true)}
+                    style={({ pressed }) => [styles.fullWidthNewBookingCard, pressed && styles.actionPressed]}>
+                    <View style={styles.newBookingIconRing}>
+                      <Icon name="plus" size={22} color="#FFFFFF" />
+                    </View>
+                    <View style={styles.fullBookingTextCol}>
+                      <Text style={styles.newBookingLabel}>New booking</Text>
+                      <Text style={styles.newBookingSub}>Reserve table</Text>
+                    </View>
+                  </Pressable>
+
+                  {/* Bottom 2 side-by-side cards */}
+                  <View style={styles.bottomActionsRow}>
                     <Pressable
-                      key={res.id}
-                      onPress={() =>
-                        router.push({
-                          pathname: '/(staff)/manager/reservation-detail',
-                          params: {
-                            id: res.id,
-                            bookingId: res.bookingId || res.id,
-                            guestName: res.guestName,
-                            time: res.time,
-                            date: res.date || 'Today',
-                            partySize: `${res.partySize} Guests`,
-                            tableNumber: res.tableNumber || 'Unassigned',
-                            tableArea: res.tableArea || 'Main Room',
-                            phone: res.phone || '',
-                            notes: res.notes || '',
-                            status: res.status,
-                            avatarUrl: res.avatarUrl || '',
-                          },
-                        })
-                      }
-                      style={({ pressed }) => [
-                        styles.timelineItem,
-                        idx === arr.length - 1 && styles.timelineItemLast,
-                        pressed && styles.actionPressed,
-                      ]}>
-                      {/* Timeline dot & line */}
-                      <View style={styles.timelineDotCol}>
-                        <View
-                          style={[
-                            styles.timelineDot,
-                            res.status === 'pending' && styles.timelineDotPending,
-                          ]}
-                        />
-                        {idx < arr.length - 1 && <View style={styles.timelineLine} />}
+                      onPress={() => router.push('/(staff)/manager/add-walkin' as never)}
+                      style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
+                      <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
+                        <Icon name="walk" size={20} color="#D97706" />
                       </View>
-
-                      {/* Card content */}
-                      <View style={styles.timelineCard}>
-                        <View style={styles.timelineCardTop}>
-                          <View style={styles.timelineNameRow}>
-                            <Text style={styles.timelineGuestName}>{res.guestName}</Text>
-                            {res.vipBadge && (
-                              <View style={styles.vipBadge}>
-                                <Icon name="star" size={10} color="#D97706" />
-                                <Text style={styles.vipBadgeText}>VIP</Text>
-                              </View>
-                            )}
-                          </View>
-                          <Text style={styles.timelineTime}>{res.time}</Text>
-                        </View>
-                        <View style={styles.timelineCardBottom}>
-                          <View style={styles.timelineMetaItem}>
-                            <Icon name="users" size={12} color="#030914ff" />
-                            <Text style={styles.timelineMetaText}>{res.partySize} guests</Text>
-                          </View>
-                          <View style={styles.timelineMetaItem}>
-                            <Icon name="grid" size={12} color="#080b12ff" />
-                            <Text style={styles.timelineMetaText}>
-                              {res.tableNumber || 'Unassigned'}
-                            </Text>
-                          </View>
-                          <StatusBadge
-                            label={
-                              res.status === 'confirmed'
-                                ? 'Confirmed'
-                                : res.status === 'seated'
-                                ? 'Seated'
-                                : 'Pending'
-                            }
-                            variant={
-                              res.status === 'confirmed'
-                                ? 'green'
-                                : res.status === 'seated'
-                                ? 'teal'
-                                : 'amber'
-                            }
-                          />
-                        </View>
+                      <View style={styles.actionTextCol}>
+                        <Text style={styles.actionCardLabel}>Walk-in</Text>
+                        <Text style={styles.actionCardSub}>Add to queue</Text>
                       </View>
                     </Pressable>
-                  ))
-              )}
-            </View>
-          </View>
 
-          {/* ─── Manager Tools Container ─────────────────────────── */}
-          <View style={styles.lightGreenContainer}>
-            <View style={styles.containerHeaderRow}>
-              <Text style={styles.containerTitle}>Manager Tools</Text>
-              <Pressable
-                onPress={() => router.push('/(staff)/manager/profile' as never)}
-                style={({ pressed }) => [styles.seeAllBtn, pressed && styles.actionPressed]}>
-                <Text style={styles.seeAllText}>Quick Access</Text>
-                <Icon name="chevron-right" size={14} color="#009669" />
-              </Pressable>
-            </View>
+                    <Pressable
+                      onPress={() => router.push('/(staff)/manager/floor-layout' as never)}
+                      style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
+                      <View style={[styles.actionIconCircle, { backgroundColor: '#E0E7FF' }]}>
+                        <Icon name="table" size={20} color="#4F46E5" />
+                      </View>
+                      <View style={styles.actionTextCol}>
+                        <Text style={styles.actionCardLabel}>Floor plan</Text>
+                        <Text style={styles.actionCardSub}>Manage tables</Text>
+                      </View>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
 
-            <View style={styles.toolsCardContainer}>
-              <ManagerToolItem
-                icon="users"
-                iconBgColor="#10B981"
-                iconColor="#FFFFFF"
-                title="Staff Accounts"
-                subtitle={`${overview?.managerTools?.staffOnShift ?? 8} staff currently on shift`}
-                hasActiveDot
-                onPress={() => router.push('/(staff)/manager/profile' as never)}
-              />
-              <ManagerToolItem
-                icon="gear"
-                iconBgColor="#3B82F6"
-                iconColor="#FFFFFF"
-                title="Restaurant Settings"
-                subtitle={
-                  overview?.managerTools?.settingsSubtitle ??
-                  'Hours, kitchen pacing, notifications'
-                }
-                onPress={() => router.push('/(staff)/manager/restaurant-settings' as never)}
-              />
-              <ManagerToolItem
-                icon="table"
-                iconBgColor="#06B6D4"
-                iconColor="#FFFFFF"
-                title="Table Setup & Floor Plan"
-                subtitle={
-                  overview?.managerTools?.floorPlanSubtitle ??
-                  'Main room, Patio & Private bar'
-                }
-                onPress={() => router.push('/(staff)/manager/tables' as never)}
-              />
-              <ManagerToolItem
-                icon="chart"
-                iconBgColor="#4F46E5"
-                iconColor="#FFFFFF"
-                title="Reports & Analytics"
-                subtitle={
-                  overview?.managerTools?.analyticsSubtitle ??
-                  'Pacing, table turns & revenue pace'
-                }
-                showDivider={false}
-                onPress={() => router.push('/(staff)/manager/reports' as never)}
-              />
-            </View>
-          </View>
+              {/* ─── Upcoming Reservations Container ─────────────────── */}
+              <View style={styles.lightGreenContainer}>
+                <View style={styles.containerHeaderRow}>
+                  <View style={styles.containerHeaderLeft}>
+                    <Text style={styles.containerTitle}>Upcoming</Text>
+                    <View style={styles.sectionCountBadge}>
+                      <Text style={styles.sectionCountText}>
+                        {reservations.filter((r) => r.status !== 'cancelled').length}
+                      </Text>
+                    </View>
+                  </View>
+                  <Pressable
+                    onPress={() => router.push('/(staff)/manager/explore' as never)}
+                    style={({ pressed }) => [styles.seeAllBtn, pressed && styles.actionPressed]}>
+                    <Text style={styles.seeAllText}>See All</Text>
+                    <Icon name="chevron-right" size={14} color="#009669" />
+                  </Pressable>
+                </View>
 
-          {/* Bottom spacer */}
-          <View style={{ height: 8 }} />
+                <View style={styles.timelineContainer}>
+                  {reservations.filter((r) => r.status !== 'cancelled').length === 0 ? (
+                    <View style={{ paddingVertical: 16, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 13, color: '#333a49ff', fontStyle: 'italic' }}>
+                        No upcoming reservations scheduled.
+                      </Text>
+                    </View>
+                  ) : (
+                    reservations
+                      .filter((r) => r.status !== 'cancelled')
+                      .slice(0, 5)
+                      .map((res, idx, arr) => (
+                        <Pressable
+                          key={res.id}
+                          onPress={() =>
+                            router.push({
+                              pathname: '/(staff)/manager/reservation-detail',
+                              params: {
+                                id: res.id,
+                                bookingId: res.bookingId || res.id,
+                                guestName: res.guestName,
+                                time: res.time,
+                                date: res.date || 'Today',
+                                partySize: `${res.partySize} Guests`,
+                                tableNumber: res.tableNumber || 'Unassigned',
+                                tableArea: res.tableArea || 'Main Room',
+                                phone: res.phone || '',
+                                notes: res.notes || '',
+                                status: res.status,
+                                avatarUrl: res.avatarUrl || '',
+                              },
+                            })
+                          }
+                          style={({ pressed }) => [
+                            styles.timelineItem,
+                            idx === arr.length - 1 && styles.timelineItemLast,
+                            pressed && styles.actionPressed,
+                          ]}>
+                          {/* Timeline dot & line */}
+                          <View style={styles.timelineDotCol}>
+                            <View
+                              style={[
+                                styles.timelineDot,
+                                res.status === 'pending' && styles.timelineDotPending,
+                              ]}
+                            />
+                            {idx < arr.length - 1 && <View style={styles.timelineLine} />}
+                          </View>
+
+                          {/* Card content */}
+                          <View style={styles.timelineCard}>
+                            <View style={styles.timelineCardTop}>
+                              <View style={styles.timelineNameRow}>
+                                <Text style={styles.timelineGuestName}>{res.guestName}</Text>
+                                {res.vipBadge && (
+                                  <View style={styles.vipBadge}>
+                                    <Icon name="star" size={10} color="#D97706" />
+                                    <Text style={styles.vipBadgeText}>VIP</Text>
+                                  </View>
+                                )}
+                              </View>
+                              <Text style={styles.timelineTime}>{res.time}</Text>
+                            </View>
+                            <View style={styles.timelineCardBottom}>
+                              <View style={styles.timelineMetaItem}>
+                                <Icon name="users" size={12} color="#030914ff" />
+                                <Text style={styles.timelineMetaText}>{res.partySize} guests</Text>
+                              </View>
+                              <View style={styles.timelineMetaItem}>
+                                <Icon name="grid" size={12} color="#080b12ff" />
+                                <Text style={styles.timelineMetaText}>
+                                  {res.tableNumber || 'Unassigned'}
+                                </Text>
+                              </View>
+                              <StatusBadge
+                                label={
+                                  res.status === 'confirmed'
+                                    ? 'Confirmed'
+                                    : res.status === 'seated'
+                                      ? 'Seated'
+                                      : 'Pending'
+                                }
+                                variant={
+                                  res.status === 'confirmed'
+                                    ? 'green'
+                                    : res.status === 'seated'
+                                      ? 'teal'
+                                      : 'amber'
+                                }
+                              />
+                            </View>
+                          </View>
+                        </Pressable>
+                      ))
+                  )}
+                </View>
+              </View>
+
+              {/* ─── Manager Tools Container ─────────────────────────── */}
+              <View style={styles.lightGreenContainer}>
+                <View style={styles.containerHeaderRow}>
+                  <Text style={styles.containerTitle}>Manager Tools</Text>
+                  <Pressable
+                    onPress={() => router.push('/(staff)/manager/profile' as never)}
+                    style={({ pressed }) => [styles.seeAllBtn, pressed && styles.actionPressed]}>
+                    <Text style={styles.seeAllText}>Quick Access</Text>
+                    <Icon name="chevron-right" size={14} color="#009669" />
+                  </Pressable>
+                </View>
+
+                <View style={styles.toolsCardContainer}>
+                  <ManagerToolItem
+                    icon="users"
+                    iconBgColor="#10B981"
+                    iconColor="#FFFFFF"
+                    title="Staff Accounts"
+                    subtitle={`${overview?.managerTools?.staffOnShift ?? 8} staff currently on shift`}
+                    hasActiveDot
+                    onPress={() => router.push('/(staff)/manager/admin-dashboard' as never)}
+                  />
+                  <ManagerToolItem
+                    icon="gear"
+                    iconBgColor="#3B82F6"
+                    iconColor="#FFFFFF"
+                    title="Restaurant Settings"
+                    subtitle={
+                      overview?.managerTools?.settingsSubtitle ??
+                      'Hours, kitchen pacing, notifications'
+                    }
+                    onPress={() => router.push('/(staff)/manager/restaurant-settings' as never)}
+                  />
+                  <ManagerToolItem
+                    icon="table"
+                    iconBgColor="#06B6D4"
+                    iconColor="#FFFFFF"
+                    title="Table Setup & Floor Plan"
+                    subtitle={
+                      overview?.managerTools?.floorPlanSubtitle ??
+                      'Main room, Patio & Private bar'
+                    }
+                    onPress={() => router.push('/(staff)/manager/tables' as never)}
+                  />
+                  <ManagerToolItem
+                    icon="chart"
+                    iconBgColor="#4F46E5"
+                    iconColor="#FFFFFF"
+                    title="Reports & Analytics"
+                    subtitle={
+                      overview?.managerTools?.analyticsSubtitle ??
+                      'Pacing, table turns & revenue pace'
+                    }
+                    showDivider={false}
+                    onPress={() => router.push('/(staff)/manager/reports' as never)}
+                  />
+                </View>
+              </View>
+
+              {/* Bottom spacer */}
+              <View style={{ height: 8 }} />
             </>
           )}
         </ScrollView>

@@ -13,8 +13,10 @@ export type IconName =
   | 'target'
   | 'clock'
   | 'chevron-right'
+  | 'chevron-left'
   | 'chevron-down'
   | 'plus'
+  | 'minus'
   | 'walk'
   | 'gear'
   | 'table'
@@ -25,6 +27,8 @@ export type IconName =
   | 'person'
   | 'phone'
   | 'arrow-back'
+  | 'arrow-forward'
+  | 'arrow-right'
   | 'dot'
   | 'search'
   | 'mic'
@@ -40,7 +44,6 @@ export type IconName =
   | 'eye'
   | 'eye-off'
   | 'id-card'
-  | 'arrow-forward'
   | 'mail'
   | 'help-circle'
   | 'pencil'
@@ -48,7 +51,22 @@ export type IconName =
   | 'sun'
   | 'wine'
   | 'whatsapp'
-  | 'trash-outline';
+  | 'trash-outline'
+  | 'leaf'
+  | 'sparkles'
+  | 'zap'
+  | 'edit'
+  | 'trash'
+  | 'logout'
+  | 'card'
+  | 'camera'
+  | 'armchair'
+  | 'help'
+  | 'x-circle'
+  | 'command'
+  | 'add'
+  | 'restaurant'
+  | 'basket';
 
 interface IconProps {
   name: IconName;
@@ -73,10 +91,20 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="time-outline" size={size} color={color} style={style} />;
     case 'chevron-right':
       return <Feather name="chevron-right" size={size} color={color} style={style} />;
+    case 'chevron-left':
+      return <Feather name="chevron-left" size={size} color={color} style={style} />;
     case 'chevron-down':
       return <Feather name="chevron-down" size={size} color={color} style={style} />;
+    case 'arrow-back':
+      return <Ionicons name="arrow-back" size={size} color={color} style={style} />;
+    case 'arrow-forward':
+      return <Ionicons name="arrow-forward" size={size} color={color} style={style} />;
+    case 'arrow-right':
+      return <Feather name="arrow-right" size={size} color={color} style={style} />;
     case 'plus':
       return <Feather name="plus" size={size} color={color} style={style} />;
+    case 'minus':
+      return <Feather name="minus" size={size} color={color} style={style} />;
     case 'walk':
       return <MaterialCommunityIcons name="walk" size={size} color={color} style={style} />;
     case 'gear':
@@ -94,11 +122,7 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
     case 'person':
       return <Ionicons name="person-outline" size={size} color={color} style={style} />;
     case 'phone':
-      return <Ionicons name="call" size={size} color={color} style={style} />;
-    case 'arrow-back':
-      return <Ionicons name="arrow-back" size={size} color={color} style={style} />;
-    case 'arrow-forward':
-      return <Ionicons name="arrow-forward" size={size} color={color} style={style} />;
+      return <Ionicons name="call-outline" size={size} color={color} style={style} />;
     case 'dot':
       return <Ionicons name="ellipse" size={size} color={color} style={style} />;
     case 'search':
@@ -132,10 +156,12 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
     case 'mail':
       return <Ionicons name="mail-outline" size={size} color={color} style={style} />;
     case 'help-circle':
+    case 'help':
       return <Ionicons name="help-circle-outline" size={size} color={color} style={style} />;
     case 'pencil':
       return <Ionicons name="pencil" size={size} color={color} style={style} />;
     case 'flash':
+    case 'zap':
       return <Ionicons name="flash" size={size} color={color} style={style} />;
     case 'sun':
       return <Ionicons name="sunny-outline" size={size} color={color} style={style} />;
@@ -145,6 +171,32 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="logo-whatsapp" size={size} color={color} style={style} />;
     case 'trash-outline':
       return <Ionicons name="trash-outline" size={size} color={color} style={style} />;
+    case 'leaf':
+      return <Ionicons name="leaf-outline" size={size} color={color} style={style} />;
+    case 'sparkles':
+      return <Ionicons name="sparkles" size={size} color={color} style={style} />;
+    case 'edit':
+      return <Feather name="edit-3" size={size} color={color} style={style} />;
+    case 'trash':
+      return <Feather name="trash-2" size={size} color={color} style={style} />;
+    case 'logout':
+      return <MaterialIcons name="logout" size={size} color={color} style={style} />;
+    case 'card':
+      return <Ionicons name="card-outline" size={size} color={color} style={style} />;
+    case 'camera':
+      return <Ionicons name="camera-outline" size={size} color={color} style={style} />;
+    case 'armchair':
+      return <MaterialCommunityIcons name="seat" size={size} color={color} style={style} />;
+    case 'x-circle':
+      return <Ionicons name="close-circle-outline" size={size} color={color} style={style} />;
+    case 'command':
+      return <Feather name="command" size={size} color={color} style={style} />;
+    case 'add':
+      return <Ionicons name="add" size={size} color={color} style={style} />;
+    case 'restaurant':
+      return <Ionicons name="restaurant-outline" size={size} color={color} style={style} />;
+    case 'basket':
+      return <Ionicons name="basket-outline" size={size} color={color} style={style} />;
     default:
       return <Ionicons name="ellipse" size={size} color={color} style={style} />;
   }

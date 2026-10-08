@@ -1,5 +1,6 @@
 import { colors } from "@/components/form-ui";
 import { Ionicons } from "@expo/vector-icons";
+import { Platform } from "react-native";
 import { Tabs } from "expo-router";
 
 export default function TabsLayout() {
@@ -7,10 +8,21 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.green,
-        tabBarInactiveTintColor: "#1B2A24",
-        tabBarStyle: { backgroundColor: "#fff", borderTopColor: "#DDE4DF" },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
+        tabBarActiveTintColor: "#022C22",
+        tabBarInactiveTintColor: "#64748B",
+        tabBarStyle: { 
+          backgroundColor: "#FFFFFF", 
+          borderTopWidth: 0,
+          elevation: 10,
+          shadowColor: "#10B981",
+          shadowOpacity: 0.15,
+          shadowRadius: 15,
+          shadowOffset: { width: 0, height: -4 },
+          height: Platform.OS === "ios" ? 85 : 65,
+          paddingBottom: Platform.OS === "ios" ? 25 : 10,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
       }}
     >
       <Tabs.Screen

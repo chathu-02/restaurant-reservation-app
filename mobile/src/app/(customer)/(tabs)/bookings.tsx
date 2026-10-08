@@ -104,7 +104,6 @@ export default function Bookings() {
         list.map((r) => (
           <Pressable
             key={r.id}
-            accessibilityRole="button"
             onPress={() => router.push({ pathname: "/booking-status", params: { id: r.id } } as never)}
             style={{
               backgroundColor: "#fff",

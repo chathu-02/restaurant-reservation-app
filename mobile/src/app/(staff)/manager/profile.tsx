@@ -1,68 +1,117 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
-  Alert,
   Switch,
+  Image,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Icon from '@/components/ui/Icon';
 import Button from '@/components/Button';
 import { useAuth } from '@/hooks/useAuth';
+import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function StaffProfileScreen() {
   const router = useRouter();
   const { user, logout, toggleDuty, updateService } = useAuth();
 
+  const [profilePic, setProfilePic] = useState('https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=256');
+  const [userData, setUserData] = useState<any>(null);
+
+  useEffect(() => {
+    if (user?.id) {
+      getDoc(doc(db, 'users', user.id)).then(docSnap => {
+        if (docSnap.exists()) {
+          setUserData(docSnap.data());
+        }
+      });
+
+      AsyncStorage.getItem(`@profile_pic_${user.id}`).then(pic => {
+        if (pic) setProfilePic(pic);
+      });
+    }
+  }, [user?.id]);
+
+  const handlePickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled && user?.id) {
+      setProfilePic(result.assets[0].uri);
+      await AsyncStorage.setItem(`@profile_pic_${user.id}`, result.assets[0].uri);
+    }
+  };
+
   const handleLogout = async () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/(auth)/role-choice' as never);
-        },
-      },
-    ]);
+    // Direct logout without confirmation as requested
+    await logout();
+    router.replace('/(auth)/role-choice' as never);
   };
 
   const services = ['BREAKFAST SERVICE', 'LUNCH SERVICE', 'DINNER SERVICE', 'NIGHT SHIFT'];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor="#022C22" />
+
       {/* Header */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Icon name="arrow-back" size={20} color="#0F172A" />
+          <Icon name="arrow-back" size={20} color="#FFFFFF" />
         </Pressable>
         <Text style={styles.headerTitle}>Staff Profile</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* User Info Card */}
-        <View style={styles.card}>
-          <View style={styles.avatarRow}>
-            <View style={styles.profileIconCircle}>
-              <Text style={styles.profileInitialText}>C</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
+        {/* Top Profile Section */}
+        <View style={styles.topProfileSection}>
+          <Pressable style={styles.avatarWrapper} onPress={handlePickImage}>
+            <Image source={{ uri: profilePic }} style={styles.largeAvatar} />
+            <View style={styles.cameraBadge}>
+              <Icon name="camera" size={14} color="#FFFFFF" />
             </View>
-            <View style={styles.userDetails}>
-              <Text style={styles.userName}>{user?.name || 'Sarah Mitchell'}</Text>
-              <Text style={styles.userRole}>
-                {(user?.role || 'Manager').toUpperCase()} • MANAGER
-              </Text>
-              <Text style={styles.userEmail}>{user?.email || 'sarah.mitchell@restaurant.com'}</Text>
+          </Pressable>
+
+          <Text style={styles.userName}>{userData?.name || user?.name || 'Manager Name'}</Text>
+          <Text style={styles.userRole}>{(user?.role || 'Manager').toUpperCase()}</Text>
+
+          {/* Contact Details */}
+          <View style={styles.contactDetailsRow}>
+            <View style={styles.contactItem}>
+              <Icon name="mail" size={14} color="#64748B" />
+              <Text style={styles.contactText}>{userData?.email || user?.email || 'email@example.com'}</Text>
             </View>
+            {userData?.phone && (
+              <View style={styles.contactItem}>
+                <Icon name="phone" size={14} color="#64748B" />
+                <Text style={styles.contactText}>{userData.phone}</Text>
+              </View>
+            )}
           </View>
+
+          <Pressable
+            style={styles.editButton}
+            onPress={() => router.push('/edit-profile' as never)}>
+            <Icon name="edit" size={16} color="#FFFFFF" />
+            <Text style={styles.editButtonText}>Edit Profile</Text>
+          </Pressable>
         </View>
 
-        {/* Duty Status */}
+        {/* Duty Status Card */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Shift & Duty Status</Text>
 
@@ -86,7 +135,7 @@ export default function StaffProfileScreen() {
 
           <View style={styles.divider} />
 
-          <Text style={[styles.settingLabel, { marginTop: 12, marginBottom: 8 }]}>Select Current Service Shift</Text>
+          <Text style={[styles.settingLabel, { marginTop: 12, marginBottom: 8 }]}>Current Service Shift</Text>
           <View style={styles.serviceChips}>
             {services.map((svc) => {
               const selected = user?.service === svc;
@@ -104,49 +153,14 @@ export default function StaffProfileScreen() {
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Quick Links</Text>
-
-          <Pressable
-            style={styles.menuItem}
-            onPress={() => router.push('/(staff)/manager/restaurant-settings' as never)}>
-            <View style={styles.settingLeft}>
-              <Icon name="gear" size={20} color="#64748B" />
-              <Text style={styles.menuText}>Restaurant Settings</Text>
-            </View>
-            <Icon name="chevron-right" size={18} color="#94A3B8" />
-          </Pressable>
-
-          <View style={styles.divider} />
-
-          <Pressable
-            style={styles.menuItem}
-            onPress={() => router.push('/(staff)/manager/reports' as never)}>
-            <View style={styles.settingLeft}>
-              <Icon name="chart" size={20} color="#64748B" />
-              <Text style={styles.menuText}>Reports & Analytics</Text>
-            </View>
-            <Icon name="chevron-right" size={18} color="#94A3B8" />
-          </Pressable>
-
-          <View style={styles.divider} />
-
-          <Pressable
-            style={styles.menuItem}
-            onPress={() => router.push('/(staff)/manager/floor-layout' as never)}>
-            <View style={styles.settingLeft}>
-              <Icon name="grid" size={20} color="#64748B" />
-              <Text style={styles.menuText}>Floor Layout</Text>
-            </View>
-            <Icon name="chevron-right" size={18} color="#94A3B8" />
+        {/* Logout Button */}
+        <View style={styles.logoutContainer}>
+          <Pressable style={styles.logoutButton} onPress={handleLogout}>
+            <Icon name="logout" size={20} color="#FFFFFF" />
+            <Text style={styles.logoutButtonText}>Sign Out</Text>
           </Pressable>
         </View>
 
-        {/* Logout */}
-        <View style={{ marginTop: 24, marginBottom: 40 }}>
-          <Button label="Sign Out" variant="secondary" onPress={handleLogout} />
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -155,17 +169,15 @@ export default function StaffProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F9EC',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    paddingVertical: 14,
+    backgroundColor: '#022C22',
   },
   backButton: {
     width: 40,
@@ -173,68 +185,114 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontSize: 18,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
   },
   scrollContent: {
     padding: 16,
+    paddingBottom: 40,
+  },
+  topProfileSection: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingVertical: 32,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 16,
+  },
+  largeAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: '#E8FAF0',
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#022C22',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  userName: {
+    fontSize: 22,
+    fontFamily: 'Inter_800ExtraBold',
+    color: '#0F172A',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  userRole: {
+    fontSize: 13,
+    fontFamily: 'Inter_700Bold',
+    color: '#059669',
+    marginBottom: 16,
+  },
+  contactDetailsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 24,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  contactText: {
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
+    color: '#64748B',
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 8,
+  },
+  editButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  avatarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  profileIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#009669',
-    borderWidth: 2.5,
-    borderColor: '#34D399',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileInitialText: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#FFFFFF',
-  },
-  userDetails: {
-    marginLeft: 14,
-    flex: 1,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  userRole: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#059669',
-    marginTop: 2,
-  },
-  userEmail: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 2,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Inter_700Bold',
     color: '#475569',
-    marginBottom: 12,
+    marginBottom: 16,
     textTransform: 'uppercase',
   },
   settingRow: {
@@ -247,57 +305,71 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   settingTextContainer: {
-    marginLeft: 12,
+    marginLeft: 14,
   },
   settingLabel: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Inter_600SemiBold',
     color: '#0F172A',
   },
   settingSubtext: {
-    fontSize: 12,
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
     color: '#64748B',
+    marginTop: 2,
   },
   divider: {
     height: 1,
     backgroundColor: '#F1F5F9',
-    marginVertical: 12,
+    marginVertical: 16,
   },
   serviceChips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#F1F5F9',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: '#E2E8F0',
   },
   chipSelected: {
     backgroundColor: '#022C22',
     borderColor: '#022C22',
   },
   chipText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
     color: '#475569',
   },
   chipTextSelected: {
     color: '#34D399',
   },
-  menuItem: {
-    flexDirection: 'row',
+  logoutContainer: {
+    marginTop: 10,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
   },
-  menuText: {
+  logoutButton: {
+    flexDirection: 'row',
+    backgroundColor: '#EF4444',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  logoutButtonText: {
+    color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginLeft: 12,
+    fontFamily: 'Inter_600SemiBold',
   },
 });
