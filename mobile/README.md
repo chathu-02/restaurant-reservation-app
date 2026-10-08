@@ -1,21 +1,32 @@
-# Welcome to your Expo app 👋
+# Restaurant Reservation & Shift Management Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern, high-fidelity React Native (Expo) mobile application designed for restaurant managers, shift leads, hosts, and floor staff.
 
+<<<<<<< HEAD
 ## Run in Expo Go
 
 1. Install dependencies from this directory:
+=======
+---
 
-   ```bash
-   npm install
-   ```
+## 📱 Features
+>>>>>>> origin/feature/staff-management
 
+- **Shift Overview Dashboard**: Live reservations, waitlist queue, table occupancy bar (e.g. 14/20 tables, 70%), and no-show metrics.
+- **Dinner Rush Projections**: Real-time rush banner with expected guest count and interval alerts (e.g., Rush expected 7:30 PM with +18 guests).
+- **Fast Quick Actions**: Walk-in queue intake, New Booking reservation modal with instant updates, and Floor Management.
+- **Manager Tools**: Quick access to staff on duty, restaurant settings, table setup/floor plan, and analytics.
+- **Bottom Navigation**: Seamless tab navigation across Dashboard, Bookings, Tables, Waitlist (with live badge), and Alerts.
+
+<<<<<<< HEAD
 2. Start the development server:
+=======
+---
+>>>>>>> origin/feature/staff-management
 
-   ```bash
-   npx expo start
-   ```
+## 📁 Project Structure
 
+<<<<<<< HEAD
 3. Install **Expo Go** on your Android or iOS device.
 4. Connect the device and computer to the same Wi-Fi network.
 5. Scan the QR code shown by the development server from Expo Go. On iOS,
@@ -32,40 +43,64 @@ The Firebase-backed sign-in and booking features require an internet connection
 when running in Expo Go.
 
 In the output, you'll also find options to open the app in a
+=======
+| Folder / File | Description | Purpose & Contents |
+|---|---|---|
+| `src/app/` | Screens & Navigation Layouts | `_layout.tsx`, `index.tsx`, `explore.tsx`, `queue.tsx`, `profile.tsx`, `login.tsx` |
+| `src/app/_layout.tsx` | Navigation & Common Providers | Stack navigation, `AuthProvider`, `ThemeProvider` |
+| `src/app/index.tsx` | Main Shift Overview Screen | Complete Shift Overview dashboard UI |
+| `src/app/explore.tsx` | Reservations & Tables Screen | Filterable reservations list and floor plan overview |
+| `src/app/queue.tsx` | Waitlist & Walk-ins Screen | Real-time queue, wait times, notify SMS, and seat actions |
+| `src/app/profile.tsx` | Staff Profile & Settings | Duty status toggle, meal service switcher, admin tools |
+| `src/app/login.tsx` | Staff Login Screen | Staff authentication & shift sign-in |
+| `src/components/` | Reusable UI Components | `Button`, `Input`, `ReservationCard`, `StatusBadge`, `MetricCard`, `RushAlertCard`, `ManagerToolItem`, `BottomNavBar` |
+| `src/components/ui/` | Core UI Controls & Icons | Multiplatform `Icon.tsx`, `collapsible.tsx` |
+| `src/constants/` | Constant Values & Config | `theme.ts` (colors, spacing, typography), `status.ts` (reservation & shift statuses) |
+| `src/hooks/` | Reusable React Hooks | `useAuth` (staff duty & session), `useReservations` (overview metrics & bookings) |
+| `src/services/` | Backend API Integration | `api.ts` (fetch client), `reservation.service.ts` (reservations & queue methods) |
+| `assets/` | Images, Fonts & Icons | Staff avatar photo (`staff_avatar.jpg`), icons, splash screen |
+| `scripts/` | Development Scripts | Project reset and build scripts |
+| `app.json` | Expo Configuration | App name, icon, splash, scheme |
+| `package.json` | Dependencies & Scripts | Expo 57, React Native 0.86, `@expo/vector-icons` |
+| `.env` | Local Environment Config | `EXPO_PUBLIC_API_URL` |
+| `.env.example` | Config Placeholders | Base API URL for emulator, web, and device |
+| `.gitignore` | Git Ignore List | Ignores `.env`, `node_modules`, `.expo` |
+>>>>>>> origin/feature/staff-management
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 🚀 Setup & Running Instructions
 
-## Get a fresh project
-
-When you're ready, run:
+### 1. Install Dependencies
 
 ```bash
-npm run reset-project
+cd mobile
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Configure Environment
 
-### Other setup steps
+Create a `.env` file based on `.env.example`:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```env
+# Web or iOS Simulator
+EXPO_PUBLIC_API_URL=http://localhost:5000/api
 
-## Learn more
+# Android Emulator
+# EXPO_PUBLIC_API_URL=http://10.0.2.2:5000/api
 
-To learn more about developing your project with Expo, look at the following resources:
+# Physical Device (use your laptop's LAN IP)
+# EXPO_PUBLIC_API_URL=http://192.168.1.100:5000/api
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 3. Start Development Server
 
-## Join the community
+```bash
+npx expo start
+```
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Press:
+- `w` to open in Web Browser
+- `a` to open in Android Emulator
+- `i` to open in iOS Simulator
+- Scan the QR code with **Expo Go** on Android or iOS

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -51,11 +52,37 @@ export default function StaffSignIn() {
   const submit = async () => {
     if (!email.trim() || !password) {
       setError("Please enter your email and password.");
+=======
+import { Button, colors, Field, LinkText, Message, Screen } from "@/components/form-ui";
+import { friendlyError, homeRouteFor, login, logout, Role } from "@/lib/auth";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Text } from "react-native";
+
+const STAFF_ROLES: Role[] = ["manager", "front", "kitchen"];
+const STAFF_DOMAIN = "staff.oceangrace.app";
+
+// a plain username becomes a staff email; a full email still works
+const toEmail = (input: string) =>
+  input.includes("@") ? input.trim() : `${input.trim().toLowerCase()}@${STAFF_DOMAIN}`;
+
+export default function StaffSignIn() {
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!username.trim() || !password) {
+      setError("Please enter your username and password.");
+>>>>>>> origin/feature/staff-management
       return;
     }
     setBusy(true);
     setError("");
     try {
+<<<<<<< HEAD
       const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
       const snap = await getDoc(doc(db, "users", cred.user.uid));
       const data = snap.exists() ? snap.data() : null;
@@ -65,11 +92,23 @@ export default function StaffSignIn() {
       setStep("pick-role");
     } catch (e) {
       setError(friendlyError(e));
+=======
+      const role = await login(toEmail(username), password);
+      if (!STAFF_ROLES.includes(role)) {
+        await logout();
+        setError("This is not a staff account. Customers can log in from the customer option.");
+        return;
+      }
+      router.replace(homeRouteFor(role) as never);
+    } catch (e) {
+      setError(friendlyError(e).replace("Email or password", "Username or password"));
+>>>>>>> origin/feature/staff-management
     } finally {
       setBusy(false);
     }
   };
 
+<<<<<<< HEAD
   // Step 2 — save chosen role to Firestore and navigate
   const pickRole = async (option: typeof ROLE_OPTIONS[0]) => {
     setBusy(true);
@@ -255,3 +294,24 @@ const styles = StyleSheet.create({
   backBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
   backText: { fontSize: 14, color: colors.muted, fontWeight: "500" },
 });
+=======
+  return (
+    <Screen>
+      <Text style={{ fontSize: 28, fontWeight: "700", color: colors.text, marginBottom: 6 }}>
+        Staff log in
+      </Text>
+      <Text style={{ fontSize: 16, color: colors.muted, marginBottom: 24 }}>
+        Use the username and password your manager gave you.
+      </Text>
+      <Field label="Username" value={username} onChangeText={setUsername} autoComplete="username" />
+      <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+      <Message text={error} />
+      <Button title={busy ? "Please wait…" : "Log in"} onPress={submit} disabled={busy} />
+      <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", marginVertical: 8 }}>
+        Forgot your password? Ask your manager.
+      </Text>
+      <LinkText title="Back" onPress={() => router.replace("/role-choice" as never)} />
+    </Screen>
+  );
+}
+>>>>>>> origin/feature/staff-management
