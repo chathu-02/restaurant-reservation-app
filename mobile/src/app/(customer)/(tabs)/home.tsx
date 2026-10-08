@@ -152,7 +152,7 @@ export default function Home() {
             <Button title="Reserve a table" onPress={() => router.push("/reserve" as never)} />
           </View>
           <View style={{ flex: 1 }}>
-            <Button title="Join the queue" secondary onPress={() => router.navigate("/queue" as never)} />
+            <Button title="Join the queue" secondary onPress={() => router.push("/join-queue" as never)} />
           </View>
         </View>
       </View>
