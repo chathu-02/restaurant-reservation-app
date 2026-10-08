@@ -63,7 +63,10 @@ export type IconName =
   | 'armchair'
   | 'help'
   | 'x-circle'
-  | 'command';
+  | 'command'
+  | 'add'
+  | 'restaurant'
+  | 'basket';
 
 interface IconProps {
   name: IconName;
@@ -188,6 +191,12 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="close-circle-outline" size={size} color={color} style={style} />;
     case 'command':
       return <Feather name="command" size={size} color={color} style={style} />;
+    case 'add':
+      return <Ionicons name="add" size={size} color={color} style={style} />;
+    case 'restaurant':
+      return <Ionicons name="restaurant-outline" size={size} color={color} style={style} />;
+    case 'basket':
+      return <Ionicons name="basket-outline" size={size} color={color} style={style} />;
     default:
       return <Ionicons name="ellipse" size={size} color={color} style={style} />;
   }

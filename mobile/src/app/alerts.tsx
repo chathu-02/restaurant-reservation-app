@@ -204,36 +204,6 @@ export default function NotificationsScreen() {
         </View>
       </ScrollView>
 
-      {/* Customer Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
-        <Pressable
-          style={styles.navItem}
-          onPress={() => router.push('/(customer)/(tabs)/home' as never)}
-        >
-          <Icon name="utensils" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Home</Text>
-        </Pressable>
-        <Pressable
-          style={styles.navItem}
-          onPress={() => router.push('/(customer)/(tabs)/bookings' as never)}
-        >
-          <Icon name="calendar" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Bookings</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/queue')}>
-          <Icon name="clock" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Queue</Text>
-        </Pressable>
-        <Pressable style={styles.navItemActive} onPress={() => {}}>
-          <Icon name="bell" size={20} color="#009669" />
-          <Text style={styles.navTextActive}>Alerts</Text>
-          <View style={styles.activeDot} />
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/customer-profile')}>
-          <Icon name="person" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Profile</Text>
-        </Pressable>
-      </View>
     </SafeAreaView>
   );
 }

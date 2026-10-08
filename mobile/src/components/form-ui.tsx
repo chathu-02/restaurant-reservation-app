@@ -13,12 +13,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export const colors = {
-  bg: "#F5F7F4",
-  text: "#1B2A24",
+  bg: "#F0FDF4",
+  text: "#064E3B",
   muted: "#55645D",
-  green: "#1F6B54",
-  border: "#BFCBC5",
-  error: "#8A2D2D",
+  green: "#10B981",
+  border: "rgba(16, 185, 129, 0.3)",
+  error: "#EF4444",
 };
 
 export function Screen({ children, top }: { children: ReactNode; top?: boolean }) {

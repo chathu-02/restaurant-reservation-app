@@ -62,9 +62,9 @@ export default function Home() {
       style={{
         flex: 1,
         padding: 20,
-        paddingTop: 52,
+        paddingTop: 16,
         justifyContent: "space-between",
-        backgroundColor: HERO_IMAGE ? "rgba(0,0,0,0.35)" : colors.green,
+        backgroundColor: HERO_IMAGE ? "rgba(2, 44, 34, 0.65)" : "#022C22",
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -78,7 +78,7 @@ export default function Home() {
       </View>
       <View style={{ paddingBottom: 30 }}>
         <Text style={{ color: "#D5EDE3", fontSize: 15 }}>{greeting}</Text>
-        <Text style={{ color: "#fff", fontSize: 28, fontWeight: "700" }}>{name || "Welcome"}</Text>
+        <Text style={{ color: "#fff", fontSize: 28, fontWeight: "700" }}>Welcome, {name || "Guest"}</Text>
       </View>
     </View>
   );

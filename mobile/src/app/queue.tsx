@@ -6,6 +6,7 @@ import {
   ScrollView,
   Pressable,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -17,28 +18,16 @@ export default function QueueTrackerScreen() {
   const [waitMin] = useState(15);
 
   const handleLeaveQueue = () => {
-    Alert.alert(
-      'Leave the Queue?',
-      `You are currently #${position} in line with ~${waitMin} min wait remaining. Leaving now will release your spot.`,
-      [
-        { text: 'Stay in Line', style: 'cancel' },
-        {
-          text: 'Leave Queue',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert('Queue Released', 'You have left the queue.');
-            router.replace('/join-queue');
-          },
-        },
-      ]
-    );
+    if (Platform.OS !== 'web') {
+      Alert.alert('Queue Released', 'You have left the queue.');
+    } else {
+      window.alert('You have left the queue.');
+    }
+    router.replace('/(customer)/(tabs)/home' as never);
   };
 
   const handleExploreMenu = () => {
-    Alert.alert(
-      "Today's Chef Specials",
-      '1. Pan-Seared Sea Bass ($34)\n2. Truffle Wild Mushroom Tagliatelle ($28.50)\n3. Smoked Duck Breast ($36)\n\nComplimentary amuse-bouche upon seating!'
-    );
+    router.push('/menu');
   };
 
   return (
@@ -191,36 +180,6 @@ export default function QueueTrackerScreen() {
         </Pressable>
       </ScrollView>
 
-      {/* Customer Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
-        <Pressable
-          style={styles.navItem}
-          onPress={() => router.push('/(customer)/(tabs)/home' as never)}
-        >
-          <Icon name="utensils" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Home</Text>
-        </Pressable>
-        <Pressable
-          style={styles.navItem}
-          onPress={() => router.push('/(customer)/(tabs)/bookings' as never)}
-        >
-          <Icon name="calendar" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Bookings</Text>
-        </Pressable>
-        <Pressable style={styles.navItemActive} onPress={() => {}}>
-          <Icon name="clock" size={20} color="#009669" />
-          <Text style={styles.navTextActive}>Queue</Text>
-          <View style={styles.activeDot} />
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/alerts')}>
-          <Icon name="bell" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Alerts</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/customer-profile')}>
-          <Icon name="person" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Profile</Text>
-        </Pressable>
-      </View>
     </SafeAreaView>
   );
 }

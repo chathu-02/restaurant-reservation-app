@@ -13,38 +13,65 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function CustomerProfileScreen() {
   const [reminders, setReminders] = useState(true);
   const [queueAlerts, setQueueAlerts] = useState(true);
   const [notifExpanded, setNotifExpanded] = useState(true);
+  
+  const [name, setName] = useState("Loading...");
+  const [email, setEmail] = useState("Loading...");
+  const [profilePic, setProfilePic] = useState('https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=256');
+
+  React.useEffect(() => {
+    const loadProfile = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        setEmail(user.email || "No Email");
+        try {
+          const docSnap = await getDoc(doc(db, "users", user.uid));
+          if (docSnap.exists()) {
+            setName(docSnap.data()?.name || "User");
+          }
+          
+          const storedPic = await AsyncStorage.getItem(`@profile_pic_${user.uid}`);
+          if (storedPic) {
+            setProfilePic(storedPic);
+          }
+        } catch (e) {
+          console.error("Error loading profile", e);
+        }
+      }
+    };
+    loadProfile();
+  }, []);
+
+  const handlePickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled && auth.currentUser) {
+      setProfilePic(result.assets[0].uri);
+      await AsyncStorage.setItem(`@profile_pic_${auth.currentUser.uid}`, result.assets[0].uri);
+    }
+  };
 
   const handleEditDetails = () => {
-    Alert.prompt
-      ? Alert.prompt(
-          'Edit Profile Name',
-          'Update your display name',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Save', onPress: () => Alert.alert('Updated', 'Name updated successfully') },
-          ],
-          'plain-text',
-          'Amara Chen'
-        )
-      : Alert.alert('Edit Personal Details', 'Name: Amara Chen\nEmail: amara.chen@email.com\nPhone: (555) 439-9201');
+    router.push('/edit-profile');
   };
 
-  const handleChangePassword = () => {
-    Alert.alert('Change Password', 'A password reset link has been dispatched to amara.chen@email.com.');
-  };
-
-  const handlePaymentMethods = () => {
-    Alert.alert('Payment Methods', 'Default: Apple Pay (Visa ending in 4022)\nStatus: Verified');
-  };
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
-      router.push('/login');
+      router.push('/role-choice');
       return;
     }
     Alert.alert(
@@ -56,7 +83,7 @@ export default function CustomerProfileScreen() {
           text: 'Log Out',
           style: 'destructive',
           onPress: () => {
-            router.push('/login');
+            router.push('/role-choice');
           },
         },
       ]
@@ -84,20 +111,18 @@ export default function CustomerProfileScreen() {
         {/* Profile Hero Card */}
         <View style={styles.profileCard}>
           {/* Avatar with Camera Badge */}
-          <View style={styles.avatarWrapper}>
+          <Pressable style={styles.avatarWrapper} onPress={handlePickImage}>
             <Image
-              source={{
-                uri: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=256',
-              }}
+              source={{ uri: profilePic }}
               style={styles.avatar}
             />
             <View style={styles.cameraBadge}>
               <Icon name="camera" size={12} color="#FFFFFF" />
             </View>
-          </View>
+          </Pressable>
 
-          <Text style={styles.userName}>Amara Chen</Text>
-          <Text style={styles.userEmail}>amara.chen@email.com</Text>
+          <Text style={styles.userName}>{name}</Text>
+          <Text style={styles.userEmail}>{email}</Text>
 
           {/* Preferred Guest Badge */}
           <View style={styles.statusBadge}>
@@ -142,40 +167,6 @@ export default function CustomerProfileScreen() {
               <Icon name="chevron-right" size={16} color="#9CA3AF" />
             </Pressable>
 
-            <View style={styles.divider} />
-
-            {/* 2. Change password */}
-            <Pressable
-              style={({ pressed }) => [styles.rowItem, pressed && styles.pressed]}
-              onPress={handleChangePassword}
-            >
-              <View style={styles.rowLeft}>
-                <View style={[styles.rowIconBox, { backgroundColor: '#EEF2FF' }]}>
-                  <Icon name="lock" size={18} color="#4F46E5" />
-                </View>
-                <Text style={styles.rowTitle}>Change password</Text>
-              </View>
-              <Icon name="chevron-right" size={16} color="#9CA3AF" />
-            </Pressable>
-
-            <View style={styles.divider} />
-
-            {/* 3. Payment methods */}
-            <Pressable
-              style={({ pressed }) => [styles.rowItem, pressed && styles.pressed]}
-              onPress={handlePaymentMethods}
-            >
-              <View style={styles.rowLeft}>
-                <View style={[styles.rowIconBox, { backgroundColor: '#EEF2FF' }]}>
-                  <Icon name="card" size={18} color="#4F46E5" />
-                </View>
-                <View>
-                  <Text style={styles.rowTitle}>Payment methods</Text>
-                  <Text style={styles.rowSub}>Apple Pay, Visa ending in 4022</Text>
-                </View>
-              </View>
-              <Icon name="chevron-right" size={16} color="#9CA3AF" />
-            </Pressable>
           </View>
         </View>
 
@@ -248,36 +239,6 @@ export default function CustomerProfileScreen() {
         </Pressable>
       </ScrollView>
 
-      {/* Customer Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
-        <Pressable
-          style={styles.navItem}
-          onPress={() => router.push('/(customer)/(tabs)/home' as never)}
-        >
-          <Icon name="utensils" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Home</Text>
-        </Pressable>
-        <Pressable
-          style={styles.navItem}
-          onPress={() => router.push('/(customer)/(tabs)/bookings' as never)}
-        >
-          <Icon name="calendar" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Bookings</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/queue')}>
-          <Icon name="clock" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Queue</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/alerts')}>
-          <Icon name="bell" size={20} color="#9CA3AF" />
-          <Text style={styles.navText}>Alerts</Text>
-        </Pressable>
-        <Pressable style={styles.navItemActive} onPress={() => {}}>
-          <Icon name="person" size={20} color="#009669" />
-          <Text style={styles.navTextActive}>Profile</Text>
-          <View style={styles.activeDot} />
-        </Pressable>
-      </View>
     </SafeAreaView>
   );
 }

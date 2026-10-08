@@ -24,6 +24,10 @@ import { useReservations } from '@/hooks/useReservations';
 import { Reservation } from '@/services/reservation.service';
 import { ReservationStatus } from '@/constants/status';
 import { dateValue, prettyDate } from '@/lib/booking';
+import { useAuth } from '@/hooks/useAuth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Logo } from '@/components/logo';
+import { BRAND } from '@/lib/brand';
 
 interface DayItem {
   id: string;
@@ -38,6 +42,18 @@ const DAYS_SHORT = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 export default function ReservationsScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  const [profilePic, setProfilePic] = React.useState('https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=256');
+
+  React.useEffect(() => {
+    if (user?.id) {
+      AsyncStorage.getItem(`@profile_pic_${user.id}`).then(pic => {
+        if (pic) setProfilePic(pic);
+      });
+    }
+  }, [user?.id]);
+
   const {
     reservations,
     addBooking,
@@ -277,10 +293,10 @@ export default function ReservationsScreen() {
       <View style={styles.container}>
         {/* Top Header Bar */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            {/* Green rounded icon */}
-            <View style={styles.serviceIconContainer}>
-              <Icon name="utensils" size={18} color="#FFFFFF" />
+          <View style={[styles.headerLeft, { flex: 1, flexDirection: 'column', alignItems: 'flex-start' }]}>
+            {/* Logo and Brand */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <Logo size={32} badge />
             </View>
 
             {/* Title + LIVE badge + Subtitle */}
@@ -306,9 +322,7 @@ export default function ReservationsScreen() {
             <Pressable
               onPress={() => router.push('/(staff)/manager/profile' as never)}
               style={styles.avatarWrapper}>
-              <View style={styles.avatarIconCircle}>
-                <Text style={styles.avatarInitialText}>C</Text>
-              </View>
+              <Image source={{ uri: profilePic }} style={styles.avatarIconCircle} />
               <View style={styles.onlineBadge} />
             </Pressable>
           </View>
