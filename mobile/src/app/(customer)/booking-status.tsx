@@ -1,17 +1,10 @@
-import { useEffect, useState } from "react";
-import { Alert, Text } from "react-native";
+import { Badge, Button, Card, colors, LinkText, Message, Screen } from "@/components/form-ui";
+import { dateValue, prettyDate, ReservationDoc, statusLabel, statusTone } from "@/lib/booking";
+import { db } from "@/lib/firebase";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { Badge, Button, Card, colors, LinkText, Message, Screen } from "@/components/form-ui";
-import {
-  ReservationDoc,
-  cancelReservation,
-  dateValue,
-  prettyDate,
-  statusLabel,
-  statusTone,
-} from "@/lib/booking";
+import { useEffect, useState } from "react";
+import { Text } from "react-native";
 
 export default function BookingStatus() {
   const router = useRouter();
@@ -28,36 +21,10 @@ export default function BookingStatus() {
     );
   }, [id]);
 
-  const active =
-    !!res && ["pending", "confirmed"].includes(res.status) && res.date >= dateValue(new Date());
+
   const needsPayment =
     res?.status === "pending" && ["waiting", "rejected"].includes(res.depositStatus);
-
-  const askCancel = () => {
-    if (!res) return;
-    const paid = res.depositRequired && ["receipt_sent", "received"].includes(res.depositStatus);
-    Alert.alert(
-      "Cancel this booking?",
-      paid
-        ? `Your deposit of Rs. ${res.depositAmount} is non-refundable.`
-        : "This will free your table for other guests.",
-      [
-        { text: "Keep booking", style: "cancel" },
-        {
-          text: "Cancel booking",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await cancelReservation(res);
-            } catch {
-              setError("Could not cancel your booking. Please try again.");
-            }
-          },
-        },
-      ]
-    );
-  };
-
+  
   return (
     <Screen top>
       <Text style={{ fontSize: 26, fontWeight: "700", color: colors.text, marginBottom: 16 }}>
@@ -78,13 +45,15 @@ export default function BookingStatus() {
               Table: {(res.tableNames ?? []).join(", ")}
             </Text>
           </Card>
+
           {needsPayment && (
             <Button
               title="Pay deposit"
               onPress={() => router.push({ pathname: "/pay-deposit", params: { id: res.id } } as never)}
             />
           )}
-                    {res.status === "confirmed" && res.date === dateValue(new Date()) && (
+
+          {res.status === "confirmed" && res.date === dateValue(new Date()) && (
             <>
               <Text />
               {res.checkedIn ? (
@@ -97,23 +66,8 @@ export default function BookingStatus() {
               )}
             </>
           )}
-          {(res.checkedIn || ["seated", "completed"].includes(res.status)) && (
-            <LinkText
-              title="Rate your visit"
-              onPress={() => router.push({ pathname: "/feedback", params: { id: res.id } } as never)}
-            />
-          )}
-          {active && (
-            <>
-              <Text />
-              <Button
-                title="Change date or time"
-                secondary
-                onPress={() => router.push({ pathname: "/change-booking", params: { id: res.id } } as never)}
-              />
-              <LinkText title="Cancel booking" onPress={askCancel} />
-            </>
-          )}
+
+          
         </>
       )}
       <LinkText title="Back to my bookings" onPress={() => router.navigate("/bookings" as never)} />

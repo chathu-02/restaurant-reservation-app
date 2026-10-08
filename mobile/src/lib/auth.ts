@@ -80,8 +80,9 @@ export function logout() {
 export function homeRouteFor(role: Role): string {
   switch (role) {
     case "manager":
+      return "/manager";
     case "front":
-      return "/staff";
+      return "/front";
     case "kitchen":
       return "/kitchen";
     default:
