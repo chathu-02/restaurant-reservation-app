@@ -1,6 +1,6 @@
-import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/components/form-ui";
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
 
 export default function TabsLayout() {
   return (
@@ -41,11 +41,11 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="menu"
+        name="notifications"
         options={{
-          title: "Menu",
+          title: "Alerts",
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "restaurant" : "restaurant-outline"} size={size} color={color} />
+            <Ionicons name={focused ? "notifications" : "notifications-outline"} size={size} color={color} />
           ),
         }}
       />

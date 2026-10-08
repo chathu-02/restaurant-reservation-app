@@ -1,22 +1,23 @@
-import { useEffect, useState } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { Badge, Chip, colors, Message, Screen } from "@/components/form-ui";
 import {
-  ReservationDoc,
   cancelReservation,
   dateValue,
   prettyDate,
+  ReservationDoc,
   statusLabel,
   statusTone,
 } from "@/lib/booking";
-import { Badge, Chip, colors, Message, Screen } from "@/components/form-ui";
+import { auth, db } from "@/lib/firebase";
+import { useRouter } from "expo-router";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { Alert, Pressable, Text, View } from "react-native";
 
 export default function Bookings() {
   const router = useRouter();
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
   const [items, setItems] = useState<ReservationDoc[]>([]);
+  const [ratedIds, setRatedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -26,7 +27,7 @@ export default function Bookings() {
       setLoading(false);
       return undefined;
     }
-    return onSnapshot(
+    const stopBookings = onSnapshot(
       query(collection(db, "reservations"), where("userId", "==", uid)),
       (snap) => {
         setItems(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<ReservationDoc, "id">) })));
@@ -37,6 +38,16 @@ export default function Bookings() {
         setLoading(false);
       }
     );
+    // feedback documents use the booking's id as their id
+    const stopFeedback = onSnapshot(
+      query(collection(db, "feedback"), where("userId", "==", uid)),
+      (snap) => setRatedIds(new Set(snap.docs.map((d) => d.id))),
+      () => {}
+    );
+    return () => {
+      stopBookings();
+      stopFeedback();
+    };
   }, []);
 
   const askCancel = (r: ReservationDoc) => {
@@ -66,7 +77,9 @@ export default function Bookings() {
   const today = dateValue(new Date());
   const key = (r: ReservationDoc) => r.date + String(r.timeMinutes).padStart(4, "0");
   const isUpcoming = (r: ReservationDoc) =>
-    ["pending", "confirmed"].includes(r.status) && r.date >= today;
+    ["pending", "confirmed"].includes(r.status) && r.date >= today && !r.checkedIn;
+  const visited = (r: ReservationDoc) =>
+    !!r.checkedIn || ["seated", "completed"].includes(r.status);
   const upcoming = items.filter(isUpcoming).sort((a, b) => key(a).localeCompare(key(b)));
   const past = items.filter((r) => !isUpcoming(r)).sort((a, b) => key(b).localeCompare(key(a)));
   const list = tab === "upcoming" ? upcoming : past;
@@ -110,7 +123,10 @@ export default function Bookings() {
               {r.partySize} guests · Table {(r.tableNames ?? []).join(", ")} · {r.bookingId}
             </Text>
             <View style={{ marginTop: 6 }}>
-              <Badge text={statusLabel(r)} tone={statusTone(r)} />
+              <Badge
+                text={r.checkedIn ? "Checked in" : statusLabel(r)}
+                tone={r.checkedIn ? "good" : statusTone(r)}
+              />
             </View>
             {tab === "upcoming" && (
               <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
@@ -125,6 +141,20 @@ export default function Bookings() {
                 <View style={{ flex: 1 }}>
                   <Chip title="Cancel" onPress={() => askCancel(r)} />
                 </View>
+              </View>
+            )}
+            {tab === "past" && visited(r) && (
+              <View style={{ marginTop: 10 }}>
+                {ratedIds.has(r.id) ? (
+                  <Badge text="Feedback sent. Thank you!" tone="good" />
+                ) : (
+                  <Chip
+                    title="Rate your visit"
+                    onPress={() =>
+                      router.push({ pathname: "/feedback", params: { id: r.id } } as never)
+                    }
+                  />
+                )}
               </View>
             )}
           </Pressable>
