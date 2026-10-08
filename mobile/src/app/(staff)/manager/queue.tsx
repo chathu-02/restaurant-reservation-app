@@ -10,6 +10,7 @@ import {
   Alert,
   StatusBar,
   Image,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -45,6 +46,12 @@ export default function QueueScreen() {
 
   // Walk-in Modal State
   const [walkInModalVisible, setWalkInModalVisible] = useState(false);
+
+  // Action Sheet State
+  const [actionSheetItem, setActionSheetItem] = useState<QueueParty | null>(null);
+
+  // Splash Success Message State
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Live Clock String
   const [liveTime, setLiveTime] = useState('');
@@ -153,52 +160,73 @@ export default function QueueScreen() {
     Alert.alert('Added to Queue 🟢', `${newParty.name} (Party of ${partySize}) added to the bottom of the waitlist!`);
   };
 
-  // Handle Seating Action
-  const handleSeatNow = (name: string, table: string) => {
-    const target = queueList.find((q) => q.name === name);
-    Alert.alert(
-      'Seat Party Now',
-      `Confirm seating ${name} at Table ${table}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Seat Guest',
-          onPress: async () => {
-            if (target?.id) {
-              await updateQueueStatus(target.id, 'seated');
-            }
-            Alert.alert('Seated!', `${name} has been seated at Table ${table}.`);
-          },
-        },
-      ]
-    );
+  const handleSeatNow = async (id: string, name: string) => {
+    try {
+      if (!id) return;
+      await updateQueueStatus(id, 'seated');
+      setSuccessMsg(`Done! ${name} has been seated.`);
+      setTimeout(() => {
+        setSuccessMsg(null);
+      }, 2000);
+    } catch (error) {
+      console.warn('Seat guest error:', error);
+      if (Platform.OS === 'web') {
+        window.alert(`Failed to seat ${name}. Please try again.`);
+      } else {
+        Alert.alert('Error', `Failed to seat ${name}. Please try again.`);
+      }
+    }
   };
 
   // Handle Buzzer Action
   const handleBuzzGuest = async (name: string, phone?: string) => {
     try {
       await notifyNextGuest(name, phone);
-      Alert.alert('Notification Sent 🔔', `Sent "Your Table is Next" notification to ${name}!`);
+      if (Platform.OS === 'web') {
+        window.alert(`Sent "Your Table is Next" notification to ${name}!`);
+      } else {
+        Alert.alert('Notification Sent 🔔', `Sent "Your Table is Next" notification to ${name}!`);
+      }
     } catch (err) {
-      Alert.alert('Buzzer Triggered 🔔', `Paging ${name}'s buzzer device...`);
+      if (Platform.OS === 'web') {
+        window.alert(`Paging ${name}'s buzzer device...`);
+      } else {
+        Alert.alert('Buzzer Triggered 🔔', `Paging ${name}'s buzzer device...`);
+      }
     }
+    setActionSheetItem(null);
   };
 
   // Handle Call Action
   const handleCallGuest = (name: string) => {
-    Alert.alert('Call Guest 📞', `Calling ${name} on phone...`);
+    if (Platform.OS === 'web') {
+      window.alert(`Calling ${name} on phone...`);
+    } else {
+      Alert.alert('Call Guest 📞', `Calling ${name} on phone...`);
+    }
+    setActionSheetItem(null);
+  };
+
+  const handleRemoveQueue = async (id: string, name: string) => {
+    await updateQueueStatus(id, 'cancelled');
+    if (Platform.OS === 'web') {
+      window.alert(`${name} removed from queue.`);
+    } else {
+      Alert.alert('Removed', `${name} removed from queue.`);
+    }
+    setActionSheetItem(null);
   };
 
   // Navigation tabs handler
   const handleTabChange = (tab: TabKey) => {
     if (tab === 'dashboard') {
-      router.push('/');
+      router.push('/(staff)/manager');
     } else if (tab === 'bookings' || tab === 'reservations') {
-      router.push('/explore');
+      router.push('/(staff)/manager/explore');
     } else if (tab === 'tables') {
-      router.push('/tables');
+      router.push('/(staff)/manager/tables');
     } else if (tab === 'alerts') {
-      router.push('/alerts');
+      router.push('/(staff)/manager/alerts');
     }
   };
 
@@ -220,7 +248,7 @@ export default function QueueScreen() {
 
           <View style={styles.headerRight}>
             <Pressable
-              onPress={() => router.push('/add-walkin')}
+              onPress={() => router.push('/(staff)/manager/add-walkin')}
               style={({ pressed }) => [styles.walkInBtn, pressed && styles.pressed]}>
               <Icon name="plus" size={15} color="#FFFFFF" />
               <Text style={styles.walkInBtnText}> Walk-in</Text>
@@ -359,7 +387,7 @@ export default function QueueScreen() {
               {/* Action Buttons Row */}
               <View style={styles.featuredActionsRow}>
                 <Pressable
-                  onPress={() => handleSeatNow(featuredParty.name, '7')}
+                  onPress={() => handleSeatNow(featuredParty.id, featuredParty.name)}
                   style={({ pressed }) => [styles.seatNowBtn, pressed && styles.pressed]}>
                   <Icon name="grid" size={18} color="#FFFFFF" />
                   <Text style={styles.seatNowBtnText}>Seat Now</Text>
@@ -509,27 +537,26 @@ export default function QueueScreen() {
                 <View style={styles.queueCardRightActions}>
                   {item.number === 1 ? (
                     <Pressable
-                      onPress={() => handleSeatNow(item.name, '7')}
+                      onPress={() => handleSeatNow(item.id, item.name)}
                       style={({ pressed }) => [styles.checkActionBtn, pressed && styles.pressed]}>
                       <Icon name="check" size={16} color="#059669" />
                     </Pressable>
                   ) : item.number === 2 ? (
                     <Pressable
-                      onPress={() => Alert.alert('SMS Chat', `Opening SMS thread with ${item.name}...`)}
+                      onPress={() => {
+                        if (Platform.OS === 'web') {
+                          window.alert(`Opening SMS thread with ${item.name}...`);
+                        } else {
+                          Alert.alert('SMS Chat', `Opening SMS thread with ${item.name}...`);
+                        }
+                      }}
                       style={({ pressed }) => [styles.chatActionBtn, pressed && styles.pressed]}>
                       <Icon name="message" size={15} color="#059669" />
                     </Pressable>
                   ) : null}
 
                   <Pressable
-                    onPress={() =>
-                      Alert.alert('Queue Actions', `Options for ${item.name}`, [
-                        { text: 'Notify Table Ready', onPress: () => handleBuzzGuest(item.name) },
-                        { text: 'Call Guest', onPress: () => handleCallGuest(item.name) },
-                        { text: 'Remove from Queue', style: 'destructive', onPress: async () => { if (item.id) await updateQueueStatus(item.id, 'cancelled'); } },
-                        { text: 'Cancel', style: 'cancel' },
-                      ])
-                    }
+                    onPress={() => setActionSheetItem(item)}
                     style={({ pressed }) => [styles.moreActionBtn, pressed && styles.pressed]}>
                     <Icon name="more-vertical" size={16} color="#94A3B8" />
                   </Pressable>
@@ -622,6 +649,66 @@ export default function QueueScreen() {
                   <Text style={styles.modalSubmitText}>Add to Queue</Text>
                 </Pressable>
               </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* ─── Action Sheet Modal ──────────────────────────── */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={!!actionSheetItem}
+          onRequestClose={() => setActionSheetItem(null)}>
+          <View style={styles.actionSheetOverlay}>
+            <View style={styles.actionSheetContent}>
+              <View style={styles.actionSheetHeader}>
+                <Text style={styles.actionSheetTitle}>Queue Actions</Text>
+                <Text style={styles.actionSheetSubtitle}>Options for {actionSheetItem?.name}</Text>
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [styles.actionSheetBtn, pressed && styles.pressed]}
+                onPress={() => actionSheetItem && handleBuzzGuest(actionSheetItem.name)}>
+                <Icon name="bell" size={20} color="#059669" />
+                <Text style={styles.actionSheetBtnText}>Notify Table Ready</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [styles.actionSheetBtn, pressed && styles.pressed]}
+                onPress={() => actionSheetItem && handleCallGuest(actionSheetItem.name)}>
+                <Icon name="phone" size={20} color="#3B82F6" />
+                <Text style={styles.actionSheetBtnText}>Call Guest</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [styles.actionSheetBtn, styles.actionSheetBtnDestructive, pressed && styles.pressed]}
+                onPress={() => actionSheetItem && handleRemoveQueue(actionSheetItem.id, actionSheetItem.name)}>
+                <Icon name="trash-outline" size={20} color="#EF4444" />
+                <Text style={styles.actionSheetBtnTextDestructive}>Remove from Queue</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [styles.actionSheetBtn, styles.actionSheetCancelBtn, pressed && styles.pressed]}
+                onPress={() => setActionSheetItem(null)}>
+                <Text style={styles.actionSheetCancelBtnText}>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+
+        {/* ─── Success Splash Modal ──────────────────────────── */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={!!successMsg}
+          onRequestClose={() => setSuccessMsg(null)}>
+          <View style={styles.splashOverlay}>
+            <View style={styles.splashContent}>
+              <View style={styles.splashIconBox}>
+                <Icon name="check" size={32} color="#059669" />
+              </View>
+              <Text style={styles.splashTitle}>Done!</Text>
+              <Text style={styles.splashMessage}>{successMsg}</Text>
             </View>
           </View>
         </Modal>
@@ -1460,5 +1547,105 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+  actionSheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  actionSheetContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  actionSheetHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  actionSheetTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+  actionSheetSubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 4,
+  },
+  actionSheetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAF9',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 10,
+    gap: 12,
+  },
+  actionSheetBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  actionSheetBtnDestructive: {
+    backgroundColor: '#FEF2F2',
+  },
+  actionSheetBtnTextDestructive: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#EF4444',
+  },
+  actionSheetCancelBtn: {
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  actionSheetCancelBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  splashOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  splashContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 300,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  splashIconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#D1FAE5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  splashTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#065F46',
+    marginBottom: 8,
+  },
+  splashMessage: {
+    fontSize: 15,
+    color: '#334155',
+    textAlign: 'center',
+    lineHeight: 22,
+    fontWeight: '500',
   },
 });

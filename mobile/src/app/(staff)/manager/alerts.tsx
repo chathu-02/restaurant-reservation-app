@@ -6,8 +6,10 @@ import {
   ScrollView,
   Pressable,
   StatusBar,
-  Alert,
   TextInput,
+  Platform,
+  Modal,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -31,6 +33,7 @@ interface FeedAlertItem {
     variant: 'dark' | 'green' | 'amber' | 'teal' | 'gray';
     action: () => void;
   };
+  onDelete?: () => void;
   isUnread?: boolean;
 }
 
@@ -45,11 +48,13 @@ export default function AlertsScreen() {
     unreadNotificationsCount,
     overview,
     sendTestNotification,
+    deleteNotification,
   } = useReservations();
 
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'critical' | 'booking' | 'cancellation'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [alertToDelete, setAlertToDelete] = useState<string | null>(null);
 
   // Map Firestore notifications & kitchenAlerts into FeedAlertItem format
   const mappedAlerts: FeedAlertItem[] = React.useMemo(() => {
@@ -124,15 +129,19 @@ export default function AlertsScreen() {
           action: async () => {
             await markNotificationRead(n.id);
             if (n.targetScreen) {
-              router.push(n.targetScreen as any);
+              const target = n.targetScreen.startsWith('/(staff)') ? n.targetScreen : `/(staff)/manager${n.targetScreen.startsWith('/') ? '' : '/'}${n.targetScreen}`;
+              router.push(target as any);
             }
           },
+        },
+        onDelete: () => {
+          setAlertToDelete(n.id);
         },
       });
     });
 
     return list;
-  }, [notifications, kitchenAlerts, user, acknowledgeKitchenAlert, markNotificationRead, router]);
+  }, [notifications, kitchenAlerts, user, acknowledgeKitchenAlert, markNotificationRead, router, setAlertToDelete]);
 
   const totalAllCount = mappedAlerts.length;
   const criticalCount = mappedAlerts.filter((a) => a.category === 'critical' && !a.topTags.some(t => t.label.includes('CANCELLATION'))).length;
@@ -166,13 +175,13 @@ export default function AlertsScreen() {
 
   const handleTabChange = (tab: TabKey) => {
     if (tab === 'dashboard') {
-      router.push('/');
+      router.push('/(staff)/manager');
     } else if (tab === 'bookings' || tab === 'reservations') {
-      router.push('/explore');
+      router.push('/(staff)/manager/explore');
     } else if (tab === 'tables') {
-      router.push('/tables');
+      router.push('/(staff)/manager/tables');
     } else if (tab === 'queue' || tab === 'waitlist') {
-      router.push('/queue');
+      router.push('/(staff)/manager/queue');
     }
   };
 
@@ -324,7 +333,7 @@ export default function AlertsScreen() {
           </ScrollView>
         </View>
 
-        
+
 
         {/* Main Feed Content ScrollView */}
         <ScrollView
@@ -529,6 +538,14 @@ export default function AlertsScreen() {
                           {item.actionButton.label}
                         </Text>
                       </Pressable>
+
+                      {item.onDelete && (
+                        <Pressable
+                          onPress={item.onDelete}
+                          style={({ pressed }) => [styles.deleteIconBtn, pressed && styles.pressed]}>
+                          <Icon name="trash-outline" size={18} color="#EF4444" />
+                        </Pressable>
+                      )}
                     </View>
                   )}
                 </View>
@@ -545,6 +562,42 @@ export default function AlertsScreen() {
           alertsCount={unreadNotificationsCount}
         />
       </View>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={!!alertToDelete}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAlertToDelete(null)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconBox}>
+              <Icon name="trash-outline" size={28} color="#EF4444" />
+            </View>
+            <Text style={styles.modalTitle}>Delete Alert</Text>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to remove this alert? This action cannot be undone.
+            </Text>
+            <View style={styles.modalActions}>
+              <Pressable
+                style={[styles.modalBtn, styles.modalCancelBtn]}
+                onPress={() => setAlertToDelete(null)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalBtn, styles.modalDeleteBtn]}
+                onPress={async () => {
+                  if (alertToDelete) {
+                    await deleteNotification(alertToDelete);
+                    setAlertToDelete(null);
+                  }
+                }}>
+                <Text style={styles.modalDeleteText}>Delete</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1147,6 +1200,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#64748B',
   },
+  deleteIconBtn: {
+    padding: 7,
+    borderRadius: 10,
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   cardActionBtn: {
     paddingVertical: 7,
     paddingHorizontal: 14,
@@ -1235,5 +1297,75 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '800',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalIconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FEF2F2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelBtn: {
+    backgroundColor: '#F1F5F9',
+  },
+  modalDeleteBtn: {
+    backgroundColor: '#EF4444',
+  },
+  modalCancelText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  modalDeleteText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

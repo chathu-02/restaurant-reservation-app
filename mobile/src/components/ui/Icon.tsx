@@ -13,6 +13,7 @@ export type IconName =
   | 'target'
   | 'clock'
   | 'chevron-right'
+  | 'chevron-down'
   | 'plus'
   | 'walk'
   | 'gear'
@@ -46,7 +47,8 @@ export type IconName =
   | 'flash'
   | 'sun'
   | 'wine'
-  | 'whatsapp';
+  | 'whatsapp'
+  | 'trash-outline';
 
 interface IconProps {
   name: IconName;
@@ -71,6 +73,8 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="time-outline" size={size} color={color} style={style} />;
     case 'chevron-right':
       return <Feather name="chevron-right" size={size} color={color} style={style} />;
+    case 'chevron-down':
+      return <Feather name="chevron-down" size={size} color={color} style={style} />;
     case 'plus':
       return <Feather name="plus" size={size} color={color} style={style} />;
     case 'walk':
@@ -139,6 +143,8 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="wine-outline" size={size} color={color} style={style} />;
     case 'whatsapp':
       return <Ionicons name="logo-whatsapp" size={size} color={color} style={style} />;
+    case 'trash-outline':
+      return <Ionicons name="trash-outline" size={size} color={color} style={style} />;
     default:
       return <Ionicons name="ellipse" size={size} color={color} style={style} />;
   }

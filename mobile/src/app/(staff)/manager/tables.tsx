@@ -174,13 +174,13 @@ export default function TablesScreen() {
   // Bottom Navigation tab change
   const handleTabChange = (tab: TabKey) => {
     if (tab === 'dashboard') {
-      router.push('/');
+      router.push('/(staff)/manager');
     } else if (tab === 'bookings' || tab === 'reservations') {
-      router.push('/explore');
+      router.push('/(staff)/manager/explore');
     } else if (tab === 'queue' || tab === 'waitlist') {
-      router.push('/queue');
+      router.push('/(staff)/manager/queue');
     } else if (tab === 'alerts') {
-      router.push('/alerts');
+      router.push('/(staff)/manager/alerts');
     }
   };
 
@@ -518,17 +518,8 @@ export default function TablesScreen() {
               <View style={styles.partyStepperRow}>
                 <Text style={styles.partyLabel}>Party Size: (Max {selectedTable.seats})</Text>
                 <View style={styles.stepperBox}>
-                  <Pressable
-                    onPress={() => setPartySize((p) => Math.max(1, p - 1))}
-                    style={({ pressed }) => [styles.stepBtn, pressed && styles.pressed]}>
-                    <Text style={styles.stepBtnText}>−</Text>
-                  </Pressable>
-                  <Text style={styles.stepValueText}>{partySize}</Text>
-                  <Pressable
-                    onPress={() => setPartySize((p) => Math.min(selectedTable.seats + 2, p + 1))}
-                    style={({ pressed }) => [styles.stepBtn, pressed && styles.pressed]}>
-                    <Text style={styles.stepBtnText}>+</Text>
-                  </Pressable>
+                  
+                 
                 </View>
               </View>
 
@@ -565,7 +556,7 @@ export default function TablesScreen() {
                 <Pressable
                   onPress={() =>
                     router.push({
-                      pathname: '/reservation-detail',
+                      pathname: '/(staff)/manager/reservation-detail',
                       params: {
                         guestName: 'Sarah Johnson',
                         time: '8:45 PM',
@@ -604,7 +595,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#F4F9EC',
+    backgroundColor: '#FFFDF5',
   },
   header: {
     flexDirection: 'row',
@@ -612,10 +603,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: 14,
+    paddingBottom: 22,
     backgroundColor: '#022C22',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
     gap: 8,
   },
   headerLeft: {
@@ -691,9 +682,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 12,
-    gap: 12,
+    paddingTop: 20,
+    paddingBottom: 14,
+    gap: 16,
   },
 
   // Area Tabs

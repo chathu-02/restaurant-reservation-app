@@ -8,6 +8,7 @@ import {
   Pressable,
   Alert,
   StatusBar,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -19,7 +20,7 @@ export type SeatingPref = 'first_open' | 'indoor' | 'patio' | 'bar';
 
 export default function AddWalkInScreen() {
   const router = useRouter();
-  const { addWalkIn } = useReservations();
+  const { addWalkIn, queue } = useReservations();
 
   // Form State
   const [guestName, setGuestName] = useState('');
@@ -30,34 +31,45 @@ export default function AddWalkInScreen() {
   const [seatingPref, setSeatingPref] = useState<SeatingPref>('indoor');
   const [notes, setNotes] = useState('');
 
-  // Add to Live Queue & Navigate
+  // Splash Modal State
+  const [splashVisible, setSplashVisible] = useState(false);
+  const [addedGuestInfo, setAddedGuestInfo] = useState<{
+    name: string;
+    partySize: number;
+    position: number;
+  } | null>(null);
+
+  // Add to Live Queue & Show Splash Msg
   const handleAddToQueue = async () => {
     if (!guestName.trim()) {
       Alert.alert('Required Field', 'Please enter guest name');
       return;
     }
 
+    const name = guestName.trim();
+    const currentPos = (queue || []).filter((q) => q.status !== 'seated' && q.status !== 'cancelled').length + 1;
+
     try {
       await addWalkIn({
-        guestName: guestName.trim(),
+        guestName: name,
         partySize,
         phone: phoneNumber,
         notes: `${seatingPref} • ${isVip ? 'VIP' : isRegular ? 'Regular' : 'Walk-in'} ${notes ? '• ' + notes : ''}`,
       });
 
-      Alert.alert(
-        'Added to Live Queue! 🟢',
-        `${guestName} (Party of ${partySize}) added to waitlist.`,
-        [
-          {
-            text: 'View Live Queue',
-            onPress: () => router.push('/queue'),
-          },
-        ]
-      );
+      setAddedGuestInfo({
+        name,
+        partySize,
+        position: currentPos,
+      });
+      setSplashVisible(true);
     } catch {
-      Alert.alert('Success', 'Walk-in guest added to queue!');
-      router.push('/queue');
+      setAddedGuestInfo({
+        name,
+        partySize,
+        position: currentPos,
+      });
+      setSplashVisible(true);
     }
   };
 
@@ -75,15 +87,15 @@ export default function AddWalkInScreen() {
   // Bottom navigation tab change
   const handleTabChange = (tab: TabKey) => {
     if (tab === 'dashboard') {
-      router.push('/');
+      router.push('/(staff)/manager');
     } else if (tab === 'bookings' || tab === 'reservations') {
-      router.push('/explore');
+      router.push('/(staff)/manager/explore');
     } else if (tab === 'tables') {
-      router.push('/tables');
-    } else if (tab === 'waitlist') {
-      router.push('/queue');
+      router.push('/(staff)/manager/tables');
+    } else if (tab === 'waitlist' || tab === 'queue') {
+      router.push('/(staff)/manager/queue');
     } else if (tab === 'alerts') {
-      router.push('/alerts');
+      router.push('/(staff)/manager/alerts');
     }
   };
 
@@ -294,6 +306,53 @@ export default function AddWalkInScreen() {
 
         {/* Bottom Navigation Bar */}
         <BottomNavBar activeTab="waitlist" onSelectTab={handleTabChange} />
+
+        {/* Splash Success Modal Overlay */}
+        <Modal visible={splashVisible} transparent animationType="fade">
+          <View style={styles.splashOverlay}>
+            <View style={styles.splashCard}>
+              <View style={styles.splashIconCircle}>
+                <Icon name="check" size={32} color="#FFFFFF" />
+              </View>
+              <Text style={styles.splashTitle}>Added to Live Queue! 🟢</Text>
+              <Text style={styles.splashSub}>
+                <Text style={{ fontWeight: '800', color: '#0F172A' }}>{addedGuestInfo?.name}</Text> (Party of {addedGuestInfo?.partySize}) has been added to the <Text style={{ fontWeight: '800', color: '#059669' }}>bottom of the Live Queue</Text> (Position #{addedGuestInfo?.position}).
+              </Text>
+
+              <View style={styles.splashBadgesRow}>
+                <View style={styles.splashBadge}>
+                  <Icon name="clock" size={12} color="#059669" />
+                  <Text style={styles.splashBadgeText}>Est. Wait: 12-15 mins</Text>
+                </View>
+                <View style={styles.splashBadge}>
+                  <Icon name="message" size={12} color="#0284C7" />
+                  <Text style={styles.splashBadgeText}>SMS Notification Active</Text>
+                </View>
+              </View>
+
+              <View style={styles.splashActions}>
+                <Pressable
+                  onPress={() => {
+                    setSplashVisible(false);
+                    router.push('/(staff)/manager/queue' as never);
+                  }}
+                  style={({ pressed }) => [styles.splashPrimaryBtn, pressed && styles.pressed]}>
+                  <Icon name="users" size={16} color="#FFFFFF" />
+                  <Text style={styles.splashPrimaryBtnText}>Go to Live Queue</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    setSplashVisible(false);
+                    handleResetForm();
+                  }}
+                  style={({ pressed }) => [styles.splashSecondaryBtn, pressed && styles.pressed]}>
+                  <Text style={styles.splashSecondaryBtnText}>Add Another Guest</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -579,5 +638,101 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
+  },
+
+  // ── Splash Modal ─────────────────────────────────
+  splashOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(2, 44, 34, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  splashCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  splashIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#059669',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  splashTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#0F172A',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  splashSub: {
+    fontSize: 14,
+    color: '#475569',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  splashBadgesRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 20,
+  },
+  splashBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  splashBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  splashActions: {
+    width: '100%',
+    gap: 10,
+  },
+  splashPrimaryBtn: {
+    backgroundColor: '#044E38',
+    paddingVertical: 14,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  splashPrimaryBtnText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  splashSecondaryBtn: {
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  splashSecondaryBtnText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#64748B',
   },
 });

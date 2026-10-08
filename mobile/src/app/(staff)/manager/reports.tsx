@@ -56,15 +56,15 @@ export default function ReportsScreen() {
 
   const handleTabChange = (tab: TabKey) => {
     if (tab === 'dashboard') {
-      router.push('/');
+      router.push('/(staff)/manager');
     } else if (tab === 'bookings' || tab === 'reservations') {
-      router.push('/explore');
+      router.push('/(staff)/manager/explore');
     } else if (tab === 'tables') {
-      router.push('/tables');
+      router.push('/(staff)/manager/tables');
     } else if (tab === 'queue' || tab === 'waitlist') {
-      router.push('/queue');
+      router.push('/(staff)/manager/queue');
     } else if (tab === 'alerts') {
-      router.push('/alerts');
+      router.push('/(staff)/manager/alerts');
     }
   };
 

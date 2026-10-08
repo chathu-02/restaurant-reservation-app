@@ -261,13 +261,13 @@ export default function ReservationsScreen() {
   // Bottom navigation change
   const handleTabChange = (tab: TabKey) => {
     if (tab === 'dashboard') {
-      router.push('/');
+      router.push('/(staff)/manager');
     } else if (tab === 'tables') {
-      router.push('/tables');
+      router.push('/(staff)/manager/tables');
     } else if (tab === 'queue' || tab === 'waitlist') {
-      router.push('/queue');
+      router.push('/(staff)/manager/queue');
     } else if (tab === 'alerts') {
-      router.push('/alerts');
+      router.push('/(staff)/manager/alerts');
     }
   };
 
@@ -304,13 +304,11 @@ export default function ReservationsScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => router.push('/profile')}
+              onPress={() => router.push('/(staff)/manager/profile' as never)}
               style={styles.avatarWrapper}>
-              <Image
-                source={require('@/assets/images/staff_avatar.jpg')}
-                style={styles.avatarImage}
-                defaultSource={require('@/assets/images/icon.png')}
-              />
+              <View style={styles.avatarIconCircle}>
+                <Text style={styles.avatarInitialText}>C</Text>
+              </View>
               <View style={styles.onlineBadge} />
             </Pressable>
           </View>
@@ -491,7 +489,7 @@ export default function ReservationsScreen() {
                   onSeat={() => handleSeatGuest(res)}
                   onAssignTable={() =>
                     router.push({
-                      pathname: '/reservation-detail',
+                      pathname: '/(staff)/manager/reservation-detail',
                       params: {
                         id: res.id,
                         bookingId: res.bookingId || res.id,
@@ -511,7 +509,7 @@ export default function ReservationsScreen() {
                   onOfferWaitlist={() => handleOfferWaitlist(res)}
                   onPress={() =>
                     router.push({
-                      pathname: '/reservation-detail',
+                      pathname: '/(staff)/manager/reservation-detail',
                       params: {
                         id: res.id,
                         bookingId: res.bookingId || res.id,
@@ -853,12 +851,20 @@ const styles = StyleSheet.create({
   avatarWrapper: {
     position: 'relative',
   },
-  avatarImage: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+  avatarIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#009669',
+    borderWidth: 1.8,
+    borderColor: '#34D399',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarInitialText: {
+    fontSize: 17,
+    fontWeight: '900',
+    color: '#FFFFFF',
   },
   onlineBadge: {
     position: 'absolute',

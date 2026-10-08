@@ -10,6 +10,7 @@ import {
   StatusBar,
   Alert,
   Linking,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -94,42 +95,26 @@ export default function ReservationDetailScreen() {
     return t.category === tableCategoryFilter;
   });
 
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
   const handleSaveAssignment = () => {
-    Alert.alert(
-      'Table Confirmed',
-      `Assigned ${selectedTable.name} (${selectedTable.type}) to ${guestName}. Notification sent to floor server Marcus D.`
-    );
+    setSuccessMsg(`Assigned ${selectedTable.name} to ${guestName}!`);
+    setTimeout(() => {
+      setSuccessMsg(null);
+      router.back();
+    }, 2000);
   };
 
   const handleUpdateStatus = () => {
-    Alert.alert(
-      'Update Reservation Status',
-      'Select arrival status:',
-      [
-        {
-          text: 'Mark Seated',
-          onPress: () => {
-            setCurrentStatus('Seated');
-            Alert.alert('Status Updated', `${guestName} marked as Seated at ${selectedTable.name}.`);
-          },
-        },
-        {
-          text: 'Mark Arrived / In Bar',
-          onPress: () => {
-            setCurrentStatus('Arrived');
-            Alert.alert('Status Updated', `${guestName} marked as Arrived.`);
-          },
-        },
-        {
-          text: 'Running Late',
-          onPress: () => {
-            setCurrentStatus('Running Late');
-            Alert.alert('Status Updated', 'Added 15 min courtesy hold.');
-          },
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    setActionSheetVisible(true);
+  };
+
+  const executeStatusUpdate = (statusLabel: string) => {
+    setCurrentStatus(statusLabel);
+    setActionSheetVisible(false);
+    setSuccessMsg(`Status updated to ${statusLabel}`);
+    setTimeout(() => setSuccessMsg(null), 2000);
   };
 
   const handleOpenWhatsApp = () => {
@@ -161,21 +146,35 @@ export default function ReservationDetailScreen() {
   };
 
   const handleCancelReservation = () => {
-    Alert.alert(
-      'Cancel Reservation',
-      `Are you sure you want to cancel ${reservationNumber} for ${guestName}? This will release the table back to inventory.`,
-      [
-        { text: 'No, Keep', style: 'cancel' },
-        {
-          text: 'Yes, Cancel',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert('Cancelled', 'Reservation cancelled and released to inventory.');
-            router.back();
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(`Are you sure you want to cancel ${reservationNumber} for ${guestName}?`);
+      if (confirmed) {
+        setSuccessMsg('Reservation cancelled.');
+        setTimeout(() => {
+          setSuccessMsg(null);
+          router.back();
+        }, 1500);
+      }
+    } else {
+      Alert.alert(
+        'Cancel Reservation',
+        `Are you sure you want to cancel ${reservationNumber} for ${guestName}? This will release the table.`,
+        [
+          { text: 'No, Keep', style: 'cancel' },
+          {
+            text: 'Yes, Cancel',
+            style: 'destructive',
+            onPress: () => {
+              setSuccessMsg('Reservation cancelled.');
+              setTimeout(() => {
+                setSuccessMsg(null);
+                router.back();
+              }, 1500);
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   return (
@@ -198,21 +197,7 @@ export default function ReservationDetailScreen() {
             <Text style={styles.resSubtitle}>Fine Dining Host Console</Text>
           </View>
 
-          <View style={styles.headerRight}>
-            <Pressable
-              onPress={() => Alert.alert('Printing', `Printing docket ${reservationNumber} to Expo printer.`)}
-              style={({ pressed }) => [styles.circularBtn, pressed && styles.pressed]}>
-              <Icon name="print" size={18} color="#4B5563" />
-            </Pressable>
-
-            <Pressable
-              onPress={() =>
-                Alert.alert('Reservation Options', '• Add Notes\n• Transfer to Shift\n• View History')
-              }
-              style={({ pressed }) => [styles.circularBtn, pressed && styles.pressed]}>
-              <Icon name="more-vertical" size={18} color="#4B5563" />
-            </Pressable>
-          </View>
+          <View style={{ width: 36 }} />
         </View>
 
         {/* Scrollable Content */}
@@ -223,16 +208,6 @@ export default function ReservationDetailScreen() {
           {/* Guest Profile Card */}
           <View style={styles.guestCard}>
             <View style={styles.guestTopRow}>
-              {/* Avatar with online dot */}
-              <View style={styles.avatarWrapper}>
-                <Image
-                  source={avatarSource}
-                  style={styles.avatar}
-                  defaultSource={require('@/assets/images/staff_avatar.jpg')}
-                />
-                <View style={styles.guestOnlineDot} />
-              </View>
-
               {/* Guest Details */}
               <View style={styles.guestInfo}>
                 <View style={styles.nameRow}>
@@ -256,29 +231,9 @@ export default function ReservationDetailScreen() {
                 </Pressable>
               </View>
 
-              {/* Status & Quick Action Buttons */}
+              {/* Status */}
               <View style={styles.guestRightCol}>
                 <StatusBadge label={currentStatus} variant="green" dot />
-
-                <View style={styles.contactActionsRow}>
-                  <Pressable
-                    onPress={handleOpenWhatsApp}
-                    style={({ pressed }) => [styles.whatsAppBtn, pressed && styles.pressed]}>
-                    <Icon name="whatsapp" size={15} color="#FFFFFF" />
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => Alert.alert('Calling Guest', `Dialing ${guestPhone}...`)}
-                    style={({ pressed }) => [styles.callBtn, pressed && styles.pressed]}>
-                    <Icon name="phone" size={14} color="#FFFFFF" />
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => Alert.alert('SMS Sent', `SMS sent to ${guestName}: "Your table is ready!"`)}
-                    style={({ pressed }) => [styles.msgBtn, pressed && styles.pressed]}>
-                    <Icon name="message" size={15} color="#4B5563" />
-                  </Pressable>
-                </View>
               </View>
             </View>
 
@@ -510,6 +465,66 @@ export default function ReservationDetailScreen() {
             <Text style={styles.cancelBtnText}>Cancel Reservation</Text>
           </Pressable>
         </View>
+
+        {/* Action Sheet Modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={actionSheetVisible}
+          onRequestClose={() => setActionSheetVisible(false)}>
+          <View style={styles.actionSheetOverlay}>
+            <View style={styles.actionSheetContent}>
+              <View style={styles.actionSheetHeader}>
+                <Text style={styles.actionSheetTitle}>Update Reservation Status</Text>
+                <Text style={styles.actionSheetSubtitle}>Select arrival status</Text>
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [styles.actionSheetBtn, pressed && styles.pressed]}
+                onPress={() => executeStatusUpdate('Seated')}>
+                <Icon name="check" size={20} color="#059669" />
+                <Text style={styles.actionSheetBtnText}>Mark Seated</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [styles.actionSheetBtn, pressed && styles.pressed]}
+                onPress={() => executeStatusUpdate('Arrived / In Bar')}>
+                <Icon name="users" size={20} color="#3B82F6" />
+                <Text style={styles.actionSheetBtnText}>Mark Arrived / In Bar</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [styles.actionSheetBtn, pressed && styles.pressed]}
+                onPress={() => executeStatusUpdate('Running Late')}>
+                <Icon name="clock" size={20} color="#D97706" />
+                <Text style={styles.actionSheetBtnText}>Running Late</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [styles.actionSheetBtn, styles.actionSheetCancelBtn, pressed && styles.pressed]}
+                onPress={() => setActionSheetVisible(false)}>
+                <Text style={styles.actionSheetCancelBtnText}>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Success Splash Modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={!!successMsg}
+          onRequestClose={() => setSuccessMsg(null)}>
+          <View style={styles.splashOverlay}>
+            <View style={styles.splashContent}>
+              <View style={styles.splashIconBox}>
+                <Icon name="check" size={32} color="#059669" />
+              </View>
+              <Text style={styles.splashTitle}>Success</Text>
+              <Text style={styles.splashMessage}>{successMsg}</Text>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -1055,11 +1070,13 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     borderRadius: 14,
     gap: 6,
+    width: '90%',
+    alignSelf: 'center',
     shadowColor: '#009669',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 6,
-    elevation: 3,
+    elevation: 4,
   },
   saveBtnText: {
     fontSize: 15,
@@ -1070,27 +1087,137 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F3F4F6',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingVertical: 11,
+    borderColor: '#D1D5DB',
+    paddingVertical: 13,
     borderRadius: 14,
     gap: 6,
+    width: '90%',
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   statusBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     color: '#374151',
   },
   cancelBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    paddingVertical: 13,
+    borderRadius: 14,
+    width: '90%',
+    alignSelf: 'center',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cancelBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
+  actionSheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  actionSheetContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  actionSheetHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  actionSheetTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+  actionSheetSubtitle: {
     fontSize: 13,
+    color: '#64748B',
+    marginTop: 4,
+  },
+  actionSheetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAF9',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 10,
+    gap: 12,
+  },
+  actionSheetBtnText: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#EF4444',
+    color: '#1E293B',
+  },
+  actionSheetCancelBtn: {
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  actionSheetCancelBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  splashOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  splashContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 300,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  splashIconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#D1FAE5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  splashTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#065F46',
+    marginBottom: 8,
+  },
+  splashMessage: {
+    fontSize: 15,
+    color: '#334155',
+    textAlign: 'center',
+    lineHeight: 22,
+    fontWeight: '500',
   },
   pressed: {
     opacity: 0.85,

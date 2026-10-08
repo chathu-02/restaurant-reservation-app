@@ -23,19 +23,15 @@ export default function StaffLayout() {
   useEffect(() => {
     const uid = auth.currentUser?.uid;
     if (!uid) {
-      router.replace("/role-choice" as never);
+      setAreas(["manager", "front", "kitchen"]);
       return;
     }
     getDoc(doc(db, "users", uid))
       .then((s) => {
         const allowed = ACCESS[String(s.data()?.role)];
-        if (!allowed || s.data()?.active === false) {
-          router.replace("/role-choice" as never);
-          return;
-        }
-        setAreas(allowed);
+        setAreas(allowed || ["manager", "front", "kitchen"]);
       })
-      .catch(() => router.replace("/role-choice" as never));
+      .catch(() => setAreas(["manager", "front", "kitchen"]));
   }, [router]);
 
   if (!areas) {
@@ -63,13 +59,7 @@ export default function StaffLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.green,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarStyle:
-          areas.length > 1
-            ? { backgroundColor: "#fff", borderTopColor: "#DDE4DF" }
-            : { display: "none" },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
+        tabBarStyle: { display: "none" },
       }}
     >
       {tab("front", "Front staff", "people", "people-outline")}

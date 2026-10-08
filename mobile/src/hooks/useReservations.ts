@@ -8,6 +8,7 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { dateValue, postKitchenAlert, LARGE_GROUP } from '@/lib/booking';
@@ -365,12 +366,13 @@ export function useReservations() {
     setOverview(updatedOverview);
   }, [reservations, queue, tables, usersCount, calculateOverview]);
 
-  // Auto-trigger Rush Hour Imminent Alert notification when peak rush time arrives/approaches
+  // Auto-trigger Rush Hour Imminent Alert notification ONLY when real peak rush time arrives (within 5 mins)
   useEffect(() => {
     if (!overview?.rushAlert) return;
     const { time, expectedGuests, withinMinutes } = overview.rushAlert;
 
-    if (expectedGuests >= 6 && withinMinutes <= 60) {
+    // Only trigger when real time is within 5 minutes of peak rush hour time
+    if (expectedGuests >= 8 && withinMinutes <= 5 && withinMinutes >= 0) {
       const alertTitle = `⚡ RUSH HOUR IMMINENT ALERT (${time})`;
 
       const alreadyAlerted = notifications.some(
@@ -380,11 +382,11 @@ export function useReservations() {
       if (!alreadyAlerted) {
         addDoc(collection(db, 'notifications'), {
           title: alertTitle,
-          message: `Rush Hour expected at ${time}! ${expectedGuests} guests arriving within ${withinMinutes} mins. Prepare host stand & kitchen pacing.`,
+          message: `Rush Hour starting now at ${time}! ${expectedGuests} guests expected. Prepare host stand & kitchen pacing.`,
           type: 'critical',
           category: 'critical',
           recipientRole: 'staff',
-          targetScreen: '/',
+          targetScreen: '/(staff)/manager',
           read: false,
           createdAt: serverTimestamp(),
         }).catch((err) => console.warn('Failed to auto-trigger rush hour notification:', err));
@@ -610,6 +612,14 @@ export function useReservations() {
     }
   };
 
+  const deleteNotification = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'notifications', id));
+    } catch (err) {
+      console.warn('Failed to delete notification:', err);
+    }
+  };
+
   const acknowledgeKitchenAlert = async (id: string) => {
     await updateDoc(doc(db, 'kitchenAlerts', id), { acknowledged: true });
   };
@@ -675,6 +685,7 @@ export function useReservations() {
     updateQueueStatus,
     updateTableStatus,
     markNotificationRead,
+    deleteNotification,
     acknowledgeKitchenAlert,
     sendTestNotification,
   };
