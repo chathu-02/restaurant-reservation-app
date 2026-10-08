@@ -67,6 +67,14 @@ export async function acknowledgeAlert(id: string) {
   await updateDoc(doc(db, "kitchenAlerts", id), { acknowledged: true, acknowledgedAt: serverTimestamp() });
 }
 
+export async function acknowledgeKitchenNotification(id: string) {
+  await updateDoc(doc(db, "notifications", id), {
+    read: true,
+    readAt: serverTimestamp(),
+    readBy: auth.currentUser?.uid ?? null,
+  });
+}
+
 export async function updateReservationStatus(id: string, status: KitchenStatus) {
   const timestamp = serverTimestamp();
   const update: Record<string, unknown> = {

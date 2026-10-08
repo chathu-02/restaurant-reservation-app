@@ -31,9 +31,31 @@ export default function KitchenTodayScreen() {
     }
   };
 
+  const previousStatus: Partial<Record<KitchenStatus, KitchenStatus>> = {
+    confirmed: "pending",
+    seated: "confirmed",
+    preparing: "seated",
+    ready: "preparing",
+    served: "ready",
+  };
+
+  const statusLabel: Record<KitchenStatus, string> = {
+    pending: "Pending",
+    confirmed: "Confirmed",
+    seated: "Seated",
+    preparing: "Preparing",
+    ready: "Ready",
+    served: "Served",
+  };
+
   const currentMins = time.getHours() * 60 + time.getMinutes();
-  const upcoming = reservations.filter(r => r.timeMinutes >= currentMins - 30);
-  const totalGuests = upcoming.reduce((acc, r) => acc + (r.partySize || 0), 0);
+  const orderedReservations = [...reservations].sort((a, b) => a.timeMinutes - b.timeMinutes);
+  const totalGuests = orderedReservations.reduce((acc, r) => acc + (r.partySize || 0), 0);
+  const upcomingGuests = orderedReservations
+    .filter((r) => r.timeMinutes >= currentMins)
+    .reduce((acc, r) => acc + (r.partySize || 0), 0);
+  const activeReservations = orderedReservations.filter((r) => r.status !== "served");
+  const completedReservations = orderedReservations.filter((r) => r.status === "served");
 
   return (
     <SafeAreaView style={styles.container}>
@@ -44,7 +66,7 @@ export default function KitchenTodayScreen() {
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.dot} />
-              <Text style={styles.headerTitle}>Next hour</Text>
+              <Text style={styles.headerTitle}>Today’s prep plan</Text>
             </View>
             <View style={styles.headerRight}>
               <Ionicons name="time-outline" size={16} color={colors.text} />
@@ -53,7 +75,7 @@ export default function KitchenTodayScreen() {
               </Text>
             </View>
           </View>
-          <Text style={styles.subtitle}>Live arrivals for your kitchen staff</Text>
+          <Text style={styles.subtitle}>All confirmed arrivals, ordered by required time</Text>
 
           <View style={styles.summaryCard}>
             <View style={styles.summaryTop}>
@@ -64,11 +86,15 @@ export default function KitchenTodayScreen() {
             </View>
             <View style={styles.summaryBottom}>
               <Text style={styles.summaryNumber}>{totalGuests}</Text>
-              <Text style={styles.summaryText}>Guests arriving</Text>
+              <Text style={styles.summaryText}>guests today</Text>
             </View>
+            <Text style={styles.summaryHint}>{upcomingGuests} guests still expected</Text>
           </View>
 
-          {upcoming.map(r => {
+          {activeReservations.length > 0 && (
+            <Text style={styles.sectionTitle}>Kitchen queue</Text>
+          )}
+          {activeReservations.map(r => {
             const diff = r.timeMinutes - currentMins;
             return (
               <View key={r.id} style={styles.arrivalCard}>
@@ -78,17 +104,30 @@ export default function KitchenTodayScreen() {
                   </View>
                   <View style={styles.arrivalInfo}>
                     <Text style={styles.arrivalName}>{r.userName}</Text>
-                    <Text style={styles.arrivalTable}>{(r.tableNames || []).join(", ")} • {r.partySize} Guests</Text>
+                    <Text style={styles.arrivalTable}>
+                      Table {(r.tableNames || []).join(", ") || "to be assigned"} • {r.partySize} guests
+                    </Text>
                   </View>
                   <View style={styles.timeInfo}>
                     <Text style={diff < 30 ? styles.inTime : styles.inTimeWarning}>
                       {diff > 0 ? `in ${diff} min` : 'due now'}
                     </Text>
-                    <Text style={styles.etaTime}>ETA {formatTime(r.timeMinutes)}</Text>
+                    <Text style={styles.etaTime}>Required {formatTime(r.timeMinutes)}</Text>
                   </View>
                 </View>
 
                 <View style={styles.actions}>
+                  {previousStatus[r.status as KitchenStatus] && (
+                    <Pressable
+                      style={styles.backBtn}
+                      onPress={() => handleStatus(r.id, previousStatus[r.status as KitchenStatus]!)}
+                    >
+                      <Ionicons name="arrow-back" size={15} color={colors.text} />
+                      <Text style={styles.backBtnText}>
+                        Back to {statusLabel[previousStatus[r.status as KitchenStatus]!]}
+                      </Text>
+                    </Pressable>
+                  )}
                   {r.status === "pending" && (
                     <Pressable style={styles.confirmBtn} onPress={() => handleStatus(r.id, "confirmed")}>
                       <Text style={styles.confirmBtnText}>Confirm booking</Text>
@@ -121,15 +160,42 @@ export default function KitchenTodayScreen() {
               </View>
             );
           })}
+          {completedReservations.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Completed</Text>
+              {completedReservations.map((r) => (
+                <View key={r.id} style={[styles.arrivalCard, styles.completedCard]}>
+                  <View style={styles.arrivalHeader}>
+                    <View style={styles.partyAvatar}>
+                      <Ionicons name="checkmark" size={20} color={colors.green} />
+                    </View>
+                    <View style={styles.arrivalInfo}>
+                      <Text style={styles.arrivalName}>{r.userName}</Text>
+                      <Text style={styles.arrivalTable}>
+                        Table {(r.tableNames || []).join(", ") || "to be assigned"} • {r.partySize} guests
+                      </Text>
+                    </View>
+                    <Text style={styles.etaTime}>{formatTime(r.timeMinutes)}</Text>
+                  </View>
+                  <View style={styles.actions}>
+                    <Pressable style={styles.backBtn} onPress={() => handleStatus(r.id, "ready")}>
+                      <Ionicons name="arrow-back" size={15} color={colors.text} />
+                      <Text style={styles.backBtnText}>Back to Ready</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
+          {orderedReservations.length === 0 && (
+            <View style={styles.emptyState}>
+              <Ionicons name="restaurant-outline" size={42} color={colors.border} />
+              <Text style={styles.emptyTitle}>No reservations for today</Text>
+              <Text style={styles.emptyText}>New customer bookings will appear here automatically.</Text>
+            </View>
+          )}
         </ScrollView>
       )}
-
-      <View style={styles.floatingContainer}>
-        <Pressable style={styles.floatingButton}>
-          <Ionicons name="clipboard-outline" size={20} color="#fff" />
-          <Text style={styles.floatingButtonText}>Kitchen Prep View</Text>
-        </Pressable>
-      </View>
     </SafeAreaView>
   );
 }
@@ -152,6 +218,8 @@ const styles = StyleSheet.create({
   summaryBottom: { flexDirection: "row", alignItems: "baseline", gap: 8 },
   summaryNumber: { color: "#fff", fontSize: 40, fontWeight: "700" },
   summaryText: { color: colors.green, fontSize: 16, fontWeight: "600" },
+  summaryHint: { color: colors.border, fontSize: 12, marginTop: 8 },
+  sectionTitle: { fontSize: 15, fontWeight: "700", color: colors.text, marginBottom: 12, marginTop: 4 },
   
   arrivalCard: { backgroundColor: "#fff", borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 },
   arrivalHeader: { flexDirection: "row", alignItems: "center" },
@@ -170,14 +238,16 @@ const styles = StyleSheet.create({
   confirmBtn: { backgroundColor: "#D5EDE3", padding: 10, borderRadius: 8, alignItems: "center" },
   confirmBtnText: { color: "#14503E", fontWeight: "700", fontSize: 13 },
   actions: { marginTop: 12, gap: 8 },
+  backBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: "#F1F3F2", padding: 10, borderRadius: 8, borderWidth: 1, borderColor: "#DDE4DF" },
+  backBtnText: { color: colors.text, fontWeight: "600", fontSize: 13 },
   prepBtn: { backgroundColor: "#E9F2FF", padding: 10, borderRadius: 8, alignItems: "center" },
   prepBtnText: { color: "#1D4ED8", fontWeight: "700", fontSize: 13 },
   readyBtn: { backgroundColor: "#D5EDE3", padding: 10, borderRadius: 8, alignItems: "center" },
   readyBtnText: { color: "#14503E", fontWeight: "700", fontSize: 13 },
   seatedChip: { marginTop: 12, alignSelf: "flex-start", backgroundColor: "#D5EDE3", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 16 },
   seatedChipText: { color: "#14503E", fontSize: 12, fontWeight: "700" },
-
-  floatingContainer: { position: "absolute", bottom: 16, left: 0, right: 0, alignItems: "center" },
-  floatingButton: { flexDirection: "row", alignItems: "center", backgroundColor: colors.text, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 30, gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 5 },
-  floatingButtonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  completedCard: { opacity: 0.72 },
+  emptyState: { alignItems: "center", paddingTop: 48, paddingHorizontal: 20 },
+  emptyTitle: { color: colors.text, fontSize: 16, fontWeight: "700", marginTop: 12 },
+  emptyText: { color: colors.muted, fontSize: 13, textAlign: "center", marginTop: 6 },
 });

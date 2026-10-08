@@ -32,6 +32,24 @@ export default function KitchenTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="tables"
+        options={{
+          title: "Tables",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "grid" : "grid-outline"} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="tasks"
+        options={{
+          title: "Prep",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "clipboard" : "clipboard-outline"} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="alerts"
         options={{
           title: "Alerts",

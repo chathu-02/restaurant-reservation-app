@@ -6,6 +6,37 @@ const mongoose = require("mongoose");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const RESERVATION_STATUSES = ["pending", "confirmed", "seated", "preparing", "ready", "served", "cancelled", "no_show"];
+
+const reservationSchema = new mongoose.Schema(
+  {
+    _id: { type: String, required: true },
+    date: { type: String, required: true, index: true },
+    time: { type: String, required: true },
+    timeMinutes: { type: Number, index: true },
+    partySize: { type: Number, required: true, min: 1 },
+    userName: { type: String, required: true, trim: true },
+    phone: { type: String, default: "" },
+    tableIds: { type: [String], default: [] },
+    tableNames: { type: [String], default: [] },
+    status: { type: String, enum: RESERVATION_STATUSES, default: "confirmed", index: true },
+  },
+  { strict: false, timestamps: true, versionKey: false, collection: "reservations" }
+);
+const Reservation = mongoose.models.Reservation || mongoose.model("Reservation", reservationSchema);
+const kitchenTaskSchema = new mongoose.Schema(
+  {
+    _id: { type: String, required: true },
+    title: { type: String, required: true, trim: true },
+    station: { type: String, required: true, trim: true },
+    priority: { type: String, enum: ["low", "normal", "high"], default: "normal" },
+    status: { type: String, enum: ["open", "in_progress", "done"], default: "open" },
+    dueTime: { type: String, default: "" },
+    notes: { type: String, default: "" },
+  },
+  { timestamps: true, versionKey: false, collection: "kitchen_tasks" }
+);
+const KitchenTask = mongoose.models.KitchenTask || mongoose.model("KitchenTask", kitchenTaskSchema);
 
 // Middleware
 app.use(cors());
@@ -85,7 +116,39 @@ let userProfile = {
 
 let bookings = [];
 let queue = [];
-const RESERVATION_STATUSES = ["pending", "confirmed", "seated", "preparing", "ready", "served", "cancelled", "no_show"];
+let kitchenTasks = [];
+
+function localDateValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function reservationTimeMinutes(reservation) {
+  if (Number.isFinite(Number(reservation.timeMinutes))) return Number(reservation.timeMinutes);
+  const match = String(reservation.time || "").match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  let hour = Number(match[1]);
+  const minute = Number(match[2]);
+  const period = match[3] && match[3].toUpperCase();
+  if (period === "PM" && hour < 12) hour += 12;
+  if (period === "AM" && hour === 12) hour = 0;
+  return hour * 60 + minute;
+}
+
+function kitchenReservationView(booking) {
+  return {
+    ...booking,
+    timeMinutes: reservationTimeMinutes(booking),
+    guestCount: Number(booking.partySize),
+    tableNames: Array.isArray(booking.tableNames)
+      ? booking.tableNames
+      : booking.tableName
+        ? [booking.tableName]
+        : [],
+  };
+}
 
 // Health endpoint
 app.get("/api/health", (req, res) => {
@@ -216,33 +279,177 @@ app.post("/api/reservations", (req, res) => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  bookings.push(booking);
-  res.status(201).json({ message: "Reservation recorded", data: booking });
+  const normalizedBooking = kitchenReservationView(booking);
+  if (mongoose.connection.readyState === 1) {
+    return Reservation.create({ ...normalizedBooking, _id: normalizedBooking.id })
+      .then((saved) => res.status(201).json({ message: "Reservation recorded", data: kitchenReservationView(saved.toObject()) }))
+      .catch((error) => {
+        console.error("Reservation save failed:", error.message);
+        res.status(500).json({ message: "Could not save reservation" });
+      });
+  }
+  bookings.push(normalizedBooking);
+  res.status(201).json({ message: "Reservation recorded", data: normalizedBooking });
 });
 
-app.get("/api/reservations", (req, res) => {
-  const result = bookings
-    .filter((booking) => !req.query.date || booking.date === req.query.date)
-    .filter((booking) => !req.query.status || booking.status === req.query.status)
-    .sort((a, b) => String(a.timeMinutes || a.time || "").localeCompare(String(b.timeMinutes || b.time || "")));
-  res.json({ data: result });
+app.get("/api/reservations", async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const filter = {};
+      if (req.query.date) filter.date = req.query.date;
+      if (req.query.status) filter.status = req.query.status;
+      const result = await Reservation.find(filter).sort({ timeMinutes: 1, time: 1 }).lean();
+      return res.json({ data: result.map(kitchenReservationView) });
+    }
+    const result = bookings
+      .filter((booking) => !req.query.date || booking.date === req.query.date)
+      .filter((booking) => !req.query.status || booking.status === req.query.status)
+      .map(kitchenReservationView)
+      .sort((a, b) => a.timeMinutes - b.timeMinutes);
+    res.json({ data: result });
+  } catch (error) {
+    console.error("Reservation list failed:", error.message);
+    res.status(500).json({ message: "Could not load reservations" });
+  }
 });
 
-app.patch("/api/reservations/:id/status", (req, res) => {
+app.get("/api/kitchen/today", async (req, res) => {
+  const date = req.query.date || localDateValue();
+  try {
+    const reservations = mongoose.connection.readyState === 1
+      ? (await Reservation.find({ date, status: { $nin: ["cancelled", "no_show"] } }).sort({ timeMinutes: 1 }).lean()).map(kitchenReservationView)
+      : bookings
+        .filter((booking) => booking.date === date)
+        .filter((booking) => !["cancelled", "no_show"].includes(booking.status))
+        .map(kitchenReservationView)
+        .sort((a, b) => a.timeMinutes - b.timeMinutes);
+    res.json({
+      data: {
+        date,
+        totalReservations: reservations.length,
+        totalGuests: reservations.reduce((total, booking) => total + booking.guestCount, 0),
+        reservations,
+      },
+    });
+  } catch (error) {
+    console.error("Kitchen reservations load failed:", error.message);
+    res.status(500).json({ message: "Could not load kitchen reservations" });
+  }
+});
+
+app.patch("/api/reservations/:id/status", async (req, res) => {
   const { status } = req.body;
   if (!RESERVATION_STATUSES.includes(status)) {
     return res.status(400).json({ message: `Status must be one of: ${RESERVATION_STATUSES.join(", ")}` });
   }
-  const booking = bookings.find((item) => item.id === req.params.id);
+  const booking = mongoose.connection.readyState === 1
+    ? await Reservation.findById(req.params.id)
+    : bookings.find((item) => item.id === req.params.id);
   if (!booking) return res.status(404).json({ message: "Reservation not found" });
 
-  booking.status = status;
-  booking.updatedAt = new Date().toISOString();
-  if (status === "seated") booking.seatedAt = booking.updatedAt;
-  if (status === "preparing") booking.preparingAt = booking.updatedAt;
-  if (status === "ready") booking.readyAt = booking.updatedAt;
-  if (status === "served") booking.servedAt = booking.updatedAt;
+  const updatedAt = new Date().toISOString();
+  const update = { status, updatedAt };
+  if (status === "seated") update.seatedAt = updatedAt;
+  if (status === "preparing") update.preparingAt = updatedAt;
+  if (status === "ready") update.readyAt = updatedAt;
+  if (status === "served") update.servedAt = updatedAt;
+  if (mongoose.connection.readyState === 1) {
+    Object.assign(booking, update);
+    await booking.save();
+    return res.json({ message: "Reservation status updated", data: kitchenReservationView(booking.toObject()) });
+  }
+  Object.assign(booking, update);
   res.json({ message: "Reservation status updated", data: booking });
+});
+
+app.post("/api/kitchen/tasks", async (req, res) => {
+  const title = String(req.body.title || "").trim();
+  const station = String(req.body.station || "").trim();
+  const { priority = "normal", dueTime = "", notes = "" } = req.body;
+  if (!title || !station) {
+    return res.status(400).json({ message: "Task title and station are required" });
+  }
+  if (!["low", "normal", "high"].includes(priority)) {
+    return res.status(400).json({ message: "Priority must be low, normal, or high" });
+  }
+  const task = {
+    id: `kt-${Date.now()}`,
+    title,
+    station,
+    priority,
+    status: "open",
+    dueTime: String(dueTime),
+    notes: String(notes),
+  };
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const saved = await KitchenTask.create({ ...task, _id: task.id });
+      return res.status(201).json({ message: "Kitchen task created", data: { ...saved.toObject(), id: saved._id } });
+    }
+    kitchenTasks.push(task);
+    res.status(201).json({ message: "Kitchen task created", data: task });
+  } catch (error) {
+    console.error("Kitchen task create failed:", error.message);
+    res.status(500).json({ message: "Could not create kitchen task" });
+  }
+});
+
+app.get("/api/kitchen/tasks", async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const tasks = await KitchenTask.find().sort({ status: 1, createdAt: -1 }).lean();
+      return res.json({ data: tasks.map((task) => ({ ...task, id: task._id })) });
+    }
+    res.json({ data: [...kitchenTasks].sort((a, b) => b.id.localeCompare(a.id)) });
+  } catch (error) {
+    console.error("Kitchen task list failed:", error.message);
+    res.status(500).json({ message: "Could not load kitchen tasks" });
+  }
+});
+
+app.put("/api/kitchen/tasks/:id", async (req, res) => {
+  const allowed = ["title", "station", "priority", "status", "dueTime", "notes"];
+  const update = Object.fromEntries(Object.entries(req.body).filter(([key]) => allowed.includes(key)));
+  if (update.title !== undefined && !String(update.title).trim()) {
+    return res.status(400).json({ message: "Task title cannot be empty" });
+  }
+  if (update.priority !== undefined && !["low", "normal", "high"].includes(update.priority)) {
+    return res.status(400).json({ message: "Priority must be low, normal, or high" });
+  }
+  if (update.status !== undefined && !["open", "in_progress", "done"].includes(update.status)) {
+    return res.status(400).json({ message: "Status must be open, in_progress, or done" });
+  }
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const task = await KitchenTask.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true }).lean();
+      if (!task) return res.status(404).json({ message: "Kitchen task not found" });
+      return res.json({ message: "Kitchen task updated", data: { ...task, id: task._id } });
+    }
+    const task = kitchenTasks.find((item) => item.id === req.params.id);
+    if (!task) return res.status(404).json({ message: "Kitchen task not found" });
+    Object.assign(task, update);
+    res.json({ message: "Kitchen task updated", data: task });
+  } catch (error) {
+    console.error("Kitchen task update failed:", error.message);
+    res.status(500).json({ message: "Could not update kitchen task" });
+  }
+});
+
+app.delete("/api/kitchen/tasks/:id", async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const deleted = await KitchenTask.findByIdAndDelete(req.params.id).lean();
+      if (!deleted) return res.status(404).json({ message: "Kitchen task not found" });
+      return res.json({ message: "Kitchen task deleted", data: { ...deleted, id: deleted._id } });
+    }
+    const index = kitchenTasks.findIndex((item) => item.id === req.params.id);
+    if (index === -1) return res.status(404).json({ message: "Kitchen task not found" });
+    const [deleted] = kitchenTasks.splice(index, 1);
+    res.json({ message: "Kitchen task deleted", data: deleted });
+  } catch (error) {
+    console.error("Kitchen task delete failed:", error.message);
+    res.status(500).json({ message: "Could not delete kitchen task" });
+  }
 });
 
 app.post("/api/queue", (req, res) => {

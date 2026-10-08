@@ -1,5 +1,4 @@
 import { Badge, Card, colors, Screen } from "@/components/form-ui";
-import { logout } from "@/lib/auth";
 import { dateValue, prettyDate, ReservationDoc, statusLabel, statusTone } from "@/lib/booking";
 import { auth, db } from "@/lib/firebase";
 import { useRouter } from "expo-router";
@@ -142,15 +141,6 @@ export default function StaffDashboard() {
           </Card>
         ))
       )}
-      <Pressable
-        style={styles.logoutButton}
-        onPress={async () => {
-          await logout();
-          router.replace("/role-choice" as never);
-        }}>
-        <Ionicons name="log-out-outline" size={18} color={colors.error} />
-        <Text style={styles.logoutText}>Log out</Text>
-      </Pressable>
     </Screen>
   );
 }
@@ -192,6 +182,4 @@ const styles = {
   emptyState: { alignItems: "center" as const, paddingVertical: 12 },
   emptyTitle: { color: colors.text, fontSize: 15, fontWeight: "700" as const, marginTop: 8 },
   emptySubtitle: { color: colors.muted, fontSize: 12, textAlign: "center" as const, marginTop: 4 },
-  logoutButton: { minHeight: 48, flexDirection: "row" as const, alignItems: "center" as const, justifyContent: "center" as const, gap: 7, marginTop: 8, marginBottom: 8 },
-  logoutText: { color: colors.error, fontSize: 14, fontWeight: "700" as const },
 };

@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Icon } from '../components/ui/Icon';
+import { logout } from '@/lib/auth';
 
 const staffAvatarImg = require('../../assets/images/staff_avatar.jpg');
 
@@ -85,8 +86,9 @@ export default function StaffProfileScreen() {
         {
           text: 'Log Out',
           style: 'destructive',
-          onPress: () => {
-            router.push('/login');
+          onPress: async () => {
+            await logout();
+            router.replace('/role-choice' as never);
           },
         },
       ]

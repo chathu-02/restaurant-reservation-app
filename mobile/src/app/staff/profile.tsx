@@ -14,7 +14,7 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace("/sign-in" as never);
+    router.replace("/role-choice" as never);
   };
 
   return (
