@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,52 +11,86 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
+import {
+  CustomerProfile,
+  getCustomerProfileSync,
+  loadCustomerProfile,
+  subscribeToProfile,
+  updateNotificationPreferences,
+} from '@/lib/profileService';
+import { logout } from '@/lib/auth';
 
 export default function CustomerProfileScreen() {
-  const [reminders, setReminders] = useState(true);
-  const [queueAlerts, setQueueAlerts] = useState(true);
+  const [profile, setProfile] = useState<CustomerProfile>(getCustomerProfileSync());
+  const [reminders, setReminders] = useState(profile.reminders);
+  const [queueAlerts, setQueueAlerts] = useState(profile.queueAlerts);
   const [notifExpanded, setNotifExpanded] = useState(true);
 
+  // Subscribe to profile state updates
+  useEffect(() => {
+    const unsubscribe = subscribeToProfile((updated) => {
+      setProfile(updated);
+      setReminders(updated.reminders);
+      setQueueAlerts(updated.queueAlerts);
+    });
+    loadCustomerProfile();
+    return unsubscribe;
+  }, []);
+
+  // Reload profile when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadCustomerProfile().then((p) => {
+        setProfile(p);
+        setReminders(p.reminders);
+        setQueueAlerts(p.queueAlerts);
+      });
+    }, [])
+  );
+
   const handleEditDetails = () => {
-    Alert.prompt
-      ? Alert.prompt(
-          'Edit Profile Name',
-          'Update your display name',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Save', onPress: () => Alert.alert('Updated', 'Name updated successfully') },
-          ],
-          'plain-text',
-          'Amara Chen'
-        )
-      : Alert.alert('Edit Personal Details', 'Name: Amara Chen\nEmail: amara.chen@email.com\nPhone: (555) 439-9201');
+    router.push('/edit-profile' as never);
   };
 
   const handleChangePassword = () => {
-    Alert.alert('Change Password', 'A password reset link has been dispatched to amara.chen@email.com.');
+    router.push('/change-password' as never);
+  };
+
+  const handleToggleReminders = (val: boolean) => {
+    setReminders(val);
+    updateNotificationPreferences(val, queueAlerts);
+  };
+
+  const handleToggleQueueAlerts = (val: boolean) => {
+    setQueueAlerts(val);
+    updateNotificationPreferences(reminders, val);
   };
 
   const handlePaymentMethods = () => {
-    Alert.alert('Payment Methods', 'Default: Apple Pay (Visa ending in 4022)\nStatus: Verified');
+    Alert.alert(
+      'Payment Methods',
+      'Default: Apple Pay (Visa ending in 4022)\nStatus: Verified\nBilling Currency: LKR\n\nTo update payment cards, contact restaurant concierge.'
+    );
   };
 
   const handleLogout = () => {
-    if (Platform.OS === 'web') {
-      router.push('/login');
-      return;
-    }
     Alert.alert(
       'Log Out of Account',
-      'Are you sure you want to log out, Amara? Your active queue position will remain saved.',
+      `Are you sure you want to log out, ${profile.name.split(' ')[0]}? Your queue and booking records will remain saved.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Log Out',
           style: 'destructive',
-          onPress: () => {
-            router.push('/login');
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (e) {
+              console.warn('Logout error:', e);
+            }
+            router.replace('/(auth)/sign-in' as never);
           },
         },
       ]
@@ -76,6 +110,7 @@ export default function CustomerProfileScreen() {
           <Pressable
             style={({ pressed }) => [styles.editBtn, pressed && styles.pressed]}
             onPress={handleEditDetails}
+            accessibilityLabel="Edit Profile"
           >
             <Icon name="edit" size={18} color="#111827" />
           </Pressable>
@@ -84,41 +119,49 @@ export default function CustomerProfileScreen() {
         {/* Profile Hero Card */}
         <View style={styles.profileCard}>
           {/* Avatar with Camera Badge */}
-          <View style={styles.avatarWrapper}>
+          <Pressable
+            style={({ pressed }) => [styles.avatarWrapper, pressed && styles.pressed]}
+            onPress={handleEditDetails}
+          >
             <Image
               source={{
-                uri: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=256',
+                uri:
+                  profile.photoUrl ||
+                  'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=256',
               }}
               style={styles.avatar}
             />
             <View style={styles.cameraBadge}>
               <Icon name="camera" size={12} color="#FFFFFF" />
             </View>
-          </View>
+          </Pressable>
 
-          <Text style={styles.userName}>Amara Chen</Text>
-          <Text style={styles.userEmail}>amara.chen@email.com</Text>
+          <Text style={styles.userName}>{profile.name}</Text>
+          <Text style={styles.userEmail}>{profile.email}</Text>
 
           {/* Preferred Guest Badge */}
           <View style={styles.statusBadge}>
             <View style={styles.statusDot} />
-            <Text style={styles.statusText}>PREFERRED GUEST • 18 VISITS</Text>
+            <Text style={styles.statusText}>
+              {profile.isPreferredGuest ? 'PREFERRED GUEST • ' : ''}
+              {profile.visitsCount} VISITS
+            </Text>
           </View>
 
           {/* 3 Stats Columns */}
           <View style={styles.statsRow}>
             <View style={styles.statCol}>
-              <Text style={styles.statNumber}>12</Text>
+              <Text style={styles.statNumber}>{profile.bookingsCount}</Text>
               <Text style={styles.statLabel}>Bookings</Text>
             </View>
 
             <View style={[styles.statCol, styles.statBorder]}>
-              <Text style={styles.statNumber}>8</Text>
+              <Text style={styles.statNumber}>{profile.queueSavesCount}</Text>
               <Text style={styles.statLabel}>Queue Saves</Text>
             </View>
 
             <View style={styles.statCol}>
-              <Text style={[styles.statNumber, { color: '#00B37E' }]}>450</Text>
+              <Text style={[styles.statNumber, { color: '#00B37E' }]}>{profile.points}</Text>
               <Text style={styles.statLabel}>Points</Text>
             </View>
           </View>
@@ -137,7 +180,10 @@ export default function CustomerProfileScreen() {
                 <View style={[styles.rowIconBox, { backgroundColor: '#EEF2FF' }]}>
                   <Icon name="person" size={18} color="#4F46E5" />
                 </View>
-                <Text style={styles.rowTitle}>Edit personal details</Text>
+                <View>
+                  <Text style={styles.rowTitle}>Edit personal details</Text>
+                  <Text style={styles.rowSub}>Name, email, phone & picture</Text>
+                </View>
               </View>
               <Icon name="chevron-right" size={16} color="#9CA3AF" />
             </Pressable>
@@ -153,7 +199,10 @@ export default function CustomerProfileScreen() {
                 <View style={[styles.rowIconBox, { backgroundColor: '#EEF2FF' }]}>
                   <Icon name="lock" size={18} color="#4F46E5" />
                 </View>
-                <Text style={styles.rowTitle}>Change password</Text>
+                <View>
+                  <Text style={styles.rowTitle}>Change password</Text>
+                  <Text style={styles.rowSub}>Update your account password</Text>
+                </View>
               </View>
               <Icon name="chevron-right" size={16} color="#9CA3AF" />
             </Pressable>
@@ -195,9 +244,12 @@ export default function CustomerProfileScreen() {
                 <Text style={styles.rowTitle}>Notification settings</Text>
               </View>
               <Icon
-                name={notifExpanded ? 'chevron-right' : 'chevron-right'}
+                name="chevron-right"
                 size={16}
                 color="#9CA3AF"
+                style={{
+                  transform: [{ rotate: notifExpanded ? '90deg' : '0deg' }],
+                }}
               />
             </Pressable>
 
@@ -212,7 +264,7 @@ export default function CustomerProfileScreen() {
                   </View>
                   <Switch
                     value={reminders}
-                    onValueChange={setReminders}
+                    onValueChange={handleToggleReminders}
                     trackColor={{ false: '#D1D5DB', true: '#009669' }}
                     thumbColor="#FFFFFF"
                   />
@@ -228,7 +280,7 @@ export default function CustomerProfileScreen() {
                   </View>
                   <Switch
                     value={queueAlerts}
-                    onValueChange={setQueueAlerts}
+                    onValueChange={handleToggleQueueAlerts}
                     trackColor={{ false: '#D1D5DB', true: '#009669' }}
                     thumbColor="#FFFFFF"
                   />
@@ -238,7 +290,7 @@ export default function CustomerProfileScreen() {
           </View>
         </View>
 
-        {/* LOGOUT BUTTON (Explicitly requested by user) */}
+        {/* LOGOUT BUTTON */}
         <Pressable
           style={({ pressed }) => [styles.logoutBtn, pressed && styles.pressed]}
           onPress={handleLogout}
@@ -531,6 +583,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 2,
     paddingHorizontal: 12,
+    position: 'relative',
   },
   navText: {
     fontSize: 10,

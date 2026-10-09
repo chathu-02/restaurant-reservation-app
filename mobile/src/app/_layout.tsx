@@ -23,6 +23,8 @@ export default function RootLayout() {
         <Stack.Screen name="queue" />
         <Stack.Screen name="alerts" />
         <Stack.Screen name="customer-profile" />
+        <Stack.Screen name="edit-profile" />
+        <Stack.Screen name="change-password" />
 
         {/* Staff Screens */}
         <Stack.Screen name="login" />
