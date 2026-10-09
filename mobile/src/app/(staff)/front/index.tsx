@@ -53,6 +53,11 @@ export default function StaffDashboard() {
         {name ? `Signed in as ${name}` : "Loading…"}
       </Text>
       {!!role && <Badge text={ROLE_LABEL[role] ?? role} tone="good" />}
+
+      <View style={{ marginTop: 14 }}>
+        <Button title="Deposit checks" onPress={() => router.push("/front/deposits" as never)} />
+      </View>
+
       <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text, marginTop: 18, marginBottom: 10 }}>
         Today's reservations ({items.length})
       </Text>
@@ -76,6 +81,7 @@ export default function StaffDashboard() {
           </Card>
         ))
       )}
+
       <Button
         title="Log out"
         secondary
