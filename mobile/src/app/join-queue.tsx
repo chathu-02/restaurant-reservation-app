@@ -7,63 +7,132 @@ import {
   TextInput,
   Pressable,
   Alert,
-  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
-import { setQueueEntry } from '@/lib/queueStore';
+import {
+  joinQueue,
+  validateAndNormalizeSriLankanPhone,
+  SeatingPreference,
+} from '@/lib/queueService';
 
 export default function JoinQueueScreen() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [partySize, setPartySize] = useState(2);
-  const [seatingPref, setSeatingPref] = useState<'Indoor' | 'Outdoor' | 'Any'>('Indoor');
+  const [seatingPref, setSeatingPref] = useState<SeatingPreference>('Indoor');
   const [specialReq, setSpecialReq] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Field validation errors
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const partyPills = [2, 4, 6, 8];
 
-  const handleJoin = () => {
-    if (!fullName.trim()) {
-      Alert.alert('Required Field', 'Please enter your full name to join the queue.');
-      return;
+  const handlePartyPillPress = (count: number) => {
+    if (count === 8) {
+      if (partySize < 8) {
+        setPartySize(8);
+      }
+    } else {
+      setPartySize(count);
     }
-    if (!phone.trim()) {
-      Alert.alert('Required Field', 'Please enter your phone number (+94).');
-      return;
-    }
-
-    const now = new Date();
-    let hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    const joinedTime = `${hours}:${minutes} ${ampm}`;
-    const seatingLabel = seatingPref === 'Any' ? 'Any table' : seatingPref;
-
-    setQueueEntry({
-      fullName: fullName.trim(),
-      phone: phone.trim(),
-      partySize,
-      seatingPref: seatingLabel,
-      specialReq: specialReq.trim(),
-      joinedTime,
-      position: 3,
-      tablesAhead: 2,
-      waitMin: 15,
-    });
-
-    router.push({
-      pathname: '/queue',
-      params: {
-        name: fullName.trim(),
-        phone: phone.trim(),
-        partySize: partySize.toString(),
-        seating: seatingLabel,
-        time: joinedTime,
-      },
-    });
   };
+
+  const handleCustomPartyInput = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    if (!cleaned) {
+      setPartySize(8);
+      return;
+    }
+    const val = parseInt(cleaned, 10);
+    if (!isNaN(val)) {
+      setPartySize(Math.max(1, Math.min(val, 50)));
+    }
+  };
+
+  const handleJoin = async () => {
+    if (isSubmitting) return;
+
+    let hasError = false;
+
+    // 1. Full name validation
+    if (!fullName.trim()) {
+      setNameError('Please enter your full name.');
+      hasError = true;
+    } else {
+      setNameError(null);
+    }
+
+    // 2. Sri Lankan phone validation
+    const phoneRes = validateAndNormalizeSriLankanPhone(phone);
+    if (!phoneRes.isValid) {
+      setPhoneError(
+        phoneRes.error || 'Please enter a valid Sri Lankan mobile number (e.g. 077 123 4567).'
+      );
+      hasError = true;
+    } else {
+      setPhoneError(null);
+    }
+
+    // 3. Party size validation
+    if (partySize < 1) {
+      Alert.alert('Invalid Party Size', 'Party size must be at least 1 guest.');
+      return;
+    }
+
+    // 4. Seating preference check
+    if (!seatingPref) {
+      Alert.alert('Seating Preference Required', 'Please select your preferred seating.');
+      return;
+    }
+
+    if (hasError) {
+      Alert.alert(
+        'Please Check Your Details',
+        'Please provide a valid full name and Sri Lankan mobile number before joining the queue.'
+      );
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const entry = await joinQueue({
+        customerName: fullName.trim(),
+        phoneNumber: phoneRes.normalized,
+        partySize,
+        seatingPreference: seatingPref,
+        specialRequests: specialReq.trim(),
+      });
+
+      router.push({
+        pathname: '/queue',
+        params: {
+          id: entry.id,
+          name: entry.customerName,
+          phone: entry.phoneNumber,
+          partySize: entry.partySize.toString(),
+          seating: entry.seatingPreference,
+          specialRequests: entry.specialRequests,
+          time: entry.joinedTimeFormatted,
+        },
+      });
+    } catch (err: any) {
+      Alert.alert(
+        'Unable to Join Queue',
+        err?.message || 'A network error occurred. Please try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Live validation hint for phone if user has typed
+  const phoneValidation = phone.trim() ? validateAndNormalizeSriLankanPhone(phone) : null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -71,6 +140,7 @@ export default function JoinQueueScreen() {
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Top Header */}
         <View style={styles.header}>
@@ -123,37 +193,76 @@ export default function JoinQueueScreen() {
 
         {/* FULL NAME */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>FULL NAME</Text>
-          <View style={styles.inputBox}>
-            <Icon name="person" size={18} color="#9CA3AF" />
+          <View style={styles.labelRow}>
+            <Text style={styles.fieldLabel}>FULL NAME</Text>
+            <Text style={styles.requiredAsterisk}>*Required</Text>
+          </View>
+          <View style={[styles.inputBox, nameError ? styles.inputBoxError : null]}>
+            <Icon name="person" size={18} color={nameError ? '#EF4444' : '#9CA3AF'} />
             <TextInput
               style={styles.textInput}
               value={fullName}
-              onChangeText={setFullName}
-              placeholder="Enter your full name"
+              onChangeText={(text) => {
+                setFullName(text);
+                if (nameError && text.trim()) setNameError(null);
+              }}
+              placeholder="e.g. Pramudi Perera"
               placeholderTextColor="#9CA3AF"
+              autoCapitalize="words"
             />
           </View>
+          {nameError && (
+            <View style={styles.errorRow}>
+              <Icon name="alert-circle" size={13} color="#EF4444" />
+              <Text style={styles.errorText}>{nameError}</Text>
+            </View>
+          )}
         </View>
 
-        {/* PHONE NUMBER */}
+        {/* PHONE NUMBER - Sri Lanka (+94) */}
         <View style={styles.fieldGroup}>
           <View style={styles.labelRow}>
             <Text style={styles.fieldLabel}>PHONE NUMBER</Text>
-            <Text style={styles.helperText}>For SMS updates</Text>
+            <Text style={styles.helperText}>Sri Lanka (For SMS updates)</Text>
           </View>
-          <View style={styles.phoneBox}>
-            <Text style={styles.countryCode}>lk +94</Text>
+          <View style={[styles.phoneBox, phoneError ? styles.inputBoxError : null]}>
+            {/* Sri Lankan Flag & Country Code Badge */}
+            <View style={styles.countryBadge}>
+              <Text style={styles.flagEmoji}>🇱🇰</Text>
+              <Text style={styles.countryCode}>+94</Text>
+            </View>
             <View style={styles.vDivider} />
             <TextInput
               style={styles.phoneInput}
               value={phone}
-              onChangeText={setPhone}
-              placeholder="7X XXX XXXX"
+              onChangeText={(text) => {
+                setPhone(text);
+                if (phoneError) setPhoneError(null);
+              }}
+              placeholder="077 123 4567 or 771234567"
               placeholderTextColor="#9CA3AF"
               keyboardType="phone-pad"
+              autoCapitalize="none"
+              autoCorrect={false}
             />
+            {phoneValidation?.isValid && (
+              <Icon name="check" size={16} color="#00B37E" style={{ marginLeft: 6 }} />
+            )}
           </View>
+          {phoneError ? (
+            <View style={styles.errorRow}>
+              <Icon name="alert-circle" size={13} color="#EF4444" />
+              <Text style={styles.errorText}>{phoneError}</Text>
+            </View>
+          ) : phoneValidation?.isValid ? (
+            <Text style={styles.phoneValidHint}>
+              Normalized: <Text style={{ fontWeight: '700' }}>{phoneValidation.formatted}</Text>
+            </Text>
+          ) : (
+            <Text style={styles.phoneHint}>
+              Accepts local formats: 071..., 077..., 076..., 074... (9 digits)
+            </Text>
+          )}
         </View>
 
         {/* PARTY SIZE */}
@@ -162,34 +271,39 @@ export default function JoinQueueScreen() {
           <View style={styles.stepperBox}>
             <View style={styles.stepperLeft}>
               <Icon name="users" size={18} color="#9CA3AF" />
-              <Text style={styles.stepperValueText}>{partySize} Guests</Text>
+              <Text style={styles.stepperValueText}>
+                {partySize} {partySize === 1 ? 'Guest' : 'Guests'}
+              </Text>
             </View>
             <View style={styles.counterRow}>
               <Pressable
-                onPress={() => setPartySize(Math.max(1, partySize - 1))}
+                onPress={() => setPartySize((prev) => Math.max(1, prev - 1))}
                 style={({ pressed }) => [styles.counterBtn, pressed && styles.pressed]}
+                accessibilityLabel="Decrease guests"
               >
                 <Icon name="minus" size={14} color="#374151" />
               </Pressable>
               <Text style={styles.counterNumber}>{partySize}</Text>
               <Pressable
-                onPress={() => setPartySize(partySize + 1)}
+                onPress={() => setPartySize((prev) => prev + 1)}
                 style={({ pressed }) => [styles.counterBtnDark, pressed && styles.pressed]}
+                accessibilityLabel="Increase guests"
               >
                 <Icon name="plus" size={14} color="#FFFFFF" />
               </Pressable>
             </View>
           </View>
 
-          {/* Quick pills */}
+          {/* Quick pills: 2 ppl, 4 ppl, 6 ppl, 8+ ppl */}
           <View style={styles.pillsRow}>
             {partyPills.map((count) => {
-              const isSelected = partySize === count;
+              const isSelected =
+                count === 8 ? partySize >= 8 : partySize === count;
               const label = count === 8 ? '8+ ppl' : `${count} ppl`;
               return (
                 <Pressable
                   key={count}
-                  onPress={() => setPartySize(count)}
+                  onPress={() => handlePartyPillPress(count)}
                   style={[styles.pillBtn, isSelected && styles.pillBtnSelected]}
                 >
                   <Text style={[styles.pillText, isSelected && styles.pillTextSelected]}>
@@ -199,29 +313,67 @@ export default function JoinQueueScreen() {
               );
             })}
           </View>
+
+          {/* Custom Party Size Input for 8+ Guests */}
+          {partySize >= 8 && (
+            <View style={styles.customPartyCard}>
+              <View style={styles.customPartyHeader}>
+                <Icon name="users" size={14} color="#009669" />
+                <Text style={styles.customPartyTitle}>Large Party Specification (8+)</Text>
+              </View>
+              <Text style={styles.customPartySubtitle}>
+                Enter exact number of guests for your party:
+              </Text>
+              <View style={styles.customPartyInputRow}>
+                <TextInput
+                  style={styles.customPartyInput}
+                  value={partySize.toString()}
+                  onChangeText={handleCustomPartyInput}
+                  keyboardType="number-pad"
+                  placeholder="8"
+                  placeholderTextColor="#9CA3AF"
+                  maxLength={2}
+                />
+                <Text style={styles.customPartySuffix}>Total Guests</Text>
+              </View>
+            </View>
+          )}
         </View>
 
         {/* SEATING PREFERENCE */}
         <View style={styles.fieldGroup}>
           <View style={styles.labelRow}>
             <Text style={styles.fieldLabel}>SEATING PREFERENCE</Text>
-            <Text style={styles.helperText}>Optional</Text>
+            <Text style={styles.helperText}>Select one</Text>
           </View>
           <View style={styles.preferenceGrid}>
             {/* Indoor */}
             <Pressable
               onPress={() => setSeatingPref('Indoor')}
-              style={[styles.prefCard, seatingPref === 'Indoor' && styles.prefCardActive]}
+              style={[
+                styles.prefCard,
+                seatingPref === 'Indoor' && styles.prefCardActive,
+              ]}
             >
               <Icon
                 name="armchair"
                 size={22}
                 color={seatingPref === 'Indoor' ? '#38BDF8' : '#6B7280'}
               />
-              <Text style={[styles.prefTitle, seatingPref === 'Indoor' && styles.prefTextActive]}>
+              <Text
+                style={[
+                  styles.prefTitle,
+                  seatingPref === 'Indoor' && styles.prefTextActive,
+                ]}
+              >
                 Indoor
               </Text>
-              <Text style={[styles.prefSub, seatingPref === 'Indoor' && styles.prefSubActive]}>
+              <Text
+                style={[
+                  styles.prefSub,
+                  seatingPref === 'Indoor' && styles.prefSubActive,
+                ]}
+              >
                 Dining hall
               </Text>
             </Pressable>
@@ -229,39 +381,60 @@ export default function JoinQueueScreen() {
             {/* Outdoor */}
             <Pressable
               onPress={() => setSeatingPref('Outdoor')}
-              style={[styles.prefCard, seatingPref === 'Outdoor' && styles.prefCardActive]}
+              style={[
+                styles.prefCard,
+                seatingPref === 'Outdoor' && styles.prefCardActive,
+              ]}
             >
               <Icon
                 name="leaf"
                 size={22}
                 color={seatingPref === 'Outdoor' ? '#34D399' : '#059669'}
               />
-              <Text style={[styles.prefTitle, seatingPref === 'Outdoor' && styles.prefTextActive]}>
+              <Text
+                style={[
+                  styles.prefTitle,
+                  seatingPref === 'Outdoor' && styles.prefTextActive,
+                ]}
+              >
                 Outdoor
               </Text>
-              <Text style={[styles.prefSub, seatingPref === 'Outdoor' && styles.prefSubActive]}>
+              <Text
+                style={[
+                  styles.prefSub,
+                  seatingPref === 'Outdoor' && styles.prefSubActive,
+                ]}
+              >
                 Garden patio
               </Text>
             </Pressable>
 
-            {/* Any table */}
+            {/* Any Table */}
             <Pressable
-              onPress={() => setSeatingPref('Any')}
-              style={[styles.prefCard, seatingPref === 'Any' && styles.prefCardActive]}
+              onPress={() => setSeatingPref('Any Table')}
+              style={[
+                styles.prefCard,
+                seatingPref === 'Any Table' && styles.prefCardActive,
+              ]}
             >
               <Icon
                 name="sparkles"
                 size={22}
-                color={seatingPref === 'Any' ? '#FBBF24' : '#D97706'}
+                color={seatingPref === 'Any Table' ? '#FBBF24' : '#D97706'}
               />
-              <Text style={[styles.prefTitle, seatingPref === 'Any' && styles.prefTextActive]}>
-                Any table
+              <Text
+                style={[
+                  styles.prefTitle,
+                  seatingPref === 'Any Table' && styles.prefTextActive,
+                ]}
+              >
+                Any Table
               </Text>
               <Text
                 style={[
                   styles.prefSub,
                   { color: '#009669', fontWeight: '800' },
-                  seatingPref === 'Any' && { color: '#34D399' },
+                  seatingPref === 'Any Table' && { color: '#34D399' },
                 ]}
               >
                 Fastest
@@ -272,7 +445,10 @@ export default function JoinQueueScreen() {
 
         {/* SPECIAL REQUESTS */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>SPECIAL REQUESTS</Text>
+          <View style={styles.labelRow}>
+            <Text style={styles.fieldLabel}>SPECIAL REQUESTS</Text>
+            <Text style={styles.helperText}>Optional</Text>
+          </View>
           <View style={styles.inputBox}>
             <TextInput
               style={[styles.textInput, { paddingLeft: 4 }]}
@@ -284,11 +460,12 @@ export default function JoinQueueScreen() {
           </View>
         </View>
 
-        {/* SMS Banner */}
+        {/* SMS Notice */}
         <View style={styles.smsNotice}>
           <Icon name="bell" size={18} color="#009669" style={{ marginTop: 2 }} />
           <Text style={styles.smsText}>
-            We'll send an SMS when your table is <Text style={{ fontWeight: '800' }}>5 minutes away</Text>. You won't lose your spot in line.
+            We'll send an SMS when your table is{' '}
+            <Text style={{ fontWeight: '800' }}>5 minutes away</Text>. You won't lose your spot in line.
           </Text>
         </View>
 
@@ -298,16 +475,30 @@ export default function JoinQueueScreen() {
             <View style={styles.greenDot} />
             <Text style={styles.estimatedLabel}>Estimated seating time</Text>
           </View>
-          <Text style={styles.estimatedTime}>~10:05 PM</Text>
+          <Text style={styles.estimatedTime}>~20 min wait</Text>
         </View>
 
         {/* Big Join Queue Button */}
         <Pressable
-          style={({ pressed }) => [styles.joinBtn, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.joinBtn,
+            isSubmitting && styles.joinBtnDisabled,
+            pressed && !isSubmitting && styles.pressed,
+          ]}
           onPress={handleJoin}
+          disabled={isSubmitting}
         >
-          <Text style={styles.joinBtnText}>Join Queue</Text>
-          <Icon name="arrow-right" size={18} color="#00E599" />
+          {isSubmitting ? (
+            <>
+              <ActivityIndicator size="small" color="#00E599" />
+              <Text style={styles.joinBtnText}>Joining Queue...</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.joinBtnText}>Join Queue</Text>
+              <Icon name="arrow-right" size={18} color="#00E599" />
+            </>
+          )}
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -447,8 +638,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#4B5563',
     letterSpacing: 0.6,
-    marginBottom: 6,
-    marginLeft: 2,
   },
   labelRow: {
     flexDirection: 'row',
@@ -456,6 +645,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
     paddingHorizontal: 2,
+  },
+  requiredAsterisk: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#EF4444',
   },
   helperText: {
     fontSize: 11,
@@ -471,6 +665,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     height: 50,
     gap: 10,
+  },
+  inputBoxError: {
+    borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
+  },
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 5,
+    paddingHorizontal: 4,
+  },
+  errorText: {
+    fontSize: 11,
+    color: '#EF4444',
+    fontWeight: '600',
   },
   textInput: {
     flex: 1,
@@ -488,11 +698,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     height: 50,
   },
+  countryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginRight: 10,
+  },
+  flagEmoji: {
+    fontSize: 16,
+  },
   countryCode: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#4B5563',
-    marginRight: 12,
+    fontWeight: '800',
+    color: '#1F2937',
   },
   vDivider: {
     width: 1,
@@ -505,6 +723,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#111827',
+  },
+  phoneValidHint: {
+    fontSize: 11,
+    color: '#059669',
+    marginTop: 4,
+    paddingHorizontal: 4,
+  },
+  phoneHint: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 4,
+    paddingHorizontal: 4,
   },
   stepperBox: {
     flexDirection: 'row',
@@ -553,7 +783,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#111827',
-    width: 18,
+    minWidth: 20,
     textAlign: 'center',
   },
   pillsRow: {
@@ -580,6 +810,52 @@ const styles = StyleSheet.create({
   },
   pillTextSelected: {
     color: '#FFFFFF',
+  },
+  customPartyCard: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    borderRadius: 16,
+    padding: 12,
+    marginTop: 8,
+  },
+  customPartyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  customPartyTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#166534',
+  },
+  customPartySubtitle: {
+    fontSize: 11,
+    color: '#4B5563',
+    marginBottom: 8,
+  },
+  customPartyInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  customPartyInput: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    borderRadius: 10,
+    width: 60,
+    height: 40,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  customPartySuffix: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#374151',
   },
   preferenceGrid: {
     flexDirection: 'row',
@@ -672,6 +948,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 3,
+  },
+  joinBtnDisabled: {
+    opacity: 0.7,
   },
   joinBtnText: {
     color: '#FFFFFF',

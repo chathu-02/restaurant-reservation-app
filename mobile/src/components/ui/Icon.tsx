@@ -40,6 +40,8 @@ export type IconName =
   | 'help'
   | 'search'
   | 'x-circle'
+  | 'alert-circle'
+  | 'tag'
   | 'command'
   | 'dot';
 
@@ -119,6 +121,10 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="search-outline" size={size} color={color} style={style} />;
     case 'x-circle':
       return <Ionicons name="close-circle-outline" size={size} color={color} style={style} />;
+    case 'alert-circle':
+      return <Ionicons name="alert-circle-outline" size={size} color={color} style={style} />;
+    case 'tag':
+      return <Ionicons name="pricetag-outline" size={size} color={color} style={style} />;
     case 'command':
       return <Feather name="command" size={size} color={color} style={style} />;
     case 'dot':

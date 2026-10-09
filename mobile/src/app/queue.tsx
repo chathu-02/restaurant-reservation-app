@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,25 +6,59 @@ import {
   ScrollView,
   Pressable,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
-import { getQueueEntry, clearQueueEntry } from '@/lib/queueStore';
+import {
+  getActiveQueueEntry,
+  getActiveQueueEntrySync,
+  leaveQueue,
+  QueueEntry,
+  validateAndNormalizeSriLankanPhone,
+} from '@/lib/queueService';
 
 export default function QueueTrackerScreen() {
   const params = useLocalSearchParams();
-  const queueEntry = getQueueEntry();
+  const [entry, setEntry] = useState<QueueEntry | null>(() => getActiveQueueEntrySync());
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const customerName = (params.name as string) || queueEntry.fullName || '';
-  const customerPhone = (params.phone as string) || queueEntry.phone || '';
-  const partySize = Number(params.partySize) || queueEntry.partySize || 2;
-  const seatingPref = (params.seating as string) || queueEntry.seatingPref || 'Indoor';
-  const joinedTime = (params.time as string) || queueEntry.joinedTime || '6:40 PM';
+  useEffect(() => {
+    let isMounted = true;
+    async function loadEntry() {
+      const active = await getActiveQueueEntry();
+      if (isMounted) {
+        setEntry(active);
+        setLoading(false);
+      }
+    }
+    loadEntry();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  const position = queueEntry.position || 3;
-  const tablesAhead = queueEntry.tablesAhead || 2;
-  const waitMin = queueEntry.waitMin || 15;
+  // Determine current active values prioritizing route params if just navigated,
+  // falling back to saved persistent entry
+  const customerName = (params.name as string) || entry?.customerName || '';
+  const customerPhone = (params.phone as string) || entry?.phoneNumber || '';
+  const partySize = params.partySize
+    ? Number(params.partySize)
+    : entry?.partySize || 2;
+  const seatingPref = (params.seating as string) || entry?.seatingPreference || 'Indoor';
+  const specialReq = (params.specialRequests as string) ?? (entry?.specialRequests || '');
+  const joinedTime = (params.time as string) || entry?.joinedTimeFormatted || '6:40 PM';
+
+  const position = entry?.queuePosition || 3;
+  const tablesAhead = entry?.tablesAhead || 2;
+  const waitMin = entry?.estimatedWaitMinutes || 15;
+
+  const hasAnyData = Boolean(customerName || entry);
+
+  // Sri Lankan phone formatting without duplicate +94
+  const phoneRes = customerPhone ? validateAndNormalizeSriLankanPhone(customerPhone) : null;
+  const displayPhone = phoneRes?.isValid ? phoneRes.formatted : customerPhone;
 
   const handleLeaveQueue = () => {
     Alert.alert(
@@ -35,8 +69,9 @@ export default function QueueTrackerScreen() {
         {
           text: 'Leave Queue',
           style: 'destructive',
-          onPress: () => {
-            clearQueueEntry();
+          onPress: async () => {
+            await leaveQueue();
+            setEntry(null);
             Alert.alert('Queue Released', 'You have left the queue.');
             router.replace('/join-queue');
           },
@@ -48,9 +83,92 @@ export default function QueueTrackerScreen() {
   const handleExploreMenu = () => {
     Alert.alert(
       "Today's Chef Specials",
-      '1. Pan-Seared Sea Bass ($34)\n2. Truffle Wild Mushroom Tagliatelle ($28.50)\n3. Smoked Duck Breast ($36)\n\nComplimentary amuse-bouche upon seating!'
+      '1. Pan-Seared Sea Bass (LKR 4,800)\n2. Truffle Wild Mushroom Tagliatelle (LKR 3,950)\n3. Smoked Duck Breast (LKR 5,200)\n\nComplimentary amuse-bouche upon seating!'
     );
   };
+
+  // If loading and no synchronous entry
+  if (loading && !entry && !hasAnyData) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centeredContainer}>
+          <ActivityIndicator size="large" color="#00B37E" />
+          <Text style={styles.loadingText}>Loading queue status...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // If no entry exists at all (customer hasn't joined queue)
+  if (!hasAnyData && !entry) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <Pressable
+            style={({ pressed }) => [styles.backBtn, pressed && styles.pressed]}
+            onPress={() => router.replace('/(customer)/(tabs)/home' as never)}
+          >
+            <Icon name="chevron-left" size={20} color="#111827" />
+          </Pressable>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>Your Queue</Text>
+            <Text style={styles.headerSubtitle}>
+              The Green Terrace <Text style={{ color: '#9CA3AF' }}>• Riverside Ave</Text>
+            </Text>
+          </View>
+          <View style={{ width: 38 }} />
+        </View>
+
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconBox}>
+            <Icon name="clock" size={40} color="#009669" />
+          </View>
+          <Text style={styles.emptyTitle}>You're Not in Line Yet</Text>
+          <Text style={styles.emptySub}>
+            Join the live queue now to reserve your spot while you browse the menu or explore nearby.
+          </Text>
+          <Pressable
+            style={({ pressed }) => [styles.joinNowBtn, pressed && styles.pressed]}
+            onPress={() => router.push('/join-queue')}
+          >
+            <Text style={styles.joinNowBtnText}>Join the Queue</Text>
+            <Icon name="arrow-right" size={16} color="#00E599" />
+          </Pressable>
+        </View>
+
+        {/* Bottom Nav */}
+        <View style={styles.bottomNav}>
+          <Pressable
+            style={styles.navItem}
+            onPress={() => router.push('/(customer)/(tabs)/home' as never)}
+          >
+            <Icon name="utensils" size={20} color="#9CA3AF" />
+            <Text style={styles.navText}>Home</Text>
+          </Pressable>
+          <Pressable
+            style={styles.navItem}
+            onPress={() => router.push('/(customer)/(tabs)/bookings' as never)}
+          >
+            <Icon name="calendar" size={20} color="#9CA3AF" />
+            <Text style={styles.navText}>Bookings</Text>
+          </Pressable>
+          <Pressable style={styles.navItemActive} onPress={() => {}}>
+            <Icon name="clock" size={20} color="#009669" />
+            <Text style={styles.navTextActive}>Queue</Text>
+            <View style={styles.activeDot} />
+          </Pressable>
+          <Pressable style={styles.navItem} onPress={() => router.push('/alerts')}>
+            <Icon name="bell" size={20} color="#9CA3AF" />
+            <Text style={styles.navText}>Alerts</Text>
+          </Pressable>
+          <Pressable style={styles.navItem} onPress={() => router.push('/customer-profile')}>
+            <Icon name="person" size={20} color="#9CA3AF" />
+            <Text style={styles.navText}>Profile</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -63,7 +181,13 @@ export default function QueueTrackerScreen() {
         <View style={styles.header}>
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.pressed]}
-            onPress={() => router.back()}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(customer)/(tabs)/home' as never);
+              }
+            }}
           >
             <Icon name="chevron-left" size={20} color="#111827" />
           </Pressable>
@@ -74,7 +198,8 @@ export default function QueueTrackerScreen() {
               <View style={styles.titleDot} />
             </View>
             <Text style={styles.headerSubtitle}>
-              {customerName ? `${customerName} • ` : ''}The Green Terrace <Text style={{ color: '#9CA3AF' }}>• Riverside Ave</Text>
+              {customerName ? `${customerName} • ` : ''}The Green Terrace{' '}
+              <Text style={{ color: '#9CA3AF' }}>• Riverside Ave</Text>
             </Text>
           </View>
 
@@ -114,7 +239,7 @@ export default function QueueTrackerScreen() {
           <View style={styles.progressBox}>
             <View style={styles.progressLabelRow}>
               <Text style={styles.tablesAheadText}>{tablesAhead} tables ahead</Text>
-              <Text style={styles.initialWaitText}>Initial wait: 25m</Text>
+              <Text style={styles.initialWaitText}>Initial wait: ~{waitMin + 10}m</Text>
             </View>
 
             <View style={styles.progressBarBg}>
@@ -128,8 +253,9 @@ export default function QueueTrackerScreen() {
           </View>
         </View>
 
-        {/* 3 Detail Cards in a Row */}
+        {/* 3 Detail Cards in a Row: Party, Joined, Seating */}
         <View style={styles.detailRow}>
+          {/* Party Size */}
           <View style={styles.detailCard}>
             <View style={styles.detailIconBox}>
               <Icon name="users" size={16} color="#4B5563" />
@@ -140,6 +266,7 @@ export default function QueueTrackerScreen() {
             </Text>
           </View>
 
+          {/* Joined Time */}
           <View style={styles.detailCard}>
             <View style={styles.detailIconBox}>
               <Icon name="clock" size={16} color="#4B5563" />
@@ -148,6 +275,7 @@ export default function QueueTrackerScreen() {
             <Text style={styles.detailValue}>{joinedTime}</Text>
           </View>
 
+          {/* Seating Preference */}
           <View style={styles.detailCard}>
             <View style={[styles.detailIconBox, { backgroundColor: '#E8FAF0' }]}>
               <Icon
@@ -163,9 +291,22 @@ export default function QueueTrackerScreen() {
               />
             </View>
             <Text style={styles.detailLabel}>SEATING</Text>
-            <Text style={styles.detailValue}>{seatingPref}</Text>
+            <Text style={styles.detailValue} numberOfLines={1}>
+              {seatingPref}
+            </Text>
           </View>
         </View>
+
+        {/* Special Requests Banner (Displayed if specified by customer) */}
+        {specialReq ? (
+          <View style={styles.specialReqCard}>
+            <View style={styles.specialReqTop}>
+              <Icon name="tag" size={14} color="#009669" />
+              <Text style={styles.specialReqTitle}>SPECIAL REQUEST</Text>
+            </View>
+            <Text style={styles.specialReqText}>"{specialReq}"</Text>
+          </View>
+        ) : null}
 
         {/* We'll alert you banner */}
         <View style={styles.alertBanner}>
@@ -182,8 +323,13 @@ export default function QueueTrackerScreen() {
               </View>
               <Text style={styles.alertBody}>
                 Please stay within <Text style={{ fontWeight: '800' }}>5 minutes</Text> of the restaurant.
-                {customerPhone ? (
-                  <Text> SMS updates sent to <Text style={{ fontWeight: '700', color: '#00875A' }}>+94 {customerPhone}</Text>.</Text>
+                {displayPhone ? (
+                  <Text>
+                    {' '}SMS updates sent to{' '}
+                    <Text style={{ fontWeight: '700', color: '#00875A' }}>
+                      {displayPhone}
+                    </Text>.
+                  </Text>
                 ) : (
                   <Text> You'll receive a ready chime and text message.</Text>
                 )}
@@ -196,7 +342,9 @@ export default function QueueTrackerScreen() {
           <View style={styles.alertFooter}>
             <View style={styles.floorStatusRow}>
               <View style={styles.statusDot} />
-              <Text style={styles.floorStatusText}>Floor status: Table clearing in progress</Text>
+              <Text style={styles.floorStatusText}>
+                Floor status: Table clearing in progress
+              </Text>
             </View>
             <Text style={styles.justNowText}>Just now</Text>
           </View>
@@ -265,11 +413,24 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 24,
   },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#4B5563',
+    fontWeight: '600',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 14,
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   backBtn: {
     width: 38,
@@ -481,6 +642,32 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#111827',
   },
+  specialReqCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 12,
+  },
+  specialReqTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  specialReqTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#009669',
+    letterSpacing: 0.6,
+  },
+  specialReqText: {
+    fontSize: 13,
+    color: '#374151',
+    fontWeight: '600',
+    fontStyle: 'italic',
+  },
   alertBanner: {
     backgroundColor: '#E8FAF0',
     borderRadius: 24,
@@ -585,6 +772,52 @@ const styles = StyleSheet.create({
   leaveBtnText: {
     color: '#EF4444',
     fontSize: 13,
+    fontWeight: '800',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+  },
+  emptyIconBox: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: '#E8FAF0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0,180,120,0.2)',
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySub: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  joinNowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#181A1E',
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+  },
+  joinNowBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '800',
   },
   bottomNav: {
