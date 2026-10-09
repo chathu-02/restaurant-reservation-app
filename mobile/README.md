@@ -1,12 +1,6 @@
-<<<<<<< HEAD
-# 🍽️ Restaurant Reservation & Shift Management Mobile App
-
-A modern, high-fidelity React Native (Expo) mobile application designed for restaurant managers, shift leads, hosts, floor staff, and customers.
-=======
 # Restaurant Reservation & Shift Management Mobile App
 
 A modern, high-fidelity React Native (Expo) mobile application designed for restaurant managers, shift leads, hosts, and floor staff.
->>>>>>> Feature/Kitchen
 
 ---
 
@@ -53,56 +47,8 @@ VITE_API_URL=http://localhost:5000/api
 npx expo start
 ```
 
-<<<<<<< HEAD
-### 4. How to Connect & Run in Expo Go
-
-- **On Android**: Open the **Expo Go** app, tap **"Scan QR code"**, and point your camera at the QR code in the terminal.
-- **On iPhone**: Open the default **Camera** app, point it at the QR code in the terminal, and tap the **"Open in Expo Go"** banner.
-- **Web / Simulator**:
-  - Press `w` in the terminal to open in your web browser.
-  - Press `a` to launch Android Emulator.
-  - Press `i` to launch iOS Simulator.
-
-*(Make sure your phone and computer are connected to the same Wi-Fi network).*
-
----
-
-## 📁 Project Structure
-
-```
-mobile/
-├── assets/
-│   └── images/
-├── src/
-│   ├── app/
-│   │   ├── _layout.tsx             # Root stack navigator & theme
-│   │   ├── index.tsx               # Central Launchpad Hub
-│   │   ├── (auth)/                 # Customer authentication
-│   │   ├── (customer)/             # Customer app screens
-│   │   └── (staff)/                # Staff app screens
-│   ├── components/
-│   │   └── ui/                     # Reusable UI controls
-│   ├── constants/
-│   ├── hooks/
-│   └── services/
-├── app.json                        # Expo configuration
-├── package.json                    # Dependencies & scripts
-└── tsconfig.json                   # TypeScript configuration
-```
-
----
-
-## 🛠️ Technology Stack
-
-- **Framework**: React Native 0.86.3
-- **Platform**: Expo SDK 57
-- **Routing**: Expo Router v57 (File-based navigation)
-- **Vector Icons**: `@expo/vector-icons`
-- **Safe Area**: `react-native-safe-area-context`
-=======
 Press:
 - `w` to open in Web Browser
 - `a` to open in Android Emulator
 - `i` to open in iOS Simulator
 - Scan the QR code with **Expo Go** on Android or iOS
->>>>>>> Feature/Kitchen

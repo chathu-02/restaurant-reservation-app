@@ -27,7 +27,7 @@ export default function QueueTrackerScreen() {
   };
 
   const handleExploreMenu = () => {
-    router.push('/menu');
+    router.push('/menu' as never);
   };
 
   return (

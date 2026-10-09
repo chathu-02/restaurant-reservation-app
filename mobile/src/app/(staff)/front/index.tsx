@@ -1,6 +1,7 @@
-import { Badge, Card, colors, Screen } from "@/components/form-ui";
+import { Badge, Button, Card, colors, Screen } from "@/components/form-ui";
 import { dateValue, prettyDate, ReservationDoc, statusLabel, statusTone } from "@/lib/booking";
 import { auth, db } from "@/lib/firebase";
+import { logout } from "@/lib/auth";
 import { useRouter } from "expo-router";
 import { collection, doc, getDoc, onSnapshot, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -51,7 +52,6 @@ export default function StaffDashboard() {
 
   return (
     <Screen top>
-<<<<<<< HEAD
       <Text style={{ fontSize: 26, fontWeight: "700", color: colors.text }}>Staff dashboard</Text>
       <Text style={{ fontSize: 15, color: colors.muted, marginBottom: 8 }}>
         {name ? `Signed in as ${name}` : "Loading…"}
@@ -65,7 +65,6 @@ export default function StaffDashboard() {
       <Text style={{ fontSize: 17, fontWeight: "700", color: colors.text, marginTop: 18, marginBottom: 10 }}>
         Today's reservations ({items.length})
       </Text>
-=======
       <View style={styles.header}>
         <View style={styles.headerCopy}>
           <Text style={styles.eyebrow}>FRONT OF HOUSE</Text>
@@ -124,7 +123,6 @@ export default function StaffDashboard() {
         <Text style={styles.sectionTitle}>Today’s reservations</Text>
         <Text style={styles.sectionCount}>{items.length}</Text>
       </View>
->>>>>>> Feature/Kitchen
       {items.length === 0 ? (
         <Card tint="#F8FAF9">
           <View style={styles.emptyState}>
@@ -157,7 +155,6 @@ export default function StaffDashboard() {
           </Card>
         ))
       )}
-<<<<<<< HEAD
 
       <Button
         title="Log out"
@@ -167,8 +164,6 @@ export default function StaffDashboard() {
           router.replace("/role-choice" as never);
         }}
       />
-=======
->>>>>>> Feature/Kitchen
     </Screen>
   );
 }

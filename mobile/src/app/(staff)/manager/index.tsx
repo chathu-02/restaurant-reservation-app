@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -25,14 +26,8 @@ import Input from '@/components/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { useReservations } from '@/hooks/useReservations';
 import { DashboardSkeleton } from '@/components/SkeletonLoader';
-<<<<<<< HEAD
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Logo } from '@/components/logo';
-import { BRAND } from '@/lib/brand';
-=======
 import { dateValue, formatTime, ReservationDoc, statusLabel } from '@/lib/booking';
 import { subscribeKitchenReservations } from '@/lib/kitchen';
->>>>>>> Feature/Kitchen
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -55,7 +50,7 @@ export default function DashboardScreen() {
 
   useEffect(() => {
     if (user?.id) {
-      AsyncStorage.getItem(`@profile_pic_${user.id}`).then(pic => {
+      AsyncStorage.getItem(`@profile_pic_${user.id}`).then((pic: string | null) => {
         if (pic) setProfilePic(pic);
       });
     }
@@ -216,19 +211,6 @@ export default function DashboardScreen() {
 
 
                 {/* Top Bar */}
-<<<<<<< HEAD
-                <View style={styles.topBar}>
-                  <View style={[styles.topBarLeft, { flex: 1, flexDirection: 'column', alignItems: 'flex-start' }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                      <Logo size={32} badge />
-                    </View>
-                    <StatusBadge
-                      label={overview?.service || user?.service || 'DINNER SERVICE'}
-                      variant="green"
-                      dot
-                      size="medium"
-                    />
-=======
             <View style={styles.topBar}>
               <View style={styles.topBarLeft}>
                 <View style={styles.serviceIconContainer}>
@@ -429,53 +411,28 @@ export default function DashboardScreen() {
                   style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
                   <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
                     <Icon name="walk" size={20} color="#D97706" />
->>>>>>> Feature/Kitchen
                   </View>
 
-                  {/* Live clock pill */}
-                  <View style={styles.clockPill}>
-                    <Icon name="clock" size={13} color="#34D399" />
-                    <Text style={styles.clockText}>{liveTime}</Text>
+                  <View style={styles.actionTextCol}>
+                    <Text style={styles.actionCardLabel}>Walk-in</Text>
+                    <Text style={styles.actionCardSub}>Add to queue</Text>
                   </View>
+                </Pressable>
 
-                  {/* Profile Initial "C" */}
-                  <Pressable
-                    onPress={() => router.push('/(staff)/manager/profile' as never)}
-                    style={styles.avatarWrapper}>
-                    <Image source={{ uri: profilePic }} style={styles.avatarIconCircle} />
-                    <View style={styles.onlineBadge} />
-                  </Pressable>
-                </View>
-
-                <Text style={styles.dateText}>
-                  {overview?.date || getFormattedDate().toUpperCase()}
-                </Text>
-                <Text style={styles.greetingText}>
-                  {getGreeting()},{' '}
-                  <Text style={styles.greetingName}>
-                    {user?.name?.split(' ')[0] || 'Sarah'}
-                  </Text>
-                </Text>
-                <Text style={styles.greetingSubtitle}>
-                  Here's your shift overview — {overview?.reservationsToday ?? 42} covers booked today
-                </Text>
-
-                {/* Shift progress card inside hero container */}
-                <View style={styles.shiftProgressContainer}>
-                  <View style={styles.shiftProgressTopRow}>
-                    <View style={styles.progressCircleBadge}>
-                      <Text style={styles.progressCircleText}>{shiftProgressPercent}%</Text>
-                    </View>
-                    <View style={styles.shiftProgressTextCol}>
-                      <Text style={styles.shiftProgressLabel}>Shift progress</Text>
-                      <Text style={styles.shiftProgressValue}>{shiftProgressPercent}% of target</Text>
-                    </View>
+                <Pressable
+                  onPress={() => router.push('/(staff)/manager/floor-layout' as never)}
+                  style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
+                  <View style={[styles.actionIconCircle, { backgroundColor: '#E0E7FF' }]}>
+                    <Icon name="table" size={20} color="#4F46E5" />
                   </View>
-                  <View style={styles.shiftProgressTrack}>
-                    <View style={[styles.shiftProgressFill, { width: `${shiftProgressPercent}%` }]} />
+                  <View style={styles.actionTextCol}>
+                    <Text style={styles.actionCardLabel}>Floor plan</Text>
+                    <Text style={styles.actionCardSub}>Manage tables</Text>
                   </View>
-                </View>
-              </Animated.View>
+                </Pressable>
+              </View>
+            </View>
+          </View>
 
               {/* ─── 2×2 Metric Cards Grid ───────────────────────────── */}
               <View style={styles.metricsGrid}>
