@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/components/form-ui";
@@ -76,17 +76,26 @@ export default function KitchenTasksScreen() {
     }
   };
 
+  const deleteTask = async (task: KitchenTask) => {
+    try {
+      await api.delete(`/kitchen/tasks/${task.id}`);
+      setTasks((current) => current.filter((item) => item.id !== task.id));
+    } catch (error) {
+      Alert.alert("Delete failed", error instanceof Error ? error.message : "The kitchen task could not be deleted.");
+    }
+  };
+
   const remove = (task: KitchenTask) => {
+    if (Platform.OS === "web") {
+      if (window.confirm(`Delete "${task.title}"?`)) {
+        void deleteTask(task);
+      }
+      return;
+    }
+
     Alert.alert("Delete task?", task.title, [
       { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: async () => {
-        try {
-          await api.delete(`/kitchen/tasks/${task.id}`);
-          await load();
-        } catch (error) {
-          Alert.alert("Delete failed", error instanceof Error ? error.message : "The kitchen task could not be deleted.");
-        }
-      } },
+      { text: "Delete", style: "destructive", onPress: () => void deleteTask(task) },
     ]);
   };
 
