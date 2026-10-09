@@ -332,46 +332,7 @@ export default function DashboardScreen() {
                 </View>
               </View>
 
-              {/* ─── Kitchen Live Board (from development) ───────────── */}
-              <View style={styles.kitchenBoard}>
-                <View style={styles.containerHeaderRow}>
-                  <View style={styles.containerHeaderLeft}>
-                    <View style={styles.kitchenLiveDot} />
-                    <Text style={styles.containerTitle}>Kitchen live board</Text>
-                  </View>
-                  <Pressable
-                    onPress={() => router.push('/kitchen' as never)}
-                    style={({ pressed }) => [styles.seeAllBtn, pressed && styles.actionPressed]}>
-                    <Text style={styles.seeAllText}>Open kitchen</Text>
-                    <Icon name="chevron-right" size={14} color="#009669" />
-                  </Pressable>
-                </View>
-                <Text style={styles.kitchenBoardSubtitle}>
-                  Customer and staff bookings update here automatically.
-                </Text>
-                {kitchenReservations.length === 0 ? (
-                  <Text style={styles.kitchenEmpty}>No active bookings for today.</Text>
-                ) : (
-                  kitchenReservations.slice(0, 4).map((reservation) => (
-                    <View key={reservation.id} style={styles.kitchenRow}>
-                      <View style={styles.kitchenTime}>
-                        <Text style={styles.kitchenTimeText}>{formatTime(reservation.timeMinutes)}</Text>
-                        <Text style={styles.kitchenPartyText}>{reservation.partySize} guests</Text>
-                      </View>
-                      <View style={styles.kitchenGuest}>
-                        <Text style={styles.kitchenGuestName} numberOfLines={1}>{reservation.userName}</Text>
-                        <Text style={styles.kitchenTable} numberOfLines={1}>
-                          {(reservation.tableNames ?? []).join(', ') || 'Table pending'}
-                        </Text>
-                      </View>
-                      <Text style={styles.kitchenStatus}>{statusLabel(reservation)}</Text>
-                    </View>
-                  ))
-                )}
-                {kitchenReservations.length > 4 && (
-                  <Text style={styles.kitchenMore}>+{kitchenReservations.length - 4} more bookings in kitchen</Text>
-                )}
-              </View>
+              
 
               {/* ─── Rush Alert Card ─────────────────────────────────── */}
               <RushAlertCard
@@ -395,7 +356,7 @@ export default function DashboardScreen() {
                     onPress={() => setBookingModalVisible(true)}
                     style={({ pressed }) => [styles.fullWidthNewBookingCard, pressed && styles.actionPressed]}>
                     <View style={styles.newBookingIconRing}>
-                      <Icon name="plus" size={22} color="#FFFFFF" />
+                      <Icon name="plus" size={18} color="#FFFFFF" />
                     </View>
                     <View style={styles.fullBookingTextCol}>
                       <Text style={styles.newBookingLabel}>New booking</Text>
@@ -409,7 +370,7 @@ export default function DashboardScreen() {
                       onPress={() => router.push('/(staff)/manager/add-walkin' as never)}
                       style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
                       <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
-                        <Icon name="walk" size={20} color="#D97706" />
+                        <Icon name="walk" size={17} color="#D97706" />
                       </View>
 
                       <View style={styles.actionTextCol}>
@@ -422,7 +383,7 @@ export default function DashboardScreen() {
                       onPress={() => router.push('/(staff)/manager/floor-layout' as never)}
                       style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
                       <View style={[styles.actionIconCircle, { backgroundColor: '#E0E7FF' }]}>
-                        <Icon name="table" size={20} color="#4F46E5" />
+                        <Icon name="table" size={17} color="#4F46E5" />
                       </View>
                       <View style={styles.actionTextCol}>
                         <Text style={styles.actionCardLabel}>Floor plan</Text>
@@ -1129,24 +1090,24 @@ const styles = StyleSheet.create({
   // ── Light Touch Containers ─────────────────
   lightGreenContainer: {
     backgroundColor: '#d0dbb8ff',
-    borderRadius: 22,
-    padding: 16,
-    marginBottom: 14,
+    borderRadius: 20,
+    padding: 13,
+    marginBottom: 12,
     borderWidth: 1.2,
     borderColor: '#E2E8F0',
     borderTopColor: '#FFFFFF',
     borderBottomColor: '#CBD5E1',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowRadius: 8,
+    elevation: 3,
   },
   containerHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 8,
     paddingHorizontal: 2,
   },
   containerHeaderLeft: {
@@ -1155,7 +1116,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   containerTitle: {
-    fontSize: 18.5,
+    fontSize: 17,
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.3,
@@ -1163,29 +1124,29 @@ const styles = StyleSheet.create({
 
   // ── Quick Actions ────────────────────────────────
   quickActionsContainer: {
-    gap: 10,
-    marginTop: 4,
+    gap: 8,
+    marginTop: 2,
   },
   fullWidthNewBookingCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#009669',
-    borderRadius: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    width: '55%',
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    width: '48%',
     alignSelf: 'center',
     borderWidth: 1.2,
     borderColor: '#059669',
     borderTopColor: 'rgba(255, 255, 255, 0.45)',
     borderBottomColor: '#064E3B',
     shadowColor: '#009669',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 5,
-    gap: 14,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+    gap: 8,
   },
   fullBookingTextCol: {
     flex: 1,
@@ -1194,31 +1155,31 @@ const styles = StyleSheet.create({
   bottomActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 6,
   },
   actionCardHalf: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     borderWidth: 1.2,
     borderColor: '#CBD5E1',
     borderTopColor: '#FFFFFF',
     borderBottomColor: '#94A3B8',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
-    gap: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+    gap: 6,
   },
   actionIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1227,19 +1188,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionCardLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
     color: '#1E293B',
   },
   actionCardSub: {
-    fontSize: 11.5,
+    fontSize: 9.5,
     fontWeight: '400',
     color: '#64748B',
   },
   newBookingIconRing: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1248,12 +1209,12 @@ const styles = StyleSheet.create({
   },
   newBookingLabel: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 13.5,
     fontWeight: '700',
   },
   newBookingSub: {
     color: 'rgba(255, 255, 255, 0.85)',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '400',
   },
   actionPressed: {

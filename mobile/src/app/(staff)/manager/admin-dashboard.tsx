@@ -698,22 +698,22 @@ const styles = StyleSheet.create({
   statCardActive: {
     backgroundColor: '#064E3B',
     borderWidth: 1.5,
-    borderColor: '#042F2E',
-    elevation: 8,
+    borderColor: '#10B981', // Brighter emerald border to pop out
+    elevation: 12,
     shadowColor: '#064E3B',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
   },
   statCardInactive: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    elevation: 4,
-    shadowColor: '#064E3B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.2)', // Soft emerald border
+    elevation: 8, // Higher elevation for highlight
+    shadowColor: '#047857', // Deeper green shadow
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
   },
   statAccentLine: {
     position: 'absolute',

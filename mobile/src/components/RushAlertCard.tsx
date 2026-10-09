@@ -23,7 +23,7 @@ export function RushAlertCard({
     <View style={[styles.card, isUrgent && styles.cardUrgent]}>
       {/* Icon */}
       <View style={[styles.iconContainer, isUrgent && styles.iconContainerUrgent]}>
-        <Icon name={isUrgent ? 'alert-triangle' : 'clock'} size={26} color="#FFFFFF" />
+        <Icon name={isUrgent ? 'alert-triangle' : 'clock'} size={18} color="#FFFFFF" />
       </View>
 
       {/* Content */}
@@ -46,7 +46,7 @@ export function RushAlertCard({
           pressed && isUrgent && styles.viewButtonPressedUrgent,
         ]}>
         <Text style={[styles.viewText, isUrgent && styles.viewTextUrgent]}>View</Text>
-        <Icon name="chevron-right" size={15} color={isUrgent ? '#7F1D1D' : '#78350F'} />
+        <Icon name="chevron-right" size={13} color={isUrgent ? '#7F1D1D' : '#78350F'} />
       </Pressable>
     </View>
   );
@@ -56,67 +56,67 @@ const styles = StyleSheet.create({
   // ── Default (orange) ────────────────────────────
   card: {
     backgroundColor: '#3B1313',
-    borderRadius: 22,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    borderRadius: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
+    borderWidth: 1.2,
     borderColor: '#EF4444',
     borderTopColor: '#F87171',
     borderBottomColor: '#991B1B',
     shadowColor: '#DC2626',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-    marginBottom: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 8,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     backgroundColor: '#EF4444',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 8,
     shadowColor: '#991B1B',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.35,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
   },
   title: {
-    fontSize: 16,
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#EF4444',
-    marginBottom: 2,
+    marginBottom: 1,
     letterSpacing: -0.2,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 10.5,
     color: '#FECDD3',
     fontWeight: '500',
-    lineHeight: 18,
+    lineHeight: 14,
   },
   viewButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 12,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 8,
     borderWidth: 1.2,
     borderColor: '#FCA5A5',
-    gap: 4,
+    gap: 3,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
     elevation: 2,
   },
   viewButtonPressed: {
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEE2E2',
   },
   viewText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '800',
     color: '#7F1D1D',
   },
@@ -136,10 +136,10 @@ const styles = StyleSheet.create({
     borderTopColor: '#F87171',
     borderBottomColor: '#991B1B',
     shadowColor: '#DC2626',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.32,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    elevation: 4,
   },
   iconContainerUrgent: {
     backgroundColor: '#EF4444',
