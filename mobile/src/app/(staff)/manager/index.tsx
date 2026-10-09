@@ -206,8 +206,8 @@ export default function DashboardScreen() {
 
                 {/* Top Bar */}
                 <View style={styles.topBar}>
-                  <View style={[styles.topBarLeft, { flex: 1, flexDirection: 'column', alignItems: 'flex-start' }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                  <View style={[styles.topBarLeft, { flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
+                    <View style={{ marginRight: 10 }}>
                       <Logo size={32} badge />
                     </View>
                     <StatusBadge
@@ -392,7 +392,7 @@ export default function DashboardScreen() {
                     <Text style={styles.containerTitle}>Upcoming</Text>
                     <View style={styles.sectionCountBadge}>
                       <Text style={styles.sectionCountText}>
-                        {reservations.filter((r) => r.status !== 'cancelled').length}
+                        {reservations.filter((r) => r.status !== 'cancelled' && (r.date === new Date().toISOString().split('T')[0] || r.date === 'Today' || !r.date)).length}
                       </Text>
                     </View>
                   </View>
@@ -405,16 +405,16 @@ export default function DashboardScreen() {
                 </View>
 
                 <View style={styles.timelineContainer}>
-                  {reservations.filter((r) => r.status !== 'cancelled').length === 0 ? (
+                  {reservations.filter((r) => r.status !== 'cancelled' && (r.date === new Date().toISOString().split('T')[0] || r.date === 'Today' || !r.date)).length === 0 ? (
                     <View style={{ paddingVertical: 16, alignItems: 'center' }}>
                       <Text style={{ fontSize: 13, color: '#333a49ff', fontStyle: 'italic' }}>
-                        No upcoming reservations scheduled.
+                        No upcoming reservations scheduled for today.
                       </Text>
                     </View>
                   ) : (
                     reservations
-                      .filter((r) => r.status !== 'cancelled')
-                      .slice(0, 5)
+                      .filter((r) => r.status !== 'cancelled' && (r.date === new Date().toISOString().split('T')[0] || r.date === 'Today' || !r.date))
+                      .slice(0, 4)
                       .map((res, idx, arr) => (
                         <Pressable
                           key={res.id}
@@ -920,7 +920,7 @@ const styles = StyleSheet.create({
     color: '#34D399',
     letterSpacing: 1.3,
     textTransform: 'uppercase',
-    marginTop: 14,
+    marginTop: 6,
     marginBottom: 8,
   },
   greetingText: {

@@ -4,8 +4,8 @@ import { dateValue, prettyDate, ReservationDoc, statusLabel, statusTone } from "
 import { auth, db } from "@/lib/firebase";
 import { useRouter } from "expo-router";
 import { collection, doc, getDoc, onSnapshot, query, where } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { useEffect, useState, useRef } from "react";
+import { Text, View, Alert } from "react-native";
 
 const ROLE_LABEL: Record<string, string> = { manager: "Manager", front: "Front staff" };
 
@@ -32,17 +32,34 @@ export default function StaffDashboard() {
     });
   }, [router]);
 
+  const isFirstLoad = useRef(true);
+
   useEffect(() => {
     const today = dateValue(new Date());
     return onSnapshot(
       query(collection(db, "reservations"), where("date", "==", today)),
-      (snap) =>
+      (snap) => {
         setItems(
           snap.docs
             .map((d) => ({ id: d.id, ...(d.data() as Omit<ReservationDoc, "id">) }))
             .sort((a, b) => a.timeMinutes - b.timeMinutes)
-        ),
-      () => {}
+        );
+
+        if (isFirstLoad.current) {
+          isFirstLoad.current = false;
+        } else {
+          snap.docChanges().forEach((change) => {
+            if (change.type === "added") {
+              const r = change.doc.data() as ReservationDoc;
+              Alert.alert(
+                "New Booking Received! 🛎️",
+                `${r.userName} booked a table for ${r.partySize} guests at ${r.time}.`
+              );
+            }
+          });
+        }
+      },
+      (error) => console.error("Error fetching reservations:", error)
     );
   }, []);
 

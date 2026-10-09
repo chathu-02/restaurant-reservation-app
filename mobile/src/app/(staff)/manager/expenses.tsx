@@ -1,0 +1,202 @@
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, StatusBar, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import Icon from '@/components/ui/Icon';
+import { Logo } from '@/components/logo';
+
+export default function ExpensesScreen() {
+  const router = useRouter();
+
+  // Mock Expense Data
+  const [expenses] = useState([
+    { id: '1', date: '2023-10-01', category: 'Food Supplies', description: 'Fresh produce & meat', amount: 1250.00, status: 'Paid' },
+    { id: '2', date: '2023-10-02', category: 'Utilities', description: 'Electricity bill', amount: 450.50, status: 'Paid' },
+    { id: '3', date: '2023-10-04', category: 'Wages', description: 'Weekly staff payout', amount: 3200.00, status: 'Pending' },
+    { id: '4', date: '2023-10-05', category: 'Equipment', description: 'New blender', amount: 120.00, status: 'Paid' },
+    { id: '5', date: '2023-10-08', category: 'Marketing', description: 'Social media ads', amount: 300.00, status: 'Pending' },
+  ]);
+
+  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor="#064E3B" />
+      
+      {/* Top Navbar */}
+      <View style={styles.navBar}>
+        <View style={styles.navLeft}>
+          <Logo size={28} badge />
+          <Text style={styles.navTitle}>OceanGrace</Text>
+        </View>
+
+        <View style={styles.navRight}>
+          <Pressable style={styles.iconButton} onPress={() => router.push('/(staff)/manager/admin-notifications' as any)}>
+            <Icon name="bell" size={20} color="#A7F3D0" />
+            <View style={styles.notificationDot} />
+          </Pressable>
+          <View style={styles.profileSection}>
+            <Text style={styles.profileName}>Admin</Text>
+            <View style={styles.profileAvatarPlaceholder}>
+              <Icon name="person" size={16} color="#064E3B" />
+            </View>
+            <Icon name="chevron-down" size={16} color="#A7F3D0" />
+          </View>
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        
+        <View style={styles.headerSection}>
+          <Text style={styles.pageTitle}>Expenses Management</Text>
+          <Text style={styles.pageSubtitle}>Track and manage restaurant expenses.</Text>
+        </View>
+
+        {/* Summary Card */}
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryIcon}>
+            <Icon name="chart" size={24} color="#EF4444" />
+          </View>
+          <View>
+            <Text style={styles.summaryLabel}>Total Expenses (This Month)</Text>
+            <Text style={styles.summaryValue}>${totalExpenses.toFixed(2)}</Text>
+          </View>
+        </View>
+
+        {/* Table Section */}
+        <View style={styles.tableCard}>
+          <View style={styles.tableHeaderSection}>
+            <Text style={styles.tableTitle}>Recent Transactions</Text>
+            <Pressable style={styles.addButton}>
+              <Icon name="plus" size={16} color="#FFFFFF" />
+              <Text style={styles.addButtonText}>Add Expense</Text>
+            </Pressable>
+          </View>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View>
+              {/* Table Header */}
+              <View style={styles.tableRowHeader}>
+                <Text style={[styles.tableCol, { width: 100 }]}>Date</Text>
+                <Text style={[styles.tableCol, { width: 150 }]}>Category</Text>
+                <Text style={[styles.tableCol, { width: 200 }]}>Description</Text>
+                <Text style={[styles.tableCol, { width: 100 }]}>Amount</Text>
+                <Text style={[styles.tableCol, { width: 100 }]}>Status</Text>
+              </View>
+
+              {/* Table Rows */}
+              {expenses.map((exp, index) => (
+                <View key={exp.id} style={[styles.tableRow, index % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
+                  <Text style={[styles.tableCell, { width: 100 }]}>{exp.date}</Text>
+                  <Text style={[styles.tableCell, styles.tableCellBold, { width: 150 }]}>{exp.category}</Text>
+                  <Text style={[styles.tableCell, { width: 200 }]}>{exp.description}</Text>
+                  <Text style={[styles.tableCell, styles.tableCellBold, { width: 100, color: '#0F172A' }]}>${exp.amount.toFixed(2)}</Text>
+                  <View style={{ width: 100, justifyContent: 'center' }}>
+                    <View style={exp.status === 'Paid' ? styles.statusPillActive : styles.statusPillPending}>
+                      <Text style={exp.status === 'Paid' ? styles.statusTextActive : styles.statusTextPending}>
+                        {exp.status}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+
+      </ScrollView>
+
+      {/* Bottom Navigation Bar */}
+      <View style={styles.bottomTabBar}>
+        <Pressable style={styles.tabItem} onPress={() => router.push('/(staff)/manager/admin-dashboard' as any)}>
+          <Icon name="grid" size={22} color="#475569" />
+          <Text style={styles.tabText}>Dashboard</Text>
+        </Pressable>
+        <Pressable style={styles.tabItemActive}>
+          <Icon name="card" size={22} color="#064E3B" />
+          <Text style={styles.tabTextActive}>Expenses</Text>
+        </Pressable>
+        <Pressable style={styles.tabItem} onPress={() => router.push('/(staff)/manager/reports' as any)}>
+          <Icon name="chart" size={22} color="#475569" />
+          <Text style={styles.tabText}>Reports</Text>
+        </Pressable>
+        <Pressable style={styles.tabItem} onPress={() => router.push('/(staff)/manager/settings' as any)}>
+          <Icon name="gear" size={22} color="#475569" />
+          <Text style={styles.tabText}>Settings</Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F0FDF4' },
+  navBar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#064E3B', paddingHorizontal: 20, paddingVertical: 16,
+    borderBottomWidth: 1, borderBottomColor: '#042F2E',
+  },
+  navLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  navTitle: { fontSize: 20, fontFamily: 'Inter_800ExtraBold', color: '#FFFFFF' },
+  bottomTabBar: {
+    flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',
+    backgroundColor: '#FFFFFF', paddingVertical: 8, paddingHorizontal: 12, borderTopWidth: 1, borderTopColor: '#E2E8F0',
+    position: 'absolute', bottom: 0, width: '100%',
+  },
+  tabItem: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 8, borderRadius: 12 },
+  tabItemActive: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 8, borderRadius: 12, backgroundColor: '#ECFDF5' },
+  tabText: { fontSize: 12, fontFamily: 'Inter_500Medium', color: '#94A3B8' },
+  tabTextActive: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#064E3B' },
+  navRight: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  iconButton: { padding: 4, position: 'relative' },
+  notificationDot: { position: 'absolute', top: 4, right: 6, width: 6, height: 6, borderRadius: 3, backgroundColor: '#EF4444' },
+  profileSection: { flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 },
+  profileName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF', display: Platform.OS === 'web' ? 'flex' : 'none' },
+  profileAvatarPlaceholder: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' },
+  
+  scrollContent: { padding: 20, paddingBottom: 100 },
+  headerSection: { marginBottom: 24 },
+  pageTitle: { fontSize: 28, fontFamily: 'Inter_800ExtraBold', color: '#0F172A', marginBottom: 4 },
+  pageSubtitle: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#64748B' },
+  
+  summaryCard: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF',
+    borderRadius: 16, padding: 20, marginBottom: 24, gap: 16,
+    elevation: 6, shadowColor: '#064E3B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 12,
+  },
+  summaryIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center' },
+  summaryLabel: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#64748B', marginBottom: 4 },
+  summaryValue: { fontSize: 24, fontFamily: 'Inter_800ExtraBold', color: '#0F172A' },
+  
+  tableCard: {
+    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
+    elevation: 8, shadowColor: '#064E3B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.15, shadowRadius: 16,
+  },
+  tableHeaderSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  tableTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#0F172A' },
+  addButton: { 
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#10B981', 
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, gap: 6,
+    elevation: 4, shadowColor: '#10B981', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4,
+  },
+  addButtonText: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  
+  tableRowHeader: { 
+    flexDirection: 'row', paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', marginBottom: 12,
+    backgroundColor: '#064E3B', paddingVertical: 12, paddingHorizontal: 12, borderRadius: 8 
+  },
+  tableCol: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#A7F3D0' },
+  tableRow: { 
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 12, 
+    borderBottomWidth: 1, borderBottomColor: '#94A3B8', borderRadius: 8, marginBottom: 4 
+  },
+  tableRowEven: { backgroundColor: '#FFFFFF' },
+  tableRowOdd: { backgroundColor: '#F8FAFC' },
+  tableCell: { fontSize: 13, fontFamily: 'Inter_500Medium', color: '#475569' },
+  tableCellBold: { fontFamily: 'Inter_700Bold', color: '#0F172A' },
+  
+  statusPillActive: { backgroundColor: '#ECFDF5', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, alignSelf: 'flex-start' },
+  statusTextActive: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#059669' },
+  statusPillPending: { backgroundColor: '#FFFBEB', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, alignSelf: 'flex-start' },
+  statusTextPending: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#D97706' },
+});

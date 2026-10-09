@@ -6,6 +6,9 @@ import { Text, View, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Pla
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
 import { Message } from "@/components/form-ui";
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Alert } from "react-native";
 
 const STAFF_ROLES: Role[] = ["manager", "front", "kitchen"];
 const STAFF_DOMAIN = "staff.oceangrace.app";
@@ -121,7 +124,33 @@ export default function StaffSignIn() {
               secureTextEntry
             />
 
-            <Text style={styles.forgot}>Forgot password? Ask manager.</Text>
+            <Pressable onPress={async () => {
+              if (!username) {
+                Alert.alert("Username required", "Please enter your username first to request a password reset.");
+                return;
+              }
+              try {
+                const q = query(collection(db, 'users'), where('email', '==', toEmail(username)));
+                const snap = await getDocs(q);
+                if (snap.empty) {
+                  Alert.alert("Not found", "No staff member found with this username.");
+                  return;
+                }
+                const userDoc = snap.docs[0];
+                await addDoc(collection(db, 'notifications'), {
+                  type: 'PASSWORD_RESET',
+                  staffId: userDoc.id,
+                  staffName: userDoc.data().name,
+                  status: 'UNREAD',
+                  createdAt: serverTimestamp()
+                });
+                Alert.alert("Request Sent", "A password reset request has been sent to the manager.");
+              } catch (e) {
+                Alert.alert("Error", "Could not send the request. Please try again.");
+              }
+            }}>
+              <Text style={styles.forgot}>Forgot password? Ask manager.</Text>
+            </Pressable>
 
             <Message text={error} />
 
