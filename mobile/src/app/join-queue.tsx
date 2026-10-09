@@ -12,10 +12,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
+import { setQueueEntry } from '@/lib/queueStore';
 
 export default function JoinQueueScreen() {
-  const [fullName, setFullName] = useState('Alex Johnson');
-  const [phone, setPhone] = useState('(555) 439-9201');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [partySize, setPartySize] = useState(2);
   const [seatingPref, setSeatingPref] = useState<'Indoor' | 'Outdoor' | 'Any'>('Indoor');
   const [specialReq, setSpecialReq] = useState('');
@@ -24,10 +25,44 @@ export default function JoinQueueScreen() {
 
   const handleJoin = () => {
     if (!fullName.trim()) {
-      Alert.alert('Required', 'Please enter your full name');
+      Alert.alert('Required Field', 'Please enter your full name to join the queue.');
       return;
     }
-    router.push('/queue');
+    if (!phone.trim()) {
+      Alert.alert('Required Field', 'Please enter your phone number (+94).');
+      return;
+    }
+
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    const joinedTime = `${hours}:${minutes} ${ampm}`;
+    const seatingLabel = seatingPref === 'Any' ? 'Any table' : seatingPref;
+
+    setQueueEntry({
+      fullName: fullName.trim(),
+      phone: phone.trim(),
+      partySize,
+      seatingPref: seatingLabel,
+      specialReq: specialReq.trim(),
+      joinedTime,
+      position: 3,
+      tablesAhead: 2,
+      waitMin: 15,
+    });
+
+    router.push({
+      pathname: '/queue',
+      params: {
+        name: fullName.trim(),
+        phone: phone.trim(),
+        partySize: partySize.toString(),
+        seating: seatingLabel,
+        time: joinedTime,
+      },
+    });
   };
 
   return (
@@ -95,7 +130,7 @@ export default function JoinQueueScreen() {
               style={styles.textInput}
               value={fullName}
               onChangeText={setFullName}
-              placeholder="Your full name"
+              placeholder="Enter your full name"
               placeholderTextColor="#9CA3AF"
             />
           </View>
@@ -108,13 +143,13 @@ export default function JoinQueueScreen() {
             <Text style={styles.helperText}>For SMS updates</Text>
           </View>
           <View style={styles.phoneBox}>
-            <Text style={styles.countryCode}>us +1</Text>
+            <Text style={styles.countryCode}>lk +94</Text>
             <View style={styles.vDivider} />
             <TextInput
               style={styles.phoneInput}
               value={phone}
               onChangeText={setPhone}
-              placeholder="(555) 000-0000"
+              placeholder="7X XXX XXXX"
               placeholderTextColor="#9CA3AF"
               keyboardType="phone-pad"
             />

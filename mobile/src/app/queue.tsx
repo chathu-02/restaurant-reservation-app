@@ -8,13 +8,23 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
+import { getQueueEntry, clearQueueEntry } from '@/lib/queueStore';
 
 export default function QueueTrackerScreen() {
-  const [position] = useState(3);
-  const [tablesAhead] = useState(2);
-  const [waitMin] = useState(15);
+  const params = useLocalSearchParams();
+  const queueEntry = getQueueEntry();
+
+  const customerName = (params.name as string) || queueEntry.fullName || '';
+  const customerPhone = (params.phone as string) || queueEntry.phone || '';
+  const partySize = Number(params.partySize) || queueEntry.partySize || 2;
+  const seatingPref = (params.seating as string) || queueEntry.seatingPref || 'Indoor';
+  const joinedTime = (params.time as string) || queueEntry.joinedTime || '6:40 PM';
+
+  const position = queueEntry.position || 3;
+  const tablesAhead = queueEntry.tablesAhead || 2;
+  const waitMin = queueEntry.waitMin || 15;
 
   const handleLeaveQueue = () => {
     Alert.alert(
@@ -26,6 +36,7 @@ export default function QueueTrackerScreen() {
           text: 'Leave Queue',
           style: 'destructive',
           onPress: () => {
+            clearQueueEntry();
             Alert.alert('Queue Released', 'You have left the queue.');
             router.replace('/join-queue');
           },
@@ -63,7 +74,7 @@ export default function QueueTrackerScreen() {
               <View style={styles.titleDot} />
             </View>
             <Text style={styles.headerSubtitle}>
-              The Green Terrace <Text style={{ color: '#9CA3AF' }}>• Riverside Ave</Text>
+              {customerName ? `${customerName} • ` : ''}The Green Terrace <Text style={{ color: '#9CA3AF' }}>• Riverside Ave</Text>
             </Text>
           </View>
 
@@ -124,7 +135,9 @@ export default function QueueTrackerScreen() {
               <Icon name="users" size={16} color="#4B5563" />
             </View>
             <Text style={styles.detailLabel}>PARTY</Text>
-            <Text style={styles.detailValue}>2 Guests</Text>
+            <Text style={styles.detailValue}>
+              {partySize} {partySize === 1 ? 'Guest' : 'Guests'}
+            </Text>
           </View>
 
           <View style={styles.detailCard}>
@@ -132,15 +145,25 @@ export default function QueueTrackerScreen() {
               <Icon name="clock" size={16} color="#4B5563" />
             </View>
             <Text style={styles.detailLabel}>JOINED</Text>
-            <Text style={styles.detailValue}>6:40 PM</Text>
+            <Text style={styles.detailValue}>{joinedTime}</Text>
           </View>
 
           <View style={styles.detailCard}>
             <View style={[styles.detailIconBox, { backgroundColor: '#E8FAF0' }]}>
-              <Icon name="armchair" size={16} color="#009669" />
+              <Icon
+                name={
+                  seatingPref.toLowerCase().includes('outdoor')
+                    ? 'leaf'
+                    : seatingPref.toLowerCase().includes('any')
+                    ? 'sparkles'
+                    : 'armchair'
+                }
+                size={16}
+                color="#009669"
+              />
             </View>
             <Text style={styles.detailLabel}>SEATING</Text>
-            <Text style={styles.detailValue}>Indoor</Text>
+            <Text style={styles.detailValue}>{seatingPref}</Text>
           </View>
         </View>
 
@@ -158,7 +181,12 @@ export default function QueueTrackerScreen() {
                 </View>
               </View>
               <Text style={styles.alertBody}>
-                Please stay within <Text style={{ fontWeight: '800' }}>5 minutes</Text> of the restaurant. You'll receive a ready chime and text message.
+                Please stay within <Text style={{ fontWeight: '800' }}>5 minutes</Text> of the restaurant.
+                {customerPhone ? (
+                  <Text> SMS updates sent to <Text style={{ fontWeight: '700', color: '#00875A' }}>+94 {customerPhone}</Text>.</Text>
+                ) : (
+                  <Text> You'll receive a ready chime and text message.</Text>
+                )}
               </Text>
             </View>
           </View>
