@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/components/form-ui";
 import { ReservationDoc, dateValue, formatTime } from "@/lib/booking";
 import { subscribeKitchenReservations, updateReservationStatus, KitchenStatus } from "@/lib/kitchen";
 
 export default function KitchenTodayScreen() {
+  const router = useRouter();
   const [time, setTime] = useState(new Date());
   const [reservations, setReservations] = useState<ReservationDoc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,10 +71,18 @@ export default function KitchenTodayScreen() {
               <Text style={styles.headerTitle}>Today’s prep plan</Text>
             </View>
             <View style={styles.headerRight}>
-              <Ionicons name="time-outline" size={16} color={colors.text} />
-              <Text style={styles.currentTime}>
-                {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </Text>
+              <View style={styles.timeBadge}>
+                <Ionicons name="time-outline" size={14} color={colors.text} />
+                <Text style={styles.currentTime}>
+                  {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => router.push("/kitchen/profile" as never)}
+                style={styles.profileBtn}
+                hitSlop={8}>
+                <Ionicons name="person-outline" size={18} color={colors.text} />
+              </Pressable>
             </View>
           </View>
           <Text style={styles.subtitle}>All confirmed arrivals, ordered by required time</Text>
@@ -207,8 +217,34 @@ const styles = StyleSheet.create({
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.green },
   headerTitle: { fontSize: 24, fontWeight: "700", color: colors.text },
-  headerRight: { flexDirection: "row", alignItems: "center", gap: 4 },
-  currentTime: { fontSize: 14, fontWeight: "600", color: colors.text },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 6 },
+  timeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#fff",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  profileBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  currentTime: { fontSize: 13, fontWeight: "600", color: colors.text },
   subtitle: { fontSize: 14, color: colors.muted, marginBottom: 24 },
   
   summaryCard: { backgroundColor: colors.text, borderRadius: 16, padding: 20, marginBottom: 24 },

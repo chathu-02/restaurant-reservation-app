@@ -15,7 +15,6 @@ export default function RootLayout() {
       <AuthProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <View style={{ flex: 1 }}>
-            <NotificationToast />
             <Stack
               screenOptions={{
                 headerShown: false,

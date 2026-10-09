@@ -23,7 +23,7 @@ export default function StaffProfileScreen() {
   const router = useRouter();
   const { user, logout, toggleDuty, updateService } = useAuth();
 
-  const [profilePic, setProfilePic] = useState('https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=256');
+  const [profilePic, setProfilePic] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
@@ -80,9 +80,15 @@ export default function StaffProfileScreen() {
         {/* Top Profile Section */}
         <View style={styles.topProfileSection}>
           <Pressable style={styles.avatarWrapper} onPress={handlePickImage}>
-            <Image source={{ uri: profilePic }} style={styles.largeAvatar} />
+            {profilePic ? (
+              <Image source={{ uri: profilePic }} style={styles.largeAvatar} />
+            ) : (
+              <View style={[styles.largeAvatar, { backgroundColor: '#022C22', justifyContent: 'center', alignItems: 'center' }]}>
+                <Icon name="person" size={40} color="#34D399" />
+              </View>
+            )}
             <View style={styles.cameraBadge}>
-              <Icon name="camera" size={14} color="#FFFFFF" />
+              <Icon name="camera" size={14} color="#064E3B" />
             </View>
           </Pressable>
 
@@ -92,12 +98,12 @@ export default function StaffProfileScreen() {
           {/* Contact Details */}
           <View style={styles.contactDetailsRow}>
             <View style={styles.contactItem}>
-              <Icon name="mail" size={14} color="#64748B" />
+              <Icon name="mail" size={14} color="#A7F3D0" />
               <Text style={styles.contactText}>{userData?.email || user?.email || 'email@example.com'}</Text>
             </View>
             {userData?.phone && (
               <View style={styles.contactItem}>
-                <Icon name="phone" size={14} color="#64748B" />
+                <Icon name="phone" size={14} color="#A7F3D0" />
                 <Text style={styles.contactText}>{userData.phone}</Text>
               </View>
             )}
@@ -106,7 +112,7 @@ export default function StaffProfileScreen() {
           <Pressable
             style={styles.editButton}
             onPress={() => router.push('/edit-profile' as never)}>
-            <Icon name="edit" size={16} color="#FFFFFF" />
+            <Icon name="edit" size={16} color="#064E3B" />
             <Text style={styles.editButtonText}>Edit Profile</Text>
           </Pressable>
         </View>
@@ -198,16 +204,16 @@ const styles = StyleSheet.create({
   },
   topProfileSection: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#064E3B',
     borderRadius: 24,
     paddingVertical: 32,
     paddingHorizontal: 16,
-    marginBottom: 16,
-    elevation: 2,
+    marginBottom: 20,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
   },
   avatarWrapper: {
     position: 'relative',
@@ -218,32 +224,32 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     borderWidth: 3,
-    borderColor: '#E8FAF0',
+    borderColor: '#34D399',
   },
   cameraBadge: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#022C22',
+    backgroundColor: '#34D399',
     width: 32,
     height: 32,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#FFFFFF',
+    borderColor: '#064E3B',
   },
   userName: {
     fontSize: 22,
     fontFamily: 'Inter_800ExtraBold',
-    color: '#0F172A',
+    color: '#FFFFFF',
     marginBottom: 4,
     textAlign: 'center',
   },
   userRole: {
     fontSize: 13,
     fontFamily: 'Inter_700Bold',
-    color: '#059669',
+    color: '#34D399',
     marginBottom: 16,
   },
   contactDetailsRow: {
@@ -261,32 +267,34 @@ const styles = StyleSheet.create({
   contactText: {
     fontSize: 13,
     fontFamily: 'Inter_500Medium',
-    color: '#64748B',
+    color: '#A7F3D0',
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#34D399',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
     gap: 8,
   },
   editButtonText: {
-    color: '#FFFFFF',
+    color: '#064E3B',
     fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Inter_700Bold',
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 24,
+    padding: 24,
     marginBottom: 16,
-    elevation: 2,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 10,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   sectionTitle: {
     fontSize: 14,

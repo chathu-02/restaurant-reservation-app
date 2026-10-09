@@ -4,15 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { doc, onSnapshot } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
-import {
-  Badge,
-  Button,
-  Card,
-  colors,
-  LinkText,
-  Message,
-  Screen,
-} from "@/components/form-ui";
+import { Badge, Button, Card, colors, LinkText, Message, Screen } from "@/components/form-ui";
 import {
   ReservationDoc,
   WHATSAPP_NUMBER,
@@ -23,6 +15,14 @@ import {
   statusTone,
 } from "@/lib/booking";
 
+const STEPS = [
+  ["confirmed", "Confirmed"],
+  ["seated", "Seated"],
+  ["preparing", "Preparing"],
+  ["ready", "Ready"],
+  ["served", "Served"],
+];
+
 export default function BookingStatus() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -31,40 +31,31 @@ export default function BookingStatus() {
 
   useEffect(() => {
     if (!id) return undefined;
-
     return onSnapshot(
       doc(db, "reservations", id),
-      (snapshot) => {
+      (s) => {
         setError("");
-        setRes(
-          snapshot.exists()
-            ? {
-              id: snapshot.id,
-              ...(snapshot.data() as Omit<ReservationDoc, "id">),
-            }
-            : null
-        );
+        setRes(s.exists() ? { id: s.id, ...(s.data() as Omit<ReservationDoc, "id">) } : null);
       },
       () => setError("Could not load this booking.")
     );
   }, [id]);
 
   const needsPayment =
-    res?.status === "pending" &&
-    ["waiting", "rejected"].includes(res.depositStatus);
+    res?.status === "pending" && ["waiting", "rejected"].includes(res.depositStatus);
 
-  // Allow changes or cancellation for bookings awaiting seating.
+  // Bookings still waiting to be seated can be changed or cancelled.
   const active =
+    !!res && ["pending", "confirmed"].includes(res.status) && !res.checkedIn;
+
+  const canRate =
     !!res &&
-    ["pending", "confirmed"].includes(res.status) &&
-    !res.checkedIn;
+    (res.checkedIn || ["seated", "preparing", "ready", "served", "completed"].includes(res.status));
 
   const askCancel = () => {
     if (!res) return;
-
     const paid =
-      res.depositRequired &&
-      ["receipt_sent", "received"].includes(res.depositStatus);
+      res.depositRequired && ["receipt_sent", "received"].includes(res.depositStatus);
 
     Alert.alert(
       "Cancel this booking?",
@@ -89,15 +80,15 @@ export default function BookingStatus() {
   };
 
   const openWhatsAppHost = () => {
-    const cleanPhone = (WHATSAPP_NUMBER || "+94774483581").replace(
-      /[^0-9]/g,
-      ""
-    );
+    const cleanPhone = (WHATSAPP_NUMBER || "").replace(/[^0-9]/g, "");
+    if (!cleanPhone) {
+      Alert.alert("WhatsApp Error", "The restaurant's WhatsApp number is not set.");
+      return;
+    }
     const bookingReference = res?.bookingId ? `#${res.bookingId}` : "";
     const msg = encodeURIComponent(
       `Hello! I have a question regarding my booking ${bookingReference}.`
     );
-
     Linking.openURL(`https://wa.me/${cleanPhone}?text=${msg}`).catch(() => {
       Alert.alert("WhatsApp Error", "Could not launch WhatsApp.");
     });
@@ -105,17 +96,9 @@ export default function BookingStatus() {
 
   return (
     <Screen top>
-      <Text
-        style={{
-          fontSize: 26,
-          fontWeight: "700",
-          color: colors.text,
-          marginBottom: 16,
-        }}
-      >
+      <Text style={{ fontSize: 26, fontWeight: "700", color: colors.text, marginBottom: 16 }}>
         Booking status
       </Text>
-
       <Message text={error} />
 
       {res && (
@@ -128,14 +111,8 @@ export default function BookingStatus() {
                 Reservation progress
               </Text>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                {[
-                  ["confirmed", "Confirmed"],
-                  ["seated", "Seated"],
-                  ["preparing", "Preparing"],
-                  ["ready", "Ready"],
-                  ["served", "Served"],
-                ].map(([value, label], index, steps) => {
-                  const current = steps.findIndex(([step]) => step === res.status);
+                {STEPS.map(([value, label], index) => {
+                  const current = STEPS.findIndex(([step]) => step === res.status);
                   const complete = index <= current;
                   return (
                     <View key={value} style={{ alignItems: "center", flex: 1 }}>
@@ -147,7 +124,8 @@ export default function BookingStatus() {
                           backgroundColor: complete ? "#16A34A" : "#D1D5DB",
                           alignItems: "center",
                           justifyContent: "center",
-                        }}>
+                        }}
+                      >
                         {complete && <Text style={{ color: "#FFFFFF", fontSize: 12 }}>✓</Text>}
                       </View>
                       <Text style={{ color: complete ? "#166534" : colors.muted, fontSize: 9, marginTop: 4 }}>
@@ -161,24 +139,12 @@ export default function BookingStatus() {
           )}
 
           <Card>
-            <Text
-              style={{ fontSize: 13, color: colors.muted, marginTop: 10 }}
-            >
-              Booking ID
-            </Text>
-            <Text
-              style={{ fontSize: 22, fontWeight: "700", color: colors.text }}
-            >
-              {res.bookingId}
-            </Text>
-            <Text
-              style={{ fontSize: 16, color: colors.text, marginTop: 10 }}
-            >
+            <Text style={{ fontSize: 13, color: colors.muted, marginTop: 10 }}>Booking ID</Text>
+            <Text style={{ fontSize: 22, fontWeight: "700", color: colors.text }}>{res.bookingId}</Text>
+            <Text style={{ fontSize: 16, color: colors.text, marginTop: 10 }}>
               {prettyDate(res.date)}, {res.time}
             </Text>
-            <Text style={{ fontSize: 15, color: colors.text }}>
-              {res.partySize} guests
-            </Text>
+            <Text style={{ fontSize: 15, color: colors.text }}>{res.partySize} guests</Text>
             <Text style={{ fontSize: 15, color: colors.text }}>
               Table: {(res.tableNames ?? []).join(", ")}
             </Text>
@@ -187,83 +153,54 @@ export default function BookingStatus() {
           {needsPayment && (
             <Button
               title="Pay deposit"
-              onPress={() =>
-                router.push({
-                  pathname: "/pay-deposit",
-                  params: { id: res.id },
-                } as never)
-              }
+              onPress={() => router.push({ pathname: "/pay-deposit", params: { id: res.id } } as never)}
             />
           )}
 
-          {res.status === "confirmed" &&
-            res.date === dateValue(new Date()) && (
-              <>
-                <Text />
-                {res.checkedIn ? (
-                  <Badge text="Checked in" tone="good" />
-                ) : (
-                  <Button
-                    title="Check in"
-                    onPress={() =>
-                      router.push({
-                        pathname: "/check-in",
-                        params: { id: res.id },
-                      } as never)
-                    }
-                  />
-                )}
-              </>
-            )}
+          {/* Check in: only for confirmed bookings, on the day of the booking */}
+          {res.status === "confirmed" && res.date === dateValue(new Date()) && (
+            <>
+              <Text />
+              {res.checkedIn ? (
+                <Badge text="Checked in" tone="good" />
+              ) : (
+                <Button
+                  title="Check in"
+                  onPress={() => router.push({ pathname: "/check-in", params: { id: res.id } } as never)}
+                />
+              )}
+            </>
+          )}
 
-          {(res.checkedIn ||
-            ["seated", "completed"].includes(res.status)) && (
-              <LinkText
-                title="Rate your visit"
-                onPress={() =>
-                  router.push({
-                    pathname: "/feedback",
-                    params: { id: res.id },
-                  } as never)
-                }
-              />
-            )}
+          {/* Feedback */}
+          {canRate && (
+            <LinkText
+              title="Rate your visit"
+              onPress={() => router.push({ pathname: "/feedback", params: { id: res.id } } as never)}
+            />
+          )}
 
+          {/* Change or cancel */}
           {active && (
             <>
               <Text />
               <Button
                 title="Change date or time"
                 secondary
-                onPress={() =>
-                  router.push({
-                    pathname: "/change-booking",
-                    params: { id: res.id },
-                  } as never)
-                }
+                onPress={() => router.push({ pathname: "/change-booking", params: { id: res.id } } as never)}
               />
               <LinkText title="Cancel booking" onPress={askCancel} />
             </>
           )}
 
           <View style={{ marginTop: 12 }}>
-            <Button
-              title="💬 Chat with Host on WhatsApp"
-              secondary
-              onPress={openWhatsAppHost}
-            />
+            <Button title="💬 Chat with Host on WhatsApp" secondary onPress={openWhatsAppHost} />
           </View>
         </>
       )}
 
-      <LinkText
-        title="Back to my bookings"
-        onPress={() => router.navigate("/bookings" as never)}
-      />
-      <LinkText
-        title="Back to home"
-        onPress={() => router.navigate("/home" as never)}
-      />
+      <LinkText title="Back to my bookings" onPress={() => router.navigate("/bookings" as never)} />
+      <LinkText title="Back to home" onPress={() => router.navigate("/home" as never)} />
     </Screen>
   );
 }

@@ -3,9 +3,9 @@ import { dateValue, prettyDate, ReservationDoc, statusLabel, statusTone } from "
 import { auth, db } from "@/lib/firebase";
 import { useRouter } from "expo-router";
 import { collection, doc, getDoc, onSnapshot, query, where } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, Alert } from "react-native";
 
 const ROLE_LABEL: Record<string, string> = { manager: "Manager", front: "Front staff" };
 
@@ -32,17 +32,34 @@ export default function StaffDashboard() {
     });
   }, [router]);
 
+  const isFirstLoad = useRef(true);
+
   useEffect(() => {
     const today = dateValue(new Date());
     return onSnapshot(
       query(collection(db, "reservations"), where("date", "==", today)),
-      (snap) =>
+      (snap) => {
         setItems(
           snap.docs
             .map((d) => ({ id: d.id, ...(d.data() as Omit<ReservationDoc, "id">) }))
             .sort((a, b) => a.timeMinutes - b.timeMinutes)
-        ),
-      () => {}
+        );
+
+        if (isFirstLoad.current) {
+          isFirstLoad.current = false;
+        } else {
+          snap.docChanges().forEach((change) => {
+            if (change.type === "added") {
+              const r = change.doc.data() as ReservationDoc;
+              Alert.alert(
+                "New Booking Received! 🛎️",
+                `${r.userName} booked a table for ${r.partySize} guests at ${r.time}.`
+              );
+            }
+          });
+        }
+      },
+      (error) => console.error("Error fetching reservations:", error)
     );
   }, []);
 
@@ -89,6 +106,13 @@ export default function StaffDashboard() {
         <Text style={styles.sectionTitle}>Quick actions</Text>
       </View>
       <View style={styles.actionsRow}>
+        <Pressable style={styles.actionCard} onPress={() => router.push("/(staff)/front/deposits" as never)}>
+          <View style={[styles.actionIcon, { backgroundColor: "#D1FAE5" }]}>
+            <Ionicons name="card-outline" size={21} color="#059669" />
+          </View>
+          <Text style={styles.actionTitle}>Deposit checks</Text>
+          <Text style={styles.actionSubtitle}>Verify payments</Text>
+        </Pressable>
         <Pressable style={styles.actionCard} onPress={() => router.push("/kitchen" as never)}>
           <View style={[styles.actionIcon, { backgroundColor: "#D5EDE3" }]}>
             <Ionicons name="restaurant-outline" size={21} color={colors.green} />
@@ -169,8 +193,8 @@ const styles = {
   actionsRow: { flexDirection: "row" as const, gap: 10, marginBottom: 24 },
   actionCard: { flex: 1, backgroundColor: "#FFFFFF", borderRadius: 16, padding: 14, borderWidth: 1, borderColor: "#DDE4DF" },
   actionIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center" as const, justifyContent: "center" as const, marginBottom: 10 },
-  actionTitle: { color: colors.text, fontSize: 14, fontWeight: "800" as const },
-  actionSubtitle: { color: colors.muted, fontSize: 12, marginTop: 3 },
+  actionTitle: { color: colors.text, fontSize: 13, fontWeight: "800" as const },
+  actionSubtitle: { color: colors.muted, fontSize: 11, marginTop: 3 },
   reservationHeader: { flexDirection: "row" as const, justifyContent: "space-between" as const, alignItems: "flex-start" as const, marginBottom: 10 },
   timeBox: { flex: 1 },
   timeText: { color: colors.green, fontSize: 17, fontWeight: "800" as const },

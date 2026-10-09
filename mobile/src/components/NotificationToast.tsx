@@ -9,8 +9,9 @@ import {
   Platform,
 } from 'react-native';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
-import { useRouter } from 'expo-router';
+import { useRouter, useSegments, usePathname } from 'expo-router';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/hooks/useAuth';
 import Icon from './ui/Icon';
 
 export interface ToastAlertData {
@@ -24,12 +25,22 @@ export interface ToastAlertData {
 
 export function NotificationToast() {
   const router = useRouter();
+  const segments = useSegments();
+  const pathname = usePathname();
+  const { user } = useAuth();
+
   const [activeToast, setActiveToast] = useState<ToastAlertData | null>(null);
   const translateY = useRef(new Animated.Value(-150)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const seenIds = useRef<Set<string>>(new Set());
   const isFirstLoad = useRef(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep references to latest route and user role for listener execution
+  const routeRef = useRef({ segments, pathname, user });
+  useEffect(() => {
+    routeRef.current = { segments, pathname, user };
+  }, [segments, pathname, user]);
 
   useEffect(() => {
     // Listen for the latest notification added to Firestore
@@ -56,13 +67,69 @@ export function NotificationToast() {
         // If this is a newly arrived notification that hasn't been shown in toast
         if (!seenIds.current.has(alertId)) {
           seenIds.current.add(alertId);
+
+          const { segments: curSegments, pathname: curPathname, user: curUser } = routeRef.current;
+
+          const recipientRole = (data.recipientRole || '').toLowerCase();
+          const notifType = (data.type || '').toLowerCase();
+          const notifCategory = (data.category || '').toLowerCase();
+
+          // Check if current user is viewing staff territory
+          const isStaffRoute = curSegments.some(
+            (s) => s === '(staff)' || s === 'manager' || s === 'front' || s === 'kitchen'
+          ) || curPathname.startsWith('/(staff)') || curPathname.includes('/manager') || curPathname.includes('/front') || curPathname.includes('/kitchen');
+
+          // Check if current user is viewing customer territory
+          const isCustomerRoute = curSegments.some(
+            (s) => s === '(customer)' || s === 'booking-status' || s === 'pay-deposit' || s === 'join-queue' || s === 'customer-profile'
+          ) || curPathname.startsWith('/(customer)') || curPathname.includes('/booking-status') || curPathname.includes('/pay-deposit') || curPathname.includes('/join-queue');
+
+          const isCustomerUser = curUser?.role?.toLowerCase() === 'customer';
+
+          // Determine if notification is meant for restaurant staff (new booking, cancellation, rush, kitchen, etc.)
+          const isStaffAlert =
+            recipientRole === 'staff' ||
+            recipientRole === 'manager' ||
+            recipientRole === 'kitchen' ||
+            recipientRole === 'front' ||
+            notifType === 'booking' ||
+            notifType === 'critical_booking' ||
+            notifType === 'cancellation' ||
+            notifCategory === 'critical' ||
+            notifType === 'kitchen_alert' ||
+            notifType === 'rush_alert';
+
+          // If this is a staff alert (e.g. customer just placed a booking):
+          // NEVER show on the customer side or to customer users!
+          if (isStaffAlert) {
+            if (isCustomerRoute || isCustomerUser || !isStaffRoute) {
+              return;
+            }
+          }
+
+          // If this is a customer-targeted alert (e.g. table ready for guest):
+          if (recipientRole === 'customer') {
+            if (isStaffRoute && !isCustomerRoute) {
+              return;
+            }
+            if (data.recipientId && curUser?.id && data.recipientId !== curUser.id) {
+              return;
+            }
+          }
+
+          const target = data.targetScreen === '/explore'
+            ? '/(staff)/manager/explore'
+            : data.targetScreen === '/alerts'
+              ? '/(staff)/manager/alerts'
+              : (data.targetScreen || (isStaffRoute ? '/(staff)/manager/alerts' : undefined));
+
           const toastData: ToastAlertData = {
             id: alertId,
             title: data.title || 'Alert Notification',
             message: data.message || data.body || '',
             type: data.type || 'booking',
             category: data.category || (data.type === 'cancellation' ? 'critical' : 'booking'),
-            targetScreen: data.targetScreen || '/alerts',
+            targetScreen: target,
           };
           triggerToast(toastData);
         }

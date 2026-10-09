@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/components/form-ui";
 import {
@@ -27,6 +28,7 @@ type KitchenFeedItem = {
 };
 
 export default function KitchenAlertsScreen() {
+  const router = useRouter();
   const [alerts, setAlerts] = useState<KitchenFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -104,7 +106,11 @@ export default function KitchenAlertsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Alerts</Text>
-        <Pressable style={styles.profileBtn}>
+        <Pressable
+          style={styles.profileBtn}
+          onPress={() => router.push("/kitchen/profile" as never)}
+          hitSlop={8}
+        >
           <Ionicons name="person-outline" size={20} color={colors.text} />
         </Pressable>
       </View>

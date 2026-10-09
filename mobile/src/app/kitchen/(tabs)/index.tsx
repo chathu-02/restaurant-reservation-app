@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/components/form-ui";
 import { ReservationDoc, formatTime, dateValue, nextDays } from "@/lib/booking";
 import { subscribeKitchenReservations } from "@/lib/kitchen";
 
 export default function KitchenUpcomingScreen() {
+  const router = useRouter();
   const [dates] = useState(nextDays(7));
   const [selectedDate, setSelectedDate] = useState(dates[0].value);
   const [reservations, setReservations] = useState<ReservationDoc[]>([]);
@@ -39,9 +41,14 @@ export default function KitchenUpcomingScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Upcoming</Text>
-        <Pressable style={styles.searchBtn}>
-          <Ionicons name="search" size={20} color={colors.text} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            style={styles.profileBtn}
+            onPress={() => router.push("/kitchen/profile" as never)}
+            hitSlop={8}>
+            <Ionicons name="person-outline" size={19} color={colors.text} />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.calendarStrip} contentContainerStyle={styles.calendarStripContent}>
@@ -106,6 +113,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 24, paddingTop: 12, paddingBottom: 16 },
   headerTitle: { fontSize: 24, fontWeight: "700", color: colors.text },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  profileBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1, borderWidth: 1, borderColor: "#E2E8F0" },
   searchBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
   calendarStrip: { maxHeight: 80, minHeight: 80 },
   calendarStripContent: { paddingHorizontal: 24, gap: 12 },

@@ -26,6 +26,7 @@ import Input from '@/components/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { useReservations } from '@/hooks/useReservations';
 import { DashboardSkeleton } from '@/components/SkeletonLoader';
+import { Logo } from '@/components/logo';
 import { dateValue, formatTime, ReservationDoc, statusLabel } from '@/lib/booking';
 import { subscribeKitchenReservations } from '@/lib/kitchen';
 
@@ -209,230 +210,64 @@ export default function DashboardScreen() {
                   { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
                 ]}>
 
-
                 {/* Top Bar */}
-            <View style={styles.topBar}>
-              <View style={styles.topBarLeft}>
-                <View style={styles.serviceIconContainer}>
-                  <Icon name="utensils" size={18} color="#FFFFFF" />
-                </View>
-                <StatusBadge
-                  label={overview?.service || user?.service || 'DINNER SERVICE'}
-                  variant="green"
-                  dot
-                  size="medium"
-                />
-              </View>
-
-              {/* Live clock pill */}
-              <View style={styles.clockPill}>
-                <Icon name="clock" size={13} color="#34D399" />
-                <Text style={styles.clockText}>{liveTime}</Text>
-              </View>
-
-              {/* Profile Initial "C" */}
-              <Pressable
-                onPress={() => router.push('/(staff)/manager/profile' as never)}
-                style={styles.avatarWrapper}>
-                <View style={styles.avatarIconCircle}>
-                  <Text style={styles.avatarInitialText}>C</Text>
-                </View>
-                <View style={styles.onlineBadge} />
-              </Pressable>
-            </View>
-
-            <Text style={styles.dateText}>
-              {overview?.date || getFormattedDate().toUpperCase()}
-            </Text>
-            <Text style={styles.greetingText}>
-              {getGreeting()},{' '}
-              <Text style={styles.greetingName}>
-                {user?.name?.split(' ')[0] || 'Sarah'}
-              </Text>
-            </Text>
-            <Text style={styles.greetingSubtitle}>
-              Here's your shift overview — {overview?.reservationsToday ?? 42} covers booked today
-            </Text>
-
-            {/* Shift progress card inside hero container */}
-            <View style={styles.shiftProgressContainer}>
-              <View style={styles.shiftProgressTopRow}>
-                <View style={styles.progressCircleBadge}>
-                  <Text style={styles.progressCircleText}>{shiftProgressPercent}%</Text>
-                </View>
-                <View style={styles.shiftProgressTextCol}>
-                  <Text style={styles.shiftProgressLabel}>Shift progress</Text>
-                  <Text style={styles.shiftProgressValue}>{shiftProgressPercent}% of target</Text>
-                </View>
-              </View>
-              <View style={styles.shiftProgressTrack}>
-                <View style={[styles.shiftProgressFill, { width: `${shiftProgressPercent}%` }]} />
-              </View>
-            </View>
-          </Animated.View>
-
-          {/* ─── 2×2 Metric Cards Grid ───────────────────────────── */}
-          <View style={styles.metricsGrid}>
-            <View style={styles.metricsRow}>
-              <MetricCard
-                icon="calendar"
-                cardBgColor="#ECFDF5"
-                borderColor="#A7F3D0"
-                iconBgColor="#10B981"
-                iconColor="#FFFFFF"
-                valueColor="#065F46"
-                labelColor="#047857"
-                badgeLabel={`+${overview?.newReservations ?? 4} new`}
-                badgeVariant="green"
-                badgeDot
-                value={overview?.reservationsToday ?? 42}
-                label="Reservations today"
-              />
-              <MetricCard
-                icon="users"
-                cardBgColor="#FFFBEB"
-                borderColor="#FDE68A"
-                iconBgColor="#F59E0B"
-                iconColor="#FFFFFF"
-                valueColor="#92400E"
-                labelColor="#B45309"
-                badgeLabel={`~${overview?.queueWaitMinutes ?? 12} min`}
-                badgeVariant="amber"
-                value={overview?.guestsInQueue ?? 6}
-                label="Guests in queue"
-              />
-            </View>
-            <View style={styles.metricsRow}>
-              <MetricCard
-                icon="grid"
-                cardBgColor="#F0FDFA"
-                borderColor="#99F6E4"
-                iconBgColor="#0D9488"
-                iconColor="#FFFFFF"
-                valueColor="#115E59"
-                labelColor="#0F766E"
-                badgeLabel={`${occupancyRate}%`}
-                badgeVariant="teal"
-                value={overview?.occupiedTables ?? 14}
-                subValue={`/ ${overview?.totalTables ?? 20}`}
-                progressPercentage={occupancyRate}
-                label="Tables occupied"
-              />
-              <MetricCard
-                icon="target"
-                cardBgColor="#EFF6FF"
-                borderColor="#BFDBFE"
-                iconBgColor="#3B82F6"
-                iconColor="#FFFFFF"
-                valueColor="#1E40AF"
-                labelColor="#1D4ED8"
-                badgeLabel={overview?.noShowRateLabel ?? 'Low rate'}
-                badgeVariant="gray"
-                value={overview?.noShowsToday ?? 2}
-                label="No-shows today"
-              />
-            </View>
-          </View>
-
-          <View style={styles.kitchenBoard}>
-            <View style={styles.containerHeaderRow}>
-              <View style={styles.containerHeaderLeft}>
-                <View style={styles.kitchenLiveDot} />
-                <Text style={styles.containerTitle}>Kitchen live board</Text>
-              </View>
-              <Pressable
-                onPress={() => router.push('/kitchen' as never)}
-                style={({ pressed }) => [styles.seeAllBtn, pressed && styles.actionPressed]}>
-                <Text style={styles.seeAllText}>Open kitchen</Text>
-                <Icon name="chevron-right" size={14} color="#009669" />
-              </Pressable>
-            </View>
-            <Text style={styles.kitchenBoardSubtitle}>
-              Customer and staff bookings update here automatically.
-            </Text>
-            {kitchenReservations.length === 0 ? (
-              <Text style={styles.kitchenEmpty}>No active bookings for today.</Text>
-            ) : (
-              kitchenReservations.slice(0, 4).map((reservation) => (
-                <View key={reservation.id} style={styles.kitchenRow}>
-                  <View style={styles.kitchenTime}>
-                    <Text style={styles.kitchenTimeText}>{formatTime(reservation.timeMinutes)}</Text>
-                    <Text style={styles.kitchenPartyText}>{reservation.partySize} guests</Text>
-                  </View>
-                  <View style={styles.kitchenGuest}>
-                    <Text style={styles.kitchenGuestName} numberOfLines={1}>{reservation.userName}</Text>
-                    <Text style={styles.kitchenTable} numberOfLines={1}>
-                      {(reservation.tableNames ?? []).join(', ') || 'Table pending'}
-                    </Text>
-                  </View>
-                  <Text style={styles.kitchenStatus}>{statusLabel(reservation)}</Text>
-                </View>
-              ))
-            )}
-            {kitchenReservations.length > 4 && (
-              <Text style={styles.kitchenMore}>+{kitchenReservations.length - 4} more bookings in kitchen</Text>
-            )}
-          </View>
-
-          {/* ─── Rush Alert Card ─────────────────────────────────── */}
-          <RushAlertCard
-            time={overview?.rushAlert?.time ?? '7:30 PM'}
-            expectedGuests={overview?.rushAlert?.expectedGuests ?? 18}
-            withinMinutes={overview?.rushAlert?.withinMinutes ?? 45}
-            onPressView={() => setRushModalVisible(true)}
-          />
-
-          {/* ─── Quick Actions Container ──────────────────────────── */}
-          <View style={styles.lightGreenContainer}>
-            <View style={styles.containerHeaderRow}>
-              <View style={styles.containerHeaderLeft}>
-                <Text style={styles.containerTitle}>Quick actions</Text>
-              </View>
-            </View>
-
-            <View style={styles.quickActionsContainer}>
-              {/* Full-width New Booking card on top */}
-              <Pressable
-                onPress={() => setBookingModalVisible(true)}
-                style={({ pressed }) => [styles.fullWidthNewBookingCard, pressed && styles.actionPressed]}>
-                <View style={styles.newBookingIconRing}>
-                  <Icon name="plus" size={22} color="#FFFFFF" />
-                </View>
-                <View style={styles.fullBookingTextCol}>
-                  <Text style={styles.newBookingLabel}>New booking</Text>
-                  <Text style={styles.newBookingSub}>Reserve table</Text>
-                </View>
-              </Pressable>
-
-              {/* Bottom 2 side-by-side cards */}
-              <View style={styles.bottomActionsRow}>
-                <Pressable
-                  onPress={() => router.push('/(staff)/manager/add-walkin' as never)}
-                  style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
-                  <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
-                    <Icon name="walk" size={20} color="#D97706" />
+                <View style={styles.topBar}>
+                  <View style={[styles.topBarLeft, { flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
+                    <View style={{ marginRight: 10 }}>
+                      <Logo size={32} badge />
+                    </View>
+                    <StatusBadge
+                      label={overview?.service || user?.service || 'DINNER SERVICE'}
+                      variant="green"
+                      dot
+                      size="medium"
+                    />
                   </View>
 
-                  <View style={styles.actionTextCol}>
-                    <Text style={styles.actionCardLabel}>Walk-in</Text>
-                    <Text style={styles.actionCardSub}>Add to queue</Text>
+                  {/* Live clock pill */}
+                  <View style={styles.clockPill}>
+                    <Icon name="clock" size={13} color="#34D399" />
+                    <Text style={styles.clockText}>{liveTime}</Text>
                   </View>
-                </Pressable>
 
-                <Pressable
-                  onPress={() => router.push('/(staff)/manager/floor-layout' as never)}
-                  style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
-                  <View style={[styles.actionIconCircle, { backgroundColor: '#E0E7FF' }]}>
-                    <Icon name="table" size={20} color="#4F46E5" />
+                  {/* Profile Initial "C" */}
+                  <Pressable
+                    onPress={() => router.push('/(staff)/manager/profile' as never)}
+                    style={styles.avatarWrapper}>
+                    <Image source={{ uri: profilePic }} style={styles.avatarIconCircle} />
+                    <View style={styles.onlineBadge} />
+                  </Pressable>
+                </View>
+
+                <Text style={styles.dateText}>
+                  {overview?.date || getFormattedDate().toUpperCase()}
+                </Text>
+                <Text style={styles.greetingText}>
+                  {getGreeting()},{' '}
+                  <Text style={styles.greetingName}>
+                    {user?.name?.split(' ')[0] || 'Sarah'}
+                  </Text>
+                </Text>
+                <Text style={styles.greetingSubtitle}>
+                  Here's your shift overview — {overview?.reservationsToday ?? 42} covers booked today
+                </Text>
+
+                {/* Shift progress card inside hero container */}
+                <View style={styles.shiftProgressContainer}>
+                  <View style={styles.shiftProgressTopRow}>
+                    <View style={styles.progressCircleBadge}>
+                      <Text style={styles.progressCircleText}>{shiftProgressPercent}%</Text>
+                    </View>
+                    <View style={styles.shiftProgressTextCol}>
+                      <Text style={styles.shiftProgressLabel}>Shift progress</Text>
+                      <Text style={styles.shiftProgressValue}>{shiftProgressPercent}% of target</Text>
+                    </View>
                   </View>
-                  <View style={styles.actionTextCol}>
-                    <Text style={styles.actionCardLabel}>Floor plan</Text>
-                    <Text style={styles.actionCardSub}>Manage tables</Text>
+                  <View style={styles.shiftProgressTrack}>
+                    <View style={[styles.shiftProgressFill, { width: `${shiftProgressPercent}%` }]} />
                   </View>
-                </Pressable>
-              </View>
-            </View>
-          </View>
+                </View>
+              </Animated.View>
 
               {/* ─── 2×2 Metric Cards Grid ───────────────────────────── */}
               <View style={styles.metricsGrid}>
@@ -497,6 +332,8 @@ export default function DashboardScreen() {
                 </View>
               </View>
 
+              
+
               {/* ─── Rush Alert Card ─────────────────────────────────── */}
               <RushAlertCard
                 time={overview?.rushAlert?.time ?? '7:30 PM'}
@@ -519,7 +356,7 @@ export default function DashboardScreen() {
                     onPress={() => setBookingModalVisible(true)}
                     style={({ pressed }) => [styles.fullWidthNewBookingCard, pressed && styles.actionPressed]}>
                     <View style={styles.newBookingIconRing}>
-                      <Icon name="plus" size={22} color="#FFFFFF" />
+                      <Icon name="plus" size={18} color="#FFFFFF" />
                     </View>
                     <View style={styles.fullBookingTextCol}>
                       <Text style={styles.newBookingLabel}>New booking</Text>
@@ -533,8 +370,9 @@ export default function DashboardScreen() {
                       onPress={() => router.push('/(staff)/manager/add-walkin' as never)}
                       style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
                       <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
-                        <Icon name="walk" size={20} color="#D97706" />
+                        <Icon name="walk" size={17} color="#D97706" />
                       </View>
+
                       <View style={styles.actionTextCol}>
                         <Text style={styles.actionCardLabel}>Walk-in</Text>
                         <Text style={styles.actionCardSub}>Add to queue</Text>
@@ -545,7 +383,7 @@ export default function DashboardScreen() {
                       onPress={() => router.push('/(staff)/manager/floor-layout' as never)}
                       style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
                       <View style={[styles.actionIconCircle, { backgroundColor: '#E0E7FF' }]}>
-                        <Icon name="table" size={20} color="#4F46E5" />
+                        <Icon name="table" size={17} color="#4F46E5" />
                       </View>
                       <View style={styles.actionTextCol}>
                         <Text style={styles.actionCardLabel}>Floor plan</Text>
@@ -563,7 +401,7 @@ export default function DashboardScreen() {
                     <Text style={styles.containerTitle}>Upcoming</Text>
                     <View style={styles.sectionCountBadge}>
                       <Text style={styles.sectionCountText}>
-                        {reservations.filter((r) => r.status !== 'cancelled').length}
+                        {reservations.filter((r) => r.status !== 'cancelled' && (r.date === new Date().toISOString().split('T')[0] || r.date === 'Today' || !r.date)).length}
                       </Text>
                     </View>
                   </View>
@@ -576,16 +414,16 @@ export default function DashboardScreen() {
                 </View>
 
                 <View style={styles.timelineContainer}>
-                  {reservations.filter((r) => r.status !== 'cancelled').length === 0 ? (
+                  {reservations.filter((r) => r.status !== 'cancelled' && (r.date === new Date().toISOString().split('T')[0] || r.date === 'Today' || !r.date)).length === 0 ? (
                     <View style={{ paddingVertical: 16, alignItems: 'center' }}>
                       <Text style={{ fontSize: 13, color: '#333a49ff', fontStyle: 'italic' }}>
-                        No upcoming reservations scheduled.
+                        No upcoming reservations scheduled for today.
                       </Text>
                     </View>
                   ) : (
                     reservations
-                      .filter((r) => r.status !== 'cancelled')
-                      .slice(0, 5)
+                      .filter((r) => r.status !== 'cancelled' && (r.date === new Date().toISOString().split('T')[0] || r.date === 'Today' || !r.date))
+                      .slice(0, 4)
                       .map((res, idx, arr) => (
                         <Pressable
                           key={res.id}
@@ -1091,7 +929,7 @@ const styles = StyleSheet.create({
     color: '#34D399',
     letterSpacing: 1.3,
     textTransform: 'uppercase',
-    marginTop: 14,
+    marginTop: 6,
     marginBottom: 8,
   },
   greetingText: {
@@ -1252,24 +1090,24 @@ const styles = StyleSheet.create({
   // ── Light Touch Containers ─────────────────
   lightGreenContainer: {
     backgroundColor: '#d0dbb8ff',
-    borderRadius: 22,
-    padding: 16,
-    marginBottom: 14,
+    borderRadius: 20,
+    padding: 13,
+    marginBottom: 12,
     borderWidth: 1.2,
     borderColor: '#E2E8F0',
     borderTopColor: '#FFFFFF',
     borderBottomColor: '#CBD5E1',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowRadius: 8,
+    elevation: 3,
   },
   containerHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 8,
     paddingHorizontal: 2,
   },
   containerHeaderLeft: {
@@ -1278,7 +1116,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   containerTitle: {
-    fontSize: 18.5,
+    fontSize: 17,
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.3,
@@ -1286,29 +1124,29 @@ const styles = StyleSheet.create({
 
   // ── Quick Actions ────────────────────────────────
   quickActionsContainer: {
-    gap: 10,
-    marginTop: 4,
+    gap: 8,
+    marginTop: 2,
   },
   fullWidthNewBookingCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#009669',
-    borderRadius: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    width: '55%',
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    width: '48%',
     alignSelf: 'center',
     borderWidth: 1.2,
     borderColor: '#059669',
     borderTopColor: 'rgba(255, 255, 255, 0.45)',
     borderBottomColor: '#064E3B',
     shadowColor: '#009669',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 5,
-    gap: 14,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+    gap: 8,
   },
   fullBookingTextCol: {
     flex: 1,
@@ -1317,31 +1155,31 @@ const styles = StyleSheet.create({
   bottomActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 6,
   },
   actionCardHalf: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     borderWidth: 1.2,
     borderColor: '#CBD5E1',
     borderTopColor: '#FFFFFF',
     borderBottomColor: '#94A3B8',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
-    gap: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+    gap: 6,
   },
   actionIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1350,19 +1188,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionCardLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
     color: '#1E293B',
   },
   actionCardSub: {
-    fontSize: 11.5,
+    fontSize: 9.5,
     fontWeight: '400',
     color: '#64748B',
   },
   newBookingIconRing: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1371,12 +1209,12 @@ const styles = StyleSheet.create({
   },
   newBookingLabel: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 13.5,
     fontWeight: '700',
   },
   newBookingSub: {
     color: 'rgba(255, 255, 255, 0.85)',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '400',
   },
   actionPressed: {

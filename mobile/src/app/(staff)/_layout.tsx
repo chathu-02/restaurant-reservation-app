@@ -1,4 +1,5 @@
 import { colors } from "@/components/form-ui";
+import NotificationToast from "@/components/NotificationToast";
 import { auth, db } from "@/lib/firebase";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
@@ -15,6 +16,8 @@ const ACCESS: Record<string, Area[]> = {
   front: ["front"],
   kitchen: ["kitchen"],
 };
+
+import { AuthProvider } from "@/hooks/useAuth";
 
 export default function StaffLayout() {
   const router = useRouter();
@@ -56,15 +59,20 @@ export default function StaffLayout() {
   );
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: { display: "none" },
-      }}
-    >
-      {tab("front", "Front staff", "people", "people-outline")}
-      {tab("manager", "Manager", "stats-chart", "stats-chart-outline")}
-      {tab("kitchen", "Kitchen", "restaurant", "restaurant-outline")}
-    </Tabs>
+    <AuthProvider>
+      <View style={{ flex: 1 }}>
+        <NotificationToast />
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: { display: "none" },
+        }}
+      >
+        {tab("front", "Front staff", "people", "people-outline")}
+        {tab("manager", "Manager", "stats-chart", "stats-chart-outline")}
+        {tab("kitchen", "Kitchen", "restaurant", "restaurant-outline")}
+      </Tabs>
+    </View>
+    </AuthProvider>
   );
 }

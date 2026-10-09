@@ -1,7 +1,11 @@
 import { Stack } from "expo-router";
+import { AuthProvider } from "@/hooks/useAuth";
 
 export default function KitchenLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }} />
+    <AuthProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </AuthProvider>
   );
 }
+
