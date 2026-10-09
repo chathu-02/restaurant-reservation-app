@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -25,9 +26,9 @@ import Input from '@/components/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { useReservations } from '@/hooks/useReservations';
 import { DashboardSkeleton } from '@/components/SkeletonLoader';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Logo } from '@/components/logo';
-import { BRAND } from '@/lib/brand';
+import { dateValue, formatTime, ReservationDoc, statusLabel } from '@/lib/booking';
+import { subscribeKitchenReservations } from '@/lib/kitchen';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function DashboardScreen() {
 
   useEffect(() => {
     if (user?.id) {
-      AsyncStorage.getItem(`@profile_pic_${user.id}`).then(pic => {
+      AsyncStorage.getItem(`@profile_pic_${user.id}`).then((pic: string | null) => {
         if (pic) setProfilePic(pic);
       });
     }
@@ -60,6 +61,7 @@ export default function DashboardScreen() {
   const [bookingModalVisible, setBookingModalVisible] = useState(false);
   const [walkInModalVisible, setWalkInModalVisible] = useState(false);
   const [rushModalVisible, setRushModalVisible] = useState(false);
+  const [kitchenReservations, setKitchenReservations] = useState<ReservationDoc[]>([]);
 
   // Form states for New Booking
   const [guestName, setGuestName] = useState('');
@@ -91,6 +93,11 @@ export default function DashboardScreen() {
       }),
     ]).start();
   }, [fadeAnim, slideAnim]);
+
+  useEffect(() => {
+    const stop = subscribeKitchenReservations(dateValue(new Date()), setKitchenReservations);
+    return stop;
+  }, []);
 
   // Live Clock String
   const [liveTime, setLiveTime] = useState('');
@@ -202,7 +209,6 @@ export default function DashboardScreen() {
                   styles.heroSection,
                   { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
                 ]}>
-
 
                 {/* Top Bar */}
                 <View style={styles.topBar}>
@@ -326,6 +332,47 @@ export default function DashboardScreen() {
                 </View>
               </View>
 
+              {/* ─── Kitchen Live Board (from development) ───────────── */}
+              <View style={styles.kitchenBoard}>
+                <View style={styles.containerHeaderRow}>
+                  <View style={styles.containerHeaderLeft}>
+                    <View style={styles.kitchenLiveDot} />
+                    <Text style={styles.containerTitle}>Kitchen live board</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => router.push('/kitchen' as never)}
+                    style={({ pressed }) => [styles.seeAllBtn, pressed && styles.actionPressed]}>
+                    <Text style={styles.seeAllText}>Open kitchen</Text>
+                    <Icon name="chevron-right" size={14} color="#009669" />
+                  </Pressable>
+                </View>
+                <Text style={styles.kitchenBoardSubtitle}>
+                  Customer and staff bookings update here automatically.
+                </Text>
+                {kitchenReservations.length === 0 ? (
+                  <Text style={styles.kitchenEmpty}>No active bookings for today.</Text>
+                ) : (
+                  kitchenReservations.slice(0, 4).map((reservation) => (
+                    <View key={reservation.id} style={styles.kitchenRow}>
+                      <View style={styles.kitchenTime}>
+                        <Text style={styles.kitchenTimeText}>{formatTime(reservation.timeMinutes)}</Text>
+                        <Text style={styles.kitchenPartyText}>{reservation.partySize} guests</Text>
+                      </View>
+                      <View style={styles.kitchenGuest}>
+                        <Text style={styles.kitchenGuestName} numberOfLines={1}>{reservation.userName}</Text>
+                        <Text style={styles.kitchenTable} numberOfLines={1}>
+                          {(reservation.tableNames ?? []).join(', ') || 'Table pending'}
+                        </Text>
+                      </View>
+                      <Text style={styles.kitchenStatus}>{statusLabel(reservation)}</Text>
+                    </View>
+                  ))
+                )}
+                {kitchenReservations.length > 4 && (
+                  <Text style={styles.kitchenMore}>+{kitchenReservations.length - 4} more bookings in kitchen</Text>
+                )}
+              </View>
+
               {/* ─── Rush Alert Card ─────────────────────────────────── */}
               <RushAlertCard
                 time={overview?.rushAlert?.time ?? '7:30 PM'}
@@ -364,6 +411,7 @@ export default function DashboardScreen() {
                       <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
                         <Icon name="walk" size={20} color="#D97706" />
                       </View>
+
                       <View style={styles.actionTextCol}>
                         <Text style={styles.actionCardLabel}>Walk-in</Text>
                         <Text style={styles.actionCardSub}>Add to queue</Text>
@@ -1005,6 +1053,77 @@ const styles = StyleSheet.create({
   metricsRow: {
     flexDirection: 'row',
     gap: 8,
+  },
+  kitchenBoard: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 22,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  kitchenLiveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16A34A',
+  },
+  kitchenBoardSubtitle: {
+    color: '#4B6357',
+    fontSize: 13,
+    marginBottom: 10,
+  },
+  kitchenRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#DCFCE7',
+    gap: 10,
+  },
+  kitchenTime: {
+    width: 66,
+  },
+  kitchenTimeText: {
+    color: '#14532D',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  kitchenPartyText: {
+    color: '#64748B',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  kitchenGuest: {
+    flex: 1,
+  },
+  kitchenGuestName: {
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  kitchenTable: {
+    color: '#64748B',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  kitchenStatus: {
+    color: '#047857',
+    fontSize: 11,
+    fontWeight: '800',
+    maxWidth: 82,
+    textAlign: 'right',
+  },
+  kitchenEmpty: {
+    color: '#64748B',
+    fontSize: 13,
+    paddingVertical: 8,
+  },
+  kitchenMore: {
+    color: '#047857',
+    fontSize: 12,
+    fontWeight: '700',
+    paddingTop: 8,
   },
 
   // ── Light Touch Containers ─────────────────

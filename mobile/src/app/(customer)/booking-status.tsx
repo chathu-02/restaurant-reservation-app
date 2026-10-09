@@ -122,6 +122,44 @@ export default function BookingStatus() {
         <>
           <Badge text={statusLabel(res)} tone={statusTone(res)} />
 
+          {["confirmed", "seated", "preparing", "ready", "served"].includes(res.status) && (
+            <Card tint="#F0FDF4">
+              <Text style={{ fontSize: 13, fontWeight: "700", color: "#14532D", marginBottom: 10 }}>
+                Reservation progress
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                {[
+                  ["confirmed", "Confirmed"],
+                  ["seated", "Seated"],
+                  ["preparing", "Preparing"],
+                  ["ready", "Ready"],
+                  ["served", "Served"],
+                ].map(([value, label], index, steps) => {
+                  const current = steps.findIndex(([step]) => step === res.status);
+                  const complete = index <= current;
+                  return (
+                    <View key={value} style={{ alignItems: "center", flex: 1 }}>
+                      <View
+                        style={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: 10,
+                          backgroundColor: complete ? "#16A34A" : "#D1D5DB",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}>
+                        {complete && <Text style={{ color: "#FFFFFF", fontSize: 12 }}>✓</Text>}
+                      </View>
+                      <Text style={{ color: complete ? "#166534" : colors.muted, fontSize: 9, marginTop: 4 }}>
+                        {label}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </Card>
+          )}
+
           <Card>
             <Text
               style={{ fontSize: 13, color: colors.muted, marginTop: 10 }}

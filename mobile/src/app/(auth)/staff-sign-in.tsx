@@ -1,14 +1,13 @@
 import { friendlyError, homeRouteFor, login, logout, Role } from "@/lib/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
+import { Message } from "@/components/form-ui";
 import { useState, ComponentProps, useCallback } from "react";
-import { Text, View, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import { Text, View, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
-import { Message } from "@/components/form-ui";
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Alert } from "react-native";
 
 const STAFF_ROLES: Role[] = ["manager", "front", "kitchen"];
 const STAFF_DOMAIN = "staff.oceangrace.app";
@@ -102,8 +101,6 @@ export default function StaffSignIn() {
           <View style={styles.logoContainer}>
             <Logo size={80} color="#064E3B" />
           </View>
-
-
 
           <Text style={styles.title}>Welcome back</Text>
           <Text style={styles.subtitle}>Use the username and password your manager gave you.</Text>

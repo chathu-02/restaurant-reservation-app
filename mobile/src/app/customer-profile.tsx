@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
+import { logout } from '@/lib/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { auth, db } from '@/lib/firebase';
@@ -65,13 +66,22 @@ export default function CustomerProfileScreen() {
   };
 
   const handleEditDetails = () => {
-    router.push('/edit-profile');
+    router.push('/edit-profile' as never);
   };
 
 
   const handleLogout = () => {
+    const completeLogout = async () => {
+      try {
+        await logout();
+        router.replace('/role-choice' as never);
+      } catch {
+        Alert.alert('Log Out Error', 'Could not log out. Please try again.');
+      }
+    };
+
     if (Platform.OS === 'web') {
-      router.push('/role-choice');
+      void completeLogout();
       return;
     }
     Alert.alert(
@@ -82,9 +92,7 @@ export default function CustomerProfileScreen() {
         {
           text: 'Log Out',
           style: 'destructive',
-          onPress: () => {
-            router.push('/role-choice');
-          },
+          onPress: () => void completeLogout(),
         },
       ]
     );

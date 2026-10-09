@@ -1,11 +1,15 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-// Default to localhost for web/iOS, or 10.0.2.2 for Android emulator
+// Use the Expo host on a physical device so API calls reach the computer running the backend.
 const getDefaultApiUrl = () => {
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:5000/api';
+  if (Platform.OS === 'web') {
+    return 'http://localhost:5000/api';
   }
-  return 'http://localhost:5000/api';
+  const hostUri = Constants.expoConfig?.hostUri;
+  const host = hostUri?.split(':')[0];
+  if (host) return `http://${host}:5000/api`;
+  return Platform.OS === 'android' ? 'http://10.0.2.2:5000/api' : 'http://localhost:5000/api';
 };
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || getDefaultApiUrl();
