@@ -1,94 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 
-interface NotificationItem {
-  id: string;
-  title: string;
-  body: string;
-  time: string;
-  unread: boolean;
-  type: 'ready' | 'calendar' | 'clock' | 'bell';
-  badge?: string;
-  ref?: string;
-}
-
 export default function NotificationsScreen() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: '1',
-      title: 'Your table is ready!',
-      body: 'Please head to the host stand within 10 minutes.',
-      time: '2m ago',
-      unread: true,
-      type: 'ready',
-      badge: 'Ready now',
-    },
-    {
-      id: '2',
-      title: 'Reminder: booking tomorrow 7:00 PM',
-      body: 'Table for 4 at The Green Terrace',
-      time: '1h ago',
-      ref: 'Booking #RB-20481',
-      unread: true,
-      type: 'calendar',
-    },
-    {
-      id: '3',
-      title: 'Booking time changed',
-      body: 'Your reservation moved to 8:15 PM as requested.',
-      time: '3h ago',
-      unread: false,
-      type: 'clock',
-    },
-    {
-      id: '4',
-      title: 'Booking confirmed',
-      body: '#RB-20481 • 14 Jun, 6:30 PM • 4 guests',
-      time: 'Yesterday',
-      unread: false,
-      type: 'bell',
-    },
-    {
-      id: '5',
-      title: 'Queue update',
-      body: 'You moved up to position #3 in line.',
-      time: 'Yesterday',
-      unread: false,
-      type: 'clock',
-    },
-  ]);
-
-  const unreadCount = notifications.filter((n) => n.unread).length;
-
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
-    Alert.alert('Notifications', 'All notifications marked as read.');
-  };
-
-  const handleCardTap = (item: NotificationItem) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === item.id ? { ...n, unread: false } : n))
-    );
-    if (item.type === 'ready') {
-      Alert.alert(
-        'Table Ready!',
-        'Table #7 is set up for your party. Please check in with host Kaweerna Sneha at the entrance.'
-      );
-    } else {
-      Alert.alert(item.title, item.body);
-    }
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -100,107 +22,19 @@ export default function NotificationsScreen() {
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Text style={styles.headerTitle}>Notifications</Text>
-            {unreadCount > 0 && (
-              <View style={styles.newBadge}>
-                <Text style={styles.newBadgeText}>{unreadCount} new</Text>
-              </View>
-            )}
+            <Text style={styles.caughtUpText}>Live updates only</Text>
           </View>
-
-          {unreadCount > 0 ? (
-            <Pressable onPress={handleMarkAllRead}>
-              <Text style={styles.markReadText}>Mark all as read</Text>
-            </Pressable>
-          ) : (
-            <Text style={styles.caughtUpText}>All read</Text>
-          )}
+          <Text style={styles.caughtUpText}>No alerts yet</Text>
         </View>
 
-        {/* Section: TODAY */}
         <View style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionLabel}>TODAY</Text>
-            <Text style={styles.sectionDate}>14 Jun 2025</Text>
+          <View style={styles.emptyState}>
+            <Icon name="bell" size={32} color="#9CA3AF" />
+            <Text style={styles.emptyTitle}>No real alerts yet</Text>
+            <Text style={styles.emptyBody}>
+              Booking and kitchen updates will appear here when they are created.
+            </Text>
           </View>
-
-          {notifications.slice(0, 3).map((item) => (
-            <Pressable
-              key={item.id}
-              style={({ pressed }) => [
-                styles.notifCard,
-                item.unread && styles.notifCardUnread,
-                pressed && styles.pressed,
-              ]}
-              onPress={() => handleCardTap(item)}
-            >
-              {item.unread && <View style={styles.unreadDot} />}
-
-              <View style={styles.cardContent}>
-                {/* Icon box */}
-                {item.type === 'ready' ? (
-                  <View style={[styles.iconBox, { backgroundColor: '#00B37E' }]}>
-                    <Icon name="utensils" size={20} color="#FFFFFF" />
-                  </View>
-                ) : (
-                  <View style={[styles.iconBox, { backgroundColor: '#181A1E' }]}>
-                    <Icon
-                      name={item.type === 'calendar' ? 'calendar' : 'clock'}
-                      size={18}
-                      color={item.type === 'calendar' ? '#34D399' : '#FBBF24'}
-                    />
-                  </View>
-                )}
-
-                {/* Text */}
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardBody}>{item.body}</Text>
-
-                  <View style={styles.cardFooter}>
-                    <Text style={styles.cardTime}>
-                      {item.time}
-                      {item.ref ? ` • ${item.ref}` : ''}
-                    </Text>
-
-                    {item.badge && (
-                      <View style={styles.readyBadge}>
-                        <Text style={styles.readyBadgeText}>{item.badge}</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Section: EARLIER */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>EARLIER</Text>
-
-          {notifications.slice(3).map((item) => (
-            <Pressable
-              key={item.id}
-              style={({ pressed }) => [styles.notifCard, pressed && styles.pressed]}
-              onPress={() => handleCardTap(item)}
-            >
-              <View style={styles.cardContent}>
-                <View style={[styles.iconBox, { backgroundColor: '#181A1E' }]}>
-                  <Icon
-                    name={item.type === 'bell' ? 'bell' : 'clock'}
-                    size={18}
-                    color="#38BDF8"
-                  />
-                </View>
-
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardBody}>{item.body}</Text>
-                  <Text style={[styles.cardTime, { marginTop: 8 }]}>{item.time}</Text>
-                </View>
-              </View>
-            </Pressable>
-          ))}
         </View>
       </ScrollView>
 
@@ -259,6 +93,24 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 20,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 56,
+  },
+  emptyTitle: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  emptyBody: {
+    marginTop: 6,
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+    color: '#6B7280',
   },
   sectionHeaderRow: {
     flexDirection: 'row',

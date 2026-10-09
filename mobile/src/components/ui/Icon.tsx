@@ -10,6 +10,7 @@ export type IconName =
   | 'calendar'
   | 'users'
   | 'grid'
+<<<<<<< HEAD
   | 'target'
   | 'clock'
   | 'chevron-right'
@@ -21,23 +22,58 @@ export type IconName =
   | 'gear'
   | 'table'
   | 'chart'
+=======
+  | 'clock'
+  | 'chevron-right'
+  | 'chevron-left'
+  | 'plus'
+  | 'minus'
+  | 'gear'
+  | 'table'
+>>>>>>> Feature/Kitchen
   | 'bell'
   | 'check'
   | 'close'
   | 'person'
   | 'phone'
   | 'arrow-back'
+<<<<<<< HEAD
   | 'arrow-forward'
   | 'arrow-right'
-  | 'dot'
+=======
+  | 'arrow-right'
+  | 'eye'
+  | 'eye-off'
+  | 'lock'
+  | 'leaf'
+  | 'sparkles'
+  | 'zap'
+  | 'star'
+  | 'edit'
+  | 'trash'
+  | 'logout'
+  | 'card'
+  | 'camera'
+  | 'armchair'
+  | 'help'
+  | 'help-circle'
   | 'search'
+  | 'x-circle'
+  | 'command'
+>>>>>>> Feature/Kitchen
+  | 'dot'
+  | 'pencil'
+  | 'message'
+  | 'alert-triangle'
+  | 'trash-outline'
   | 'mic'
   | 'filter'
-  | 'star'
-  | 'alert-triangle'
-  | 'book'
-  | 'print'
+  | 'chevron-down'
+  | 'target'
+  | 'walk'
+  | 'chart'
   | 'more-vertical'
+<<<<<<< HEAD
   | 'message'
   | 'refresh'
   | 'lock'
@@ -47,10 +83,11 @@ export type IconName =
   | 'mail'
   | 'help-circle'
   | 'pencil'
+=======
+>>>>>>> Feature/Kitchen
   | 'flash'
-  | 'sun'
-  | 'wine'
   | 'whatsapp'
+<<<<<<< HEAD
   | 'trash-outline'
   | 'leaf'
   | 'sparkles'
@@ -67,6 +104,9 @@ export type IconName =
   | 'add'
   | 'restaurant'
   | 'basket';
+=======
+  | 'refresh';
+>>>>>>> Feature/Kitchen
 
 interface IconProps {
   name: IconName;
@@ -85,8 +125,11 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="people-outline" size={size} color={color} style={style} />;
     case 'grid':
       return <Ionicons name="grid-outline" size={size} color={color} style={style} />;
+<<<<<<< HEAD
     case 'target':
       return <MaterialCommunityIcons name="target" size={size} color={color} style={style} />;
+=======
+>>>>>>> Feature/Kitchen
     case 'clock':
       return <Ionicons name="time-outline" size={size} color={color} style={style} />;
     case 'chevron-right':
@@ -105,14 +148,20 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Feather name="plus" size={size} color={color} style={style} />;
     case 'minus':
       return <Feather name="minus" size={size} color={color} style={style} />;
+<<<<<<< HEAD
     case 'walk':
       return <MaterialCommunityIcons name="walk" size={size} color={color} style={style} />;
+=======
+>>>>>>> Feature/Kitchen
     case 'gear':
       return <Ionicons name="settings-outline" size={size} color={color} style={style} />;
     case 'table':
       return <MaterialIcons name="table-restaurant" size={size} color={color} style={style} />;
+<<<<<<< HEAD
     case 'chart':
       return <Ionicons name="bar-chart-outline" size={size} color={color} style={style} />;
+=======
+>>>>>>> Feature/Kitchen
     case 'bell':
       return <Ionicons name="notifications-outline" size={size} color={color} style={style} />;
     case 'check':
@@ -123,6 +172,7 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="person-outline" size={size} color={color} style={style} />;
     case 'phone':
       return <Ionicons name="call-outline" size={size} color={color} style={style} />;
+<<<<<<< HEAD
     case 'dot':
       return <Ionicons name="ellipse" size={size} color={color} style={style} />;
     case 'search':
@@ -147,10 +197,13 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="refresh-outline" size={size} color={color} style={style} />;
     case 'lock':
       return <Ionicons name="lock-closed-outline" size={size} color={color} style={style} />;
+=======
+>>>>>>> Feature/Kitchen
     case 'eye':
       return <Ionicons name="eye-outline" size={size} color={color} style={style} />;
     case 'eye-off':
       return <Ionicons name="eye-off-outline" size={size} color={color} style={style} />;
+<<<<<<< HEAD
     case 'id-card':
       return <MaterialCommunityIcons name="badge-account-horizontal-outline" size={size} color={color} style={style} />;
     case 'mail':
@@ -171,6 +224,10 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="logo-whatsapp" size={size} color={color} style={style} />;
     case 'trash-outline':
       return <Ionicons name="trash-outline" size={size} color={color} style={style} />;
+=======
+    case 'lock':
+      return <Ionicons name="lock-closed-outline" size={size} color={color} style={style} />;
+>>>>>>> Feature/Kitchen
     case 'leaf':
       return <Ionicons name="leaf-outline" size={size} color={color} style={style} />;
     case 'sparkles':
@@ -187,16 +244,57 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <Ionicons name="camera-outline" size={size} color={color} style={style} />;
     case 'armchair':
       return <MaterialCommunityIcons name="seat" size={size} color={color} style={style} />;
+<<<<<<< HEAD
+=======
+    case 'help':
+      return <Ionicons name="help-circle-outline" size={size} color={color} style={style} />;
+    case 'help-circle':
+      return <Ionicons name="help-circle-outline" size={size} color={color} style={style} />;
+    case 'search':
+      return <Ionicons name="search-outline" size={size} color={color} style={style} />;
+>>>>>>> Feature/Kitchen
     case 'x-circle':
       return <Ionicons name="close-circle-outline" size={size} color={color} style={style} />;
     case 'command':
       return <Feather name="command" size={size} color={color} style={style} />;
+<<<<<<< HEAD
     case 'add':
       return <Ionicons name="add" size={size} color={color} style={style} />;
     case 'restaurant':
       return <Ionicons name="restaurant-outline" size={size} color={color} style={style} />;
     case 'basket':
       return <Ionicons name="basket-outline" size={size} color={color} style={style} />;
+=======
+    case 'pencil':
+      return <Feather name="edit-3" size={size} color={color} style={style} />;
+    case 'message':
+      return <Ionicons name="chatbubble-outline" size={size} color={color} style={style} />;
+    case 'alert-triangle':
+      return <Feather name="alert-triangle" size={size} color={color} style={style} />;
+    case 'trash-outline':
+      return <Feather name="trash-2" size={size} color={color} style={style} />;
+    case 'mic':
+      return <Ionicons name="mic-outline" size={size} color={color} style={style} />;
+    case 'filter':
+      return <Ionicons name="filter-outline" size={size} color={color} style={style} />;
+    case 'chevron-down':
+      return <Feather name="chevron-down" size={size} color={color} style={style} />;
+    case 'target':
+      return <Feather name="target" size={size} color={color} style={style} />;
+    case 'walk':
+      return <MaterialCommunityIcons name="walk" size={size} color={color} style={style} />;
+    case 'chart':
+      return <Feather name="bar-chart-2" size={size} color={color} style={style} />;
+    case 'more-vertical':
+      return <Feather name="more-vertical" size={size} color={color} style={style} />;
+    case 'flash':
+      return <Ionicons name="flash-outline" size={size} color={color} style={style} />;
+    case 'whatsapp':
+      return <Ionicons name="logo-whatsapp" size={size} color={color} style={style} />;
+    case 'refresh':
+      return <Ionicons name="refresh-outline" size={size} color={color} style={style} />;
+    case 'dot':
+>>>>>>> Feature/Kitchen
     default:
       return <Ionicons name="ellipse" size={size} color={color} style={style} />;
   }

@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 # 🍽️ Restaurant Reservation & Shift Management Mobile App
 
 A modern, high-fidelity React Native (Expo) mobile application designed for restaurant managers, shift leads, hosts, floor staff, and customers.
+=======
+# Restaurant Reservation & Shift Management Mobile App
+
+A modern, high-fidelity React Native (Expo) mobile application designed for restaurant managers, shift leads, hosts, and floor staff.
+>>>>>>> Feature/Kitchen
 
 ---
 
@@ -47,6 +53,7 @@ VITE_API_URL=http://localhost:5000/api
 npx expo start
 ```
 
+<<<<<<< HEAD
 ### 4. How to Connect & Run in Expo Go
 
 - **On Android**: Open the **Expo Go** app, tap **"Scan QR code"**, and point your camera at the QR code in the terminal.
@@ -92,3 +99,10 @@ mobile/
 - **Routing**: Expo Router v57 (File-based navigation)
 - **Vector Icons**: `@expo/vector-icons`
 - **Safe Area**: `react-native-safe-area-context`
+=======
+Press:
+- `w` to open in Web Browser
+- `a` to open in Android Emulator
+- `i` to open in iOS Simulator
+- Scan the QR code with **Expo Go** on Android or iOS
+>>>>>>> Feature/Kitchen

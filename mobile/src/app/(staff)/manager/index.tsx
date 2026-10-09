@@ -25,9 +25,14 @@ import Input from '@/components/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { useReservations } from '@/hooks/useReservations';
 import { DashboardSkeleton } from '@/components/SkeletonLoader';
+<<<<<<< HEAD
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Logo } from '@/components/logo';
 import { BRAND } from '@/lib/brand';
+=======
+import { dateValue, formatTime, ReservationDoc, statusLabel } from '@/lib/booking';
+import { subscribeKitchenReservations } from '@/lib/kitchen';
+>>>>>>> Feature/Kitchen
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -60,6 +65,7 @@ export default function DashboardScreen() {
   const [bookingModalVisible, setBookingModalVisible] = useState(false);
   const [walkInModalVisible, setWalkInModalVisible] = useState(false);
   const [rushModalVisible, setRushModalVisible] = useState(false);
+  const [kitchenReservations, setKitchenReservations] = useState<ReservationDoc[]>([]);
 
   // Form states for New Booking
   const [guestName, setGuestName] = useState('');
@@ -91,6 +97,11 @@ export default function DashboardScreen() {
       }),
     ]).start();
   }, [fadeAnim, slideAnim]);
+
+  useEffect(() => {
+    const stop = subscribeKitchenReservations(dateValue(new Date()), setKitchenReservations);
+    return stop;
+  }, []);
 
   // Live Clock String
   const [liveTime, setLiveTime] = useState('');
@@ -205,6 +216,7 @@ export default function DashboardScreen() {
 
 
                 {/* Top Bar */}
+<<<<<<< HEAD
                 <View style={styles.topBar}>
                   <View style={[styles.topBarLeft, { flex: 1, flexDirection: 'column', alignItems: 'flex-start' }]}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
@@ -216,6 +228,208 @@ export default function DashboardScreen() {
                       dot
                       size="medium"
                     />
+=======
+            <View style={styles.topBar}>
+              <View style={styles.topBarLeft}>
+                <View style={styles.serviceIconContainer}>
+                  <Icon name="utensils" size={18} color="#FFFFFF" />
+                </View>
+                <StatusBadge
+                  label={overview?.service || user?.service || 'DINNER SERVICE'}
+                  variant="green"
+                  dot
+                  size="medium"
+                />
+              </View>
+
+              {/* Live clock pill */}
+              <View style={styles.clockPill}>
+                <Icon name="clock" size={13} color="#34D399" />
+                <Text style={styles.clockText}>{liveTime}</Text>
+              </View>
+
+              {/* Profile Initial "C" */}
+              <Pressable
+                onPress={() => router.push('/(staff)/manager/profile' as never)}
+                style={styles.avatarWrapper}>
+                <View style={styles.avatarIconCircle}>
+                  <Text style={styles.avatarInitialText}>C</Text>
+                </View>
+                <View style={styles.onlineBadge} />
+              </Pressable>
+            </View>
+
+            <Text style={styles.dateText}>
+              {overview?.date || getFormattedDate().toUpperCase()}
+            </Text>
+            <Text style={styles.greetingText}>
+              {getGreeting()},{' '}
+              <Text style={styles.greetingName}>
+                {user?.name?.split(' ')[0] || 'Sarah'}
+              </Text>
+            </Text>
+            <Text style={styles.greetingSubtitle}>
+              Here's your shift overview — {overview?.reservationsToday ?? 42} covers booked today
+            </Text>
+
+            {/* Shift progress card inside hero container */}
+            <View style={styles.shiftProgressContainer}>
+              <View style={styles.shiftProgressTopRow}>
+                <View style={styles.progressCircleBadge}>
+                  <Text style={styles.progressCircleText}>{shiftProgressPercent}%</Text>
+                </View>
+                <View style={styles.shiftProgressTextCol}>
+                  <Text style={styles.shiftProgressLabel}>Shift progress</Text>
+                  <Text style={styles.shiftProgressValue}>{shiftProgressPercent}% of target</Text>
+                </View>
+              </View>
+              <View style={styles.shiftProgressTrack}>
+                <View style={[styles.shiftProgressFill, { width: `${shiftProgressPercent}%` }]} />
+              </View>
+            </View>
+          </Animated.View>
+
+          {/* ─── 2×2 Metric Cards Grid ───────────────────────────── */}
+          <View style={styles.metricsGrid}>
+            <View style={styles.metricsRow}>
+              <MetricCard
+                icon="calendar"
+                cardBgColor="#ECFDF5"
+                borderColor="#A7F3D0"
+                iconBgColor="#10B981"
+                iconColor="#FFFFFF"
+                valueColor="#065F46"
+                labelColor="#047857"
+                badgeLabel={`+${overview?.newReservations ?? 4} new`}
+                badgeVariant="green"
+                badgeDot
+                value={overview?.reservationsToday ?? 42}
+                label="Reservations today"
+              />
+              <MetricCard
+                icon="users"
+                cardBgColor="#FFFBEB"
+                borderColor="#FDE68A"
+                iconBgColor="#F59E0B"
+                iconColor="#FFFFFF"
+                valueColor="#92400E"
+                labelColor="#B45309"
+                badgeLabel={`~${overview?.queueWaitMinutes ?? 12} min`}
+                badgeVariant="amber"
+                value={overview?.guestsInQueue ?? 6}
+                label="Guests in queue"
+              />
+            </View>
+            <View style={styles.metricsRow}>
+              <MetricCard
+                icon="grid"
+                cardBgColor="#F0FDFA"
+                borderColor="#99F6E4"
+                iconBgColor="#0D9488"
+                iconColor="#FFFFFF"
+                valueColor="#115E59"
+                labelColor="#0F766E"
+                badgeLabel={`${occupancyRate}%`}
+                badgeVariant="teal"
+                value={overview?.occupiedTables ?? 14}
+                subValue={`/ ${overview?.totalTables ?? 20}`}
+                progressPercentage={occupancyRate}
+                label="Tables occupied"
+              />
+              <MetricCard
+                icon="target"
+                cardBgColor="#EFF6FF"
+                borderColor="#BFDBFE"
+                iconBgColor="#3B82F6"
+                iconColor="#FFFFFF"
+                valueColor="#1E40AF"
+                labelColor="#1D4ED8"
+                badgeLabel={overview?.noShowRateLabel ?? 'Low rate'}
+                badgeVariant="gray"
+                value={overview?.noShowsToday ?? 2}
+                label="No-shows today"
+              />
+            </View>
+          </View>
+
+          <View style={styles.kitchenBoard}>
+            <View style={styles.containerHeaderRow}>
+              <View style={styles.containerHeaderLeft}>
+                <View style={styles.kitchenLiveDot} />
+                <Text style={styles.containerTitle}>Kitchen live board</Text>
+              </View>
+              <Pressable
+                onPress={() => router.push('/kitchen' as never)}
+                style={({ pressed }) => [styles.seeAllBtn, pressed && styles.actionPressed]}>
+                <Text style={styles.seeAllText}>Open kitchen</Text>
+                <Icon name="chevron-right" size={14} color="#009669" />
+              </Pressable>
+            </View>
+            <Text style={styles.kitchenBoardSubtitle}>
+              Customer and staff bookings update here automatically.
+            </Text>
+            {kitchenReservations.length === 0 ? (
+              <Text style={styles.kitchenEmpty}>No active bookings for today.</Text>
+            ) : (
+              kitchenReservations.slice(0, 4).map((reservation) => (
+                <View key={reservation.id} style={styles.kitchenRow}>
+                  <View style={styles.kitchenTime}>
+                    <Text style={styles.kitchenTimeText}>{formatTime(reservation.timeMinutes)}</Text>
+                    <Text style={styles.kitchenPartyText}>{reservation.partySize} guests</Text>
+                  </View>
+                  <View style={styles.kitchenGuest}>
+                    <Text style={styles.kitchenGuestName} numberOfLines={1}>{reservation.userName}</Text>
+                    <Text style={styles.kitchenTable} numberOfLines={1}>
+                      {(reservation.tableNames ?? []).join(', ') || 'Table pending'}
+                    </Text>
+                  </View>
+                  <Text style={styles.kitchenStatus}>{statusLabel(reservation)}</Text>
+                </View>
+              ))
+            )}
+            {kitchenReservations.length > 4 && (
+              <Text style={styles.kitchenMore}>+{kitchenReservations.length - 4} more bookings in kitchen</Text>
+            )}
+          </View>
+
+          {/* ─── Rush Alert Card ─────────────────────────────────── */}
+          <RushAlertCard
+            time={overview?.rushAlert?.time ?? '7:30 PM'}
+            expectedGuests={overview?.rushAlert?.expectedGuests ?? 18}
+            withinMinutes={overview?.rushAlert?.withinMinutes ?? 45}
+            onPressView={() => setRushModalVisible(true)}
+          />
+
+          {/* ─── Quick Actions Container ──────────────────────────── */}
+          <View style={styles.lightGreenContainer}>
+            <View style={styles.containerHeaderRow}>
+              <View style={styles.containerHeaderLeft}>
+                <Text style={styles.containerTitle}>Quick actions</Text>
+              </View>
+            </View>
+
+            <View style={styles.quickActionsContainer}>
+              {/* Full-width New Booking card on top */}
+              <Pressable
+                onPress={() => setBookingModalVisible(true)}
+                style={({ pressed }) => [styles.fullWidthNewBookingCard, pressed && styles.actionPressed]}>
+                <View style={styles.newBookingIconRing}>
+                  <Icon name="plus" size={22} color="#FFFFFF" />
+                </View>
+                <View style={styles.fullBookingTextCol}>
+                  <Text style={styles.newBookingLabel}>New booking</Text>
+                  <Text style={styles.newBookingSub}>Reserve table</Text>
+                </View>
+              </Pressable>
+
+              {/* Bottom 2 side-by-side cards */}
+              <View style={styles.bottomActionsRow}>
+                <Pressable
+                  onPress={() => router.push('/(staff)/manager/add-walkin' as never)}
+                  style={({ pressed }) => [styles.actionCardHalf, pressed && styles.actionPressed]}>
+                  <View style={[styles.actionIconCircle, { backgroundColor: '#FEF3C7' }]}>
+                    <Icon name="walk" size={20} color="#D97706" />
+>>>>>>> Feature/Kitchen
                   </View>
 
                   {/* Live clock pill */}
@@ -1005,6 +1219,77 @@ const styles = StyleSheet.create({
   metricsRow: {
     flexDirection: 'row',
     gap: 8,
+  },
+  kitchenBoard: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 22,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  kitchenLiveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16A34A',
+  },
+  kitchenBoardSubtitle: {
+    color: '#4B6357',
+    fontSize: 13,
+    marginBottom: 10,
+  },
+  kitchenRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#DCFCE7',
+    gap: 10,
+  },
+  kitchenTime: {
+    width: 66,
+  },
+  kitchenTimeText: {
+    color: '#14532D',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  kitchenPartyText: {
+    color: '#64748B',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  kitchenGuest: {
+    flex: 1,
+  },
+  kitchenGuestName: {
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  kitchenTable: {
+    color: '#64748B',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  kitchenStatus: {
+    color: '#047857',
+    fontSize: 11,
+    fontWeight: '800',
+    maxWidth: 82,
+    textAlign: 'right',
+  },
+  kitchenEmpty: {
+    color: '#64748B',
+    fontSize: 13,
+    paddingVertical: 8,
+  },
+  kitchenMore: {
+    color: '#047857',
+    fontSize: 12,
+    fontWeight: '700',
+    paddingTop: 8,
   },
 
   // ── Light Touch Containers ─────────────────

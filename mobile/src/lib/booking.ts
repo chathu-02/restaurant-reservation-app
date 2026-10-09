@@ -158,6 +158,9 @@ export function statusLabel(r: { status: string; depositStatus: string }) {
     return "Waiting for your deposit";
   }
   if (r.status === "seated") return "Seated";
+  if (r.status === "preparing") return "Kitchen is preparing";
+  if (r.status === "ready") return "Ready for service";
+  if (r.status === "served") return "Served";
   if (r.status === "cancelled") return "Cancelled";
   if (r.status === "no_show") return "Marked as no-show";
   if (r.status === "expired") return "Expired";
@@ -248,7 +251,7 @@ export function layoutRows(tables: TableDoc[]): TableDoc[][] {
 }
 
 export function statusTone(r: { status: string }): "good" | "wait" | "bad" {
-  if (r.status === "confirmed" || r.status === "seated") return "good";
+  if (["confirmed", "seated", "preparing", "ready", "served"].includes(r.status)) return "good";
   if (r.status === "pending") return "wait";
   return "bad";
 }

@@ -13,10 +13,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
+<<<<<<< HEAD
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+=======
+import { logout } from '@/lib/auth';
+>>>>>>> Feature/Kitchen
 
 export default function CustomerProfileScreen() {
   const [reminders, setReminders] = useState(true);
@@ -70,8 +74,21 @@ export default function CustomerProfileScreen() {
 
 
   const handleLogout = () => {
+    const completeLogout = async () => {
+      try {
+        await logout();
+        router.replace('/role-choice' as never);
+      } catch {
+        Alert.alert('Log Out Error', 'Could not log out. Please try again.');
+      }
+    };
+
     if (Platform.OS === 'web') {
+<<<<<<< HEAD
       router.push('/role-choice');
+=======
+      void completeLogout();
+>>>>>>> Feature/Kitchen
       return;
     }
     Alert.alert(
@@ -82,9 +99,13 @@ export default function CustomerProfileScreen() {
         {
           text: 'Log Out',
           style: 'destructive',
+<<<<<<< HEAD
           onPress: () => {
             router.push('/role-choice');
           },
+=======
+          onPress: () => void completeLogout(),
+>>>>>>> Feature/Kitchen
         },
       ]
     );
