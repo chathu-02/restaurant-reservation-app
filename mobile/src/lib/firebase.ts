@@ -5,7 +5,7 @@ import { getReactNativePersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyAF8yqPHlsxz0A6-XqD2A1XbSzYvfFdB-8",
   authDomain: "restaurant-reservation-a-a7518.firebaseapp.com",
   projectId: "restaurant-reservation-a-a7518",
