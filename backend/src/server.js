@@ -452,10 +452,27 @@ app.delete("/api/kitchen/tasks/:id", async (req, res) => {
   }
 });
 
+app.get("/api/queue", (req, res) => {
+  res.json({ data: queue });
+});
+
+app.get("/api/queue/:id", (req, res) => {
+  const item = queue.find((q) => q.id === req.params.id);
+  if (!item) return res.status(404).json({ message: "Queue entry not found" });
+  res.json({ data: item });
+});
+
 app.post("/api/queue", (req, res) => {
   const entry = { id: `q-${Date.now()}`, ...req.body, createdAt: new Date().toISOString() };
   queue.push(entry);
   res.status(201).json({ message: "Queue entry added", data: entry });
+});
+
+app.delete("/api/queue/:id", (req, res) => {
+  const index = queue.findIndex((q) => q.id === req.params.id);
+  if (index === -1) return res.status(404).json({ message: "Queue entry not found" });
+  const [removed] = queue.splice(index, 1);
+  res.json({ message: "Left queue", data: removed });
 });
 
 // Connect to MongoDB and start the API

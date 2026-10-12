@@ -145,10 +145,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: '#064E3B', paddingHorizontal: 16, paddingVertical: 16,
   },
-  navTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  navTitle: { fontSize: 18, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.3 },
   content: { padding: 20 },
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 },
-  emptyText: { fontSize: 16, fontFamily: 'Inter_500Medium', color: '#94A3B8' },
+  emptyText: { fontSize: 16, fontWeight: '500', color: '#94A3B8' },
   
   notificationCard: {
     backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, marginBottom: 16,
@@ -157,26 +157,26 @@ const styles = StyleSheet.create({
   },
   notifHeader: { flexDirection: 'row', gap: 12, marginBottom: 20, alignItems: 'center' },
   iconCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FEF3C7', justifyContent: 'center', alignItems: 'center' },
-  notifTitle: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#0F172A', marginBottom: 2 },
-  notifDesc: { fontSize: 13, fontFamily: 'Inter_500Medium', color: '#64748B' },
+  notifTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 2 },
+  notifDesc: { fontSize: 13, fontWeight: '500', color: '#64748B' },
   
   actionBtn: { 
     backgroundColor: '#10B981', paddingVertical: 12, borderRadius: 8, alignItems: 'center',
     elevation: 4, shadowColor: '#10B981', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4,
   },
-  actionBtnText: { color: '#FFFFFF', fontSize: 14, fontFamily: 'Inter_700Bold' },
+  actionBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
   
   modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
   modalContent: { width: '100%', backgroundColor: '#FFFFFF', borderRadius: 20, padding: 24, elevation: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.25, shadowRadius: 24 },
-  modalTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#0F172A', marginBottom: 24 },
+  modalTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A', marginBottom: 24 },
   
   formGroup: { marginBottom: 20 },
-  formLabel: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#475569', marginBottom: 8 },
-  formInput: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, fontFamily: 'Inter_500Medium', color: '#0F172A' },
+  formLabel: { fontSize: 13, fontWeight: '600', color: '#475569', marginBottom: 8 },
+  formInput: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, fontWeight: '500', color: '#0F172A' },
   
   modalActions: { flexDirection: 'row', gap: 12, marginTop: 12 },
   cancelButton: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: '#F1F5F9', alignItems: 'center' },
-  cancelButtonText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#64748B' },
+  cancelButtonText: { fontSize: 14, fontWeight: '600', color: '#64748B' },
   saveButton: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: '#10B981', alignItems: 'center' },
-  saveButtonText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
+  saveButtonText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
 });

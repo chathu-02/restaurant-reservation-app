@@ -241,14 +241,15 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 22,
-    fontFamily: 'Inter_800ExtraBold',
+    fontWeight: '800',
     color: '#FFFFFF',
     marginBottom: 4,
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   userRole: {
     fontSize: 13,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
     color: '#34D399',
     marginBottom: 16,
   },
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
   },
   contactText: {
     fontSize: 13,
-    fontFamily: 'Inter_500Medium',
+    fontWeight: '500',
     color: '#A7F3D0',
   },
   editButton: {
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     color: '#064E3B',
     fontSize: 14,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
     color: '#475569',
     marginBottom: 16,
     textTransform: 'uppercase',
@@ -317,12 +318,12 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
     color: '#0F172A',
   },
   settingSubtext: {
     fontSize: 13,
-    fontFamily: 'Inter_500Medium',
+    fontWeight: '500',
     color: '#64748B',
     marginTop: 2,
   },
@@ -350,7 +351,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
     color: '#475569',
   },
   chipTextSelected: {
@@ -378,6 +379,6 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
   },
 });

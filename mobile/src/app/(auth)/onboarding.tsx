@@ -1,19 +1,67 @@
 import { Logo } from "@/components/logo";
 import { BRAND } from "@/lib/brand";
+import {
+  CormorantGaramond_500Medium,
+  CormorantGaramond_600SemiBold,
+  CormorantGaramond_700Bold,
+} from "@expo-google-fonts/cormorant-garamond";
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+} from "@expo-google-fonts/plus-jakarta-sans";
+import { Ionicons } from "@expo/vector-icons";
+import { useFonts } from "expo-font";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useState, useRef } from "react";
-import { Pressable, StyleSheet, Text, View, Animated, Dimensions, Image, FlatList } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-const { width, height } = Dimensions.get('window');
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  Dimensions,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SLIDES = [
-  { id: "1", image: require("../../../assets/images/onboarding1.jpg"), title: "Book Ahead", text: "Reserve a table before you arrive and skip the wait on busy nights." },
-  { id: "2", image: require("../../../assets/images/onboarding2.jpg"), title: "Skip the Crowd", text: "Join the queue from anywhere and watch your position update live." },
-  { id: "3", image: require("../../../assets/images/onboarding3.jpg"), title: "Stay Updated", text: "Get an alert in the app the moment your table is ready." },
+  {
+    id: "1",
+    tag: "Fine Dining Experience",
+    image: require("../../../assets/images/onboarding1.jpg"),
+    text: "Reserve your ideal table before you arrive and skip the long wait on busy nights.",
+    shiftRatio: 0.22,
+  },
+  {
+    id: "2",
+    tag: "Live Waitlist",
+    image: require("../../../assets/images/onboarding2.jpg"),
+    text: "Join the virtual queue from anywhere and watch your live position update in real time.",
+    shiftRatio: 0.10,
+  },
+  {
+    id: "3",
+    tag: "Smart Notifications",
+    image: require("../../../assets/images/onboarding3.jpg"),
+    text: "Get an instant alert the exact moment your table is ready, so you can walk right in.",
+    shiftRatio: 0.10,
+  },
 ];
 
-const Paginator = ({ data, scrollX }: { data: any[], scrollX: Animated.Value }) => {
+const Paginator = ({
+  data,
+  scrollX,
+  width,
+}: {
+  data: any[];
+  scrollX: Animated.Value;
+  width: number;
+}) => {
   return (
     <View style={styles.paginatorContainer}>
       {data.map((_, i) => {
@@ -21,20 +69,24 @@ const Paginator = ({ data, scrollX }: { data: any[], scrollX: Animated.Value }) 
 
         const dotWidth = scrollX.interpolate({
           inputRange,
-          outputRange: [10, 32, 10],
-          extrapolate: 'clamp',
+          outputRange: [8, 30, 8],
+          extrapolate: "clamp",
         });
 
         const opacity = scrollX.interpolate({
           inputRange,
-          outputRange: [0.4, 1, 0.4],
-          extrapolate: 'clamp',
+          outputRange: [0.35, 1, 0.35],
+          extrapolate: "clamp",
         });
 
-        const color = scrollX.interpolate({
+        const backgroundColor = scrollX.interpolate({
           inputRange,
-          outputRange: ["#BFCBC5", "#10B981", "#BFCBC5"],
-          extrapolate: 'clamp',
+          outputRange: [
+            "rgba(255, 255, 255, 0.35)",
+            "#10B981",
+            "rgba(255, 255, 255, 0.35)",
+          ],
+          extrapolate: "clamp",
         });
 
         return (
@@ -42,7 +94,7 @@ const Paginator = ({ data, scrollX }: { data: any[], scrollX: Animated.Value }) 
             key={i.toString()}
             style={[
               styles.dot,
-              { width: dotWidth, opacity, backgroundColor: color },
+              { width: dotWidth, opacity, backgroundColor },
             ]}
           />
         );
@@ -53,10 +105,23 @@ const Paginator = ({ data, scrollX }: { data: any[], scrollX: Animated.Value }) 
 
 export default function Onboarding() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+
+  const [fontsLoaded] = useFonts({
+    CormorantGaramond_500Medium,
+    CormorantGaramond_600SemiBold,
+    CormorantGaramond_700Bold,
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+  });
+
   const [showSplash, setShowSplash] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const currentIndexRef = useRef(0);
-  
+
   const scrollX = useRef(new Animated.Value(0)).current;
   const slidesRef = useRef<FlatList>(null);
 
@@ -67,16 +132,15 @@ export default function Onboarding() {
   useEffect(() => {
     const listenerId = scrollX.addListener(({ value }) => {
       const index = Math.round(value / width);
-      if (index !== currentIndexRef.current) {
+      if (index !== currentIndexRef.current && index >= 0 && index < SLIDES.length) {
         currentIndexRef.current = index;
-        setCurrentIndex(index); // Force re-render for button text
+        setCurrentIndex(index);
       }
     });
     return () => scrollX.removeListener(listenerId);
-  }, [scrollX]);
+  }, [scrollX, width]);
 
   useEffect(() => {
-    // Splash entrance
     Animated.spring(logoScale, {
       toValue: 1,
       friction: 6,
@@ -85,15 +149,15 @@ export default function Onboarding() {
     }).start();
 
     const timer = setTimeout(() => {
-      // Fade out splash
       Animated.timing(splashOpacity, {
         toValue: 0,
-        duration: 800,
+        duration: 700,
         useNativeDriver: true,
       }).start(() => setShowSplash(false));
-    }, 2000);
+    }, 1800);
+
     return () => clearTimeout(timer);
-  }, []);
+  }, [logoScale, splashOpacity]);
 
   const finish = () => router.replace("/role-choice" as never);
 
@@ -101,11 +165,8 @@ export default function Onboarding() {
     if (currentIndexRef.current < SLIDES.length - 1) {
       const nextIndex = currentIndexRef.current + 1;
       const offset = nextIndex * width;
-      // Try multiple methods to support different RN/Animated.FlatList versions
       if (slidesRef.current?.scrollToOffset) {
         slidesRef.current.scrollToOffset({ offset, animated: true });
-      } else if ((slidesRef.current as any)?.getNode) {
-        (slidesRef.current as any).getNode().scrollToOffset({ offset, animated: true });
       } else {
         slidesRef.current?.scrollToIndex({ index: nextIndex, animated: true });
       }
@@ -116,212 +177,372 @@ export default function Onboarding() {
 
   if (showSplash) {
     return (
-      <View style={[styles.screen, styles.center, { backgroundColor: "#F0FDF4", position: 'absolute', width, height, zIndex: 100 }]}>
-        <Animated.View style={{ alignItems: 'center', opacity: splashOpacity, transform: [{ scale: logoScale }] }}>
-          <Logo size={240} color="#064E3B" />
-          <Text style={[styles.name, { color: "#064E3B" }]}>{BRAND.name}</Text>
-          <Text style={{ color: "#047857", fontSize: 14, letterSpacing: 3, marginTop: 8, fontWeight: '600' }}>
-            {BRAND.tagline.toUpperCase()}
-          </Text>
+      <View
+        style={[
+          styles.screen,
+          styles.center,
+          {
+            backgroundColor: "#FFFFFF",
+            position: "absolute",
+            width,
+            height,
+            zIndex: 100,
+          },
+        ]}
+      >
+        <StatusBar style="dark" />
+        <Animated.View
+          style={{
+            alignItems: "center",
+            opacity: splashOpacity,
+            transform: [{ scale: logoScale }],
+          }}
+        >
+          <Logo size={240} />
+          <Text style={styles.splashName}>{BRAND.name}</Text>
+          <View style={styles.splashTaglineContainer}>
+            <Text style={styles.splashTagline}>
+              {BRAND.tagline.toUpperCase()}
+            </Text>
+          </View>
         </Animated.View>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#F0FDF4" }}>
-      <SafeAreaView style={styles.screen}>
-        <View style={styles.topRow}>
-          <Pressable onPress={finish} style={styles.skip} accessibilityRole="button">
-            <Text style={styles.skipText}>Skip</Text>
-          </Pressable>
-        </View>
+    <View style={styles.container}>
+      <StatusBar style="light" />
 
-        <Animated.FlatList
-          ref={slidesRef}
-          data={SLIDES}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          pagingEnabled
-          bounces={false}
-          keyExtractor={(item) => item.id}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-            { useNativeDriver: false }
-          )}
-          scrollEventThrottle={32}
-          renderItem={({ item, index }) => {
-            const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
+      {/* Fullscreen Swipable Slides */}
+      <Animated.FlatList
+        ref={slidesRef}
+        data={SLIDES}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        pagingEnabled
+        bounces={false}
+        keyExtractor={(item) => item.id}
+        getItemLayout={(_, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+        renderItem={({ item, index }) => {
+          const inputRange = [
+            (index - 1) * width,
+            index * width,
+            (index + 1) * width,
+          ];
 
-            const imageScale = scrollX.interpolate({
-              inputRange,
-              outputRange: [0.8, 1, 0.8],
-              extrapolate: 'clamp',
-            });
+          // Gentle parallax zoom for the background photo
+          const imageScale = scrollX.interpolate({
+            inputRange,
+            outputRange: [1.12, 1, 1.12],
+            extrapolate: "clamp",
+          });
 
-            const textTranslateY = scrollX.interpolate({
-              inputRange,
-              outputRange: [50, 0, 50],
-              extrapolate: 'clamp',
-            });
+          // Text entrance motion
+          const textTranslateY = scrollX.interpolate({
+            inputRange,
+            outputRange: [40, 0, 40],
+            extrapolate: "clamp",
+          });
 
-            const opacity = scrollX.interpolate({
-              inputRange,
-              outputRange: [0, 1, 0],
-              extrapolate: 'clamp',
-            });
+          const opacity = scrollX.interpolate({
+            inputRange,
+            outputRange: [0, 1, 0],
+            extrapolate: "clamp",
+          });
 
-            return (
-              <View style={[styles.slideContainer, { width }]}>
-                <Animated.View 
-                  style={[
-                    styles.imageContainer, 
-                    { 
-                      transform: [{ scale: imageScale }],
-                      opacity
-                    }
-                  ]}
-                >
-                  <Image 
-                    source={item.image} 
-                    style={styles.image}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.imageOverlay} />
-                </Animated.View>
+          const shift = item.shiftRatio ?? 0.12;
 
-                <Animated.View 
-                  style={{ 
-                    alignItems: 'center',
+          return (
+            <View style={[styles.slideContainer, { width, height }]}>
+              {/* Fullscreen Background Photo shifted upwards */}
+              <Animated.Image
+                source={item.image}
+                style={[
+                  styles.bgImage,
+                  {
+                    height: height * (1 + shift + 0.15),
+                    top: -height * shift,
+                    transform: [{ scale: imageScale }],
+                  },
+                ]}
+                resizeMode="cover"
+              />
+
+              {/* Cinematic Rich Color & Gradient Overlay */}
+              <LinearGradient
+                colors={[
+                  "rgba(2, 22, 17, 0.45)",
+                  "rgba(2, 22, 17, 0.05)",
+                  "rgba(2, 22, 17, 0.7)",
+                  "rgba(2, 22, 17, 0.96)",
+                  "#021611",
+                ]}
+                locations={[0, 0.18, 0.44, 0.68, 1]}
+                style={StyleSheet.absoluteFill}
+              />
+
+              {/* Slide Content positioned above bottom controls */}
+              <View
+                style={[
+                  styles.slideContent,
+                  {
+                    paddingBottom: Math.max(insets.bottom, 24) + 124,
+                  },
+                ]}
+              >
+                <Animated.View
+                  style={{
+                    alignItems: "center",
                     transform: [{ translateY: textTranslateY }],
-                    opacity
+                    opacity,
                   }}
                 >
-                  <Text style={styles.title}>{item.title}</Text>
+                  <Text style={styles.tagText}>{item.tag}</Text>
                   <Text style={styles.body}>{item.text}</Text>
                 </Animated.View>
               </View>
-            );
-          }}
-        />
+            </View>
+          );
+        }}
+      />
 
-        <View style={styles.bottomContainer}>
-          <Paginator data={SLIDES} scrollX={scrollX} />
-          
+      {/* Floating Top Navigation Bar */}
+      <SafeAreaView
+        edges={["top"]}
+        style={styles.topBarContainer}
+        pointerEvents="box-none"
+      >
+        <View />
+
+        {currentIndex < SLIDES.length - 1 ? (
           <Pressable
+            onPress={finish}
             style={({ pressed }) => [
-              styles.button,
-              pressed && { opacity: 0.8, transform: [{ scale: 0.96 }] }
+              styles.skipButton,
+              pressed && styles.skipButtonPressed,
             ]}
             accessibilityRole="button"
-            onPress={scrollToNext}
+          >
+            <Text style={styles.skipText}>Skip</Text>
+            <Ionicons name="chevron-forward" size={14} color="#D1D5DB" />
+          </Pressable>
+        ) : null}
+      </SafeAreaView>
+
+      {/* Bottom Controls (Paginator & Action Button) */}
+      <View
+        style={[
+          styles.bottomContainer,
+          { paddingBottom: Math.max(insets.bottom, 24) + 12 },
+        ]}
+        pointerEvents="box-none"
+      >
+        <Paginator data={SLIDES} scrollX={scrollX} width={width} />
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.buttonPressable,
+            pressed && styles.buttonPressed,
+          ]}
+          accessibilityRole="button"
+          onPress={scrollToNext}
+        >
+          <LinearGradient
+            colors={["#10B981", "#059669"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.buttonGradient}
           >
             <Text style={styles.buttonText}>
               {currentIndex === SLIDES.length - 1 ? "Get Started" : "Continue"}
             </Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
+            <Ionicons
+              name={
+                currentIndex === SLIDES.length - 1
+                  ? "arrow-forward-circle"
+                  : "arrow-forward"
+              }
+              size={18}
+              color="#FFFFFF"
+              style={{ marginLeft: 6 }}
+            />
+          </LinearGradient>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  center: { alignItems: "center", justifyContent: "center" },
-  name: { fontSize: 32, fontWeight: "800", marginTop: 16 },
-  
-  topRow: { 
-    alignItems: "flex-end", 
-    zIndex: 10,
-    paddingHorizontal: 24,
-    paddingTop: 12
+  container: {
+    flex: 1,
+    backgroundColor: "#021611",
   },
-  skip: { minHeight: 44, justifyContent: "center" },
-  skipText: { fontSize: 16, color: "#047857", fontWeight: "600" },
-
-  slideContainer: {
+  screen: {
+    flex: 1,
+  },
+  center: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
   },
-  imageContainer: {
-    width: width * 0.85,
-    height: width * 0.85,
-    marginBottom: 40,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.5,
-    shadowRadius: 30,
-    elevation: 20,
-    borderRadius: 36,
-    overflow: "hidden",
+  splashName: {
+    fontFamily: "CormorantGaramond_700Bold",
+    fontSize: 40,
+    color: "#064E3B",
+    marginTop: 18,
+    letterSpacing: 1.2,
+    textAlign: "center",
+  },
+  splashTaglineContainer: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 5,
+    borderRadius: 20,
+    backgroundColor: "#ECFDF5",
     borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.3)",
+    borderColor: "#A7F3D0",
   },
-  image: {
+  splashTagline: {
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: "#047857",
+    fontSize: 12,
+    letterSpacing: 3,
+  },
+
+  // Slide Layout
+  slideContainer: {
+    position: "relative",
+    overflow: "hidden",
+  },
+  bgImage: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     width: "100%",
-    height: "100%",
   },
-  imageOverlay: {
-    position: 'absolute',
+  slideContent: {
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "center",
+    paddingHorizontal: 28,
+  },
+
+  // Headline (Cormorant Garamond - Luxury Editorial Serif)
+  tagText: {
+    fontFamily: "CormorantGaramond_600SemiBold",
+    fontSize: 36,
+    color: "#FFFFFF",
+    textAlign: "center",
+    letterSpacing: 0.8,
+    marginBottom: 12,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 1.5 },
+    textShadowRadius: 8,
+  },
+  // Subtitle / Body copy (Plus Jakarta Sans - Clean Modern Sans-serif)
+  body: {
+    fontFamily: "PlusJakartaSans_400Regular",
+    fontSize: 15,
+    lineHeight: 24,
+    color: "#E2E8F0",
+    textAlign: "center",
+    paddingHorizontal: 16,
+    letterSpacing: 0.2,
+  },
+
+  // Top Bar
+  topBarContainer: {
+    position: "absolute",
     top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 22,
+    paddingTop: 12,
+    zIndex: 20,
+  },
+
+  skipButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.22)",
+  },
+  skipButtonPressed: {
+    backgroundColor: "rgba(255, 255, 255, 0.26)",
+    transform: [{ scale: 0.96 }],
+  },
+  skipText: {
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontSize: 14,
+    color: "#FFFFFF",
+    letterSpacing: 0.6,
+  },
+
+  // Bottom Controls
+  bottomContainer: {
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(6, 78, 59, 0.15)",
-  },
-  
-  title: { 
-    fontSize: 34, 
-    fontWeight: "900", 
-    color: "#064E3B", 
-    marginBottom: 16,
-    textAlign: "center",
-    letterSpacing: 0.5,
-  },
-  body: { 
-    fontSize: 18, 
-    lineHeight: 28, 
-    color: "#55645D", 
-    textAlign: "center", 
-    paddingHorizontal: 16,
-    fontWeight: "400"
-  },
-  
-  bottomContainer: {
     paddingHorizontal: 24,
-    paddingBottom: 32,
-    paddingTop: 16,
+    zIndex: 20,
   },
   paginatorContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    height: 30,
+    height: 24,
     marginBottom: 20,
   },
-  dot: { 
-    height: 8, 
-    borderRadius: 4, 
-    marginHorizontal: 5,
+  dot: {
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
   },
-  button: { 
-    height: 64, 
-    borderRadius: 20, 
-    backgroundColor: "#10B981", 
-    alignItems: "center", 
-    justifyContent: "center",
+  buttonPressable: {
+    borderRadius: 14,
+    overflow: "hidden",
     shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  buttonText: { 
-    color: "#FFFFFF", 
-    fontSize: 19, 
-    fontWeight: "800",
-    letterSpacing: 1
+  buttonPressed: {
+    transform: [{ scale: 0.98 }],
+    opacity: 0.92,
+  },
+  buttonGradient: {
+    height: 48,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  buttonText: {
+    fontFamily: "PlusJakartaSans_700Bold",
+    color: "#FFFFFF",
+    fontSize: 14,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
 });
