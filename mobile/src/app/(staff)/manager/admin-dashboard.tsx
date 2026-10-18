@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Image, StatusBar, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Image, StatusBar, Modal, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Icon from '@/components/ui/Icon';
-import { collection, getDocs, doc, updateDoc, deleteDoc, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { db, firebaseConfig } from '@/lib/firebase';
+import { friendlyError } from '@/lib/auth';
 import { Logo } from '@/components/logo';
 
 export default function AdminDashboardScreen() {
@@ -13,25 +16,26 @@ export default function AdminDashboardScreen() {
   const [staffList, setStaffList] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchStaff = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'users'));
-        const staffData: any[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          // Exclude customers from the staff dashboard
-          if (data.role && data.role.toLowerCase() !== 'customer') {
-            staffData.push({ id: doc.id, ...data });
-          }
-        });
-        setStaffList(staffData);
-      } catch (error) {
-        console.error('Error fetching staff:', error);
-      }
-    };
-    fetchStaff();
+    const q = collection(db, 'users');
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const staffData: any[] = [];
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        // Exclude customers from the staff dashboard
+        if (data.role && data.role.toLowerCase() !== 'customer') {
+          staffData.push({ id: docSnap.id, ...data });
+        }
+      });
+      setStaffList(staffData);
+    }, (error) => {
+      console.error('Error listening to staff:', error);
+    });
+
+    return () => unsubscribe();
   }, []);
+
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newStaffForm, setNewStaffForm] = useState({ name: '', email: '', phone: '', address: '', password: '', role: 'Front Office' });
   
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -98,17 +102,97 @@ export default function AdminDashboardScreen() {
   ];
 
   const handleAddStaff = async () => {
+    const trimmedName = newStaffForm.name.trim();
+    const rawEmail = newStaffForm.email.trim();
+    const trimmedPhone = newStaffForm.phone.trim();
+    const trimmedAddress = newStaffForm.address.trim();
+    const trimmedPassword = newStaffForm.password.trim();
+
+    if (!trimmedName) {
+      Alert.alert('Validation Error', 'Please enter staff full name.');
+      return;
+    }
+    if (!rawEmail) {
+      Alert.alert('Validation Error', 'Please enter an email address or username.');
+      return;
+    }
+    if (!trimmedPassword) {
+      Alert.alert('Validation Error', 'Please enter a password.');
+      return;
+    }
+    if (trimmedPassword.length < 6) {
+      Alert.alert('Validation Error', 'Password must be at least 6 characters.');
+      return;
+    }
+
+    // Format email: If just a username is entered, append domain matching staff sign-in
+    const formattedEmail = rawEmail.includes('@')
+      ? rawEmail.toLowerCase()
+      : `${rawEmail.toLowerCase()}@staff.oceangrace.app`;
+
+    // Map UI role to system role for permissions & login
+    let systemRole = 'front';
+    const roleLower = newStaffForm.role.toLowerCase();
+    if (roleLower.includes('manager')) systemRole = 'manager';
+    else if (roleLower.includes('chef') || roleLower.includes('kitchen')) systemRole = 'kitchen';
+    else systemRole = 'front';
+
+    setIsSubmitting(true);
     try {
-      const docRef = await addDoc(collection(db, 'users'), {
-        ...newStaffForm,
+      let userUid: string | null = null;
+
+      // 1. Create Auth user via secondary app instance so manager is not logged out
+      try {
+        const secondaryAppName = `StaffAuth_${Date.now()}`;
+        const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+        const secondaryAuth = getAuth(secondaryApp);
+        const cred = await createUserWithEmailAndPassword(secondaryAuth, formattedEmail, trimmedPassword);
+        userUid = cred.user.uid;
+        await signOut(secondaryAuth);
+        await deleteApp(secondaryApp);
+      } catch (authError: any) {
+        console.warn('Firebase Auth creation notice:', authError);
+        if (authError?.code === 'auth/email-already-in-use') {
+          Alert.alert('Account Exists', 'A staff account with this email or username already exists in Firebase Auth.');
+          setIsSubmitting(false);
+          return;
+        }
+        if (authError?.code === 'auth/weak-password' || authError?.code === 'auth/invalid-email') {
+          Alert.alert('Auth Error', friendlyError(authError));
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // 2. Prepare database payload
+      const userData = {
+        name: trimmedName,
+        email: formattedEmail,
+        phone: trimmedPhone,
+        address: trimmedAddress,
+        password: trimmedPassword,
+        role: systemRole,
+        roleTitle: newStaffForm.role,
+        active: true,
         isOnDuty: false,
-        createdAt: serverTimestamp()
-      });
-      setStaffList(prev => [...prev, { id: docRef.id, ...newStaffForm, isOnDuty: false }]);
+        createdAt: serverTimestamp(),
+      };
+
+      // 3. Save to Firestore 'users' collection
+      if (userUid) {
+        await setDoc(doc(db, 'users', userUid), userData);
+      } else {
+        await addDoc(collection(db, 'users'), userData);
+      }
+
+      Alert.alert('Success', `${trimmedName} has been saved to the database successfully!`);
       setIsAddModalVisible(false);
       setNewStaffForm({ name: '', email: '', phone: '', address: '', password: '', role: 'Front Office' });
-    } catch (error) {
-      console.error('Error adding staff:', error);
+    } catch (error: any) {
+      console.error('Error adding staff to database:', error);
+      Alert.alert('Database Error', error?.message || 'Failed to save staff member to the database.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -168,12 +252,39 @@ export default function AdminDashboardScreen() {
     }
   };
 
-  const handleDeleteStaffDirectly = async (id: string) => {
+  const handleDeleteStaffDirectly = (id: string, name?: string) => {
+    Alert.alert(
+      'Delete Staff',
+      `Are you sure you want to remove ${name || 'this staff member'} from the database?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, 'users', id));
+              Alert.alert('Deleted', 'Staff member removed successfully.');
+            } catch (error) {
+              console.error('Error deleting staff directly:', error);
+              Alert.alert('Error', 'Failed to delete staff member from database.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleToggleDuty = async (staffMember: any) => {
     try {
-      await deleteDoc(doc(db, 'users', id));
-      setStaffList(prev => prev.filter(s => s.id !== id));
-    } catch (error) {
-      console.error('Error deleting staff directly:', error);
+      const nextStatus = !staffMember.isOnDuty;
+      await updateDoc(doc(db, 'users', staffMember.id), {
+        isOnDuty: nextStatus,
+        lastDutyChange: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error('Error toggling duty status:', err);
+      Alert.alert('Error', 'Could not update duty status.');
     }
   };
 
@@ -329,21 +440,24 @@ export default function AdminDashboardScreen() {
                   <Text style={[styles.tableCell, styles.tableCellBold, { width: 150 }]}>{staff.name || 'Unknown'}</Text>
                   <Text style={[styles.tableCell, { width: 180 }]}>{staff.email || 'No email'}</Text>
                   <View style={{ width: 100, justifyContent: 'center' }}>
-                    <Text style={styles.tableRoleText}>{staff.role || 'Staff'}</Text>
+                    <Text style={styles.tableRoleText}>{staff.roleTitle || staff.role || 'Staff'}</Text>
                   </View>
                   <View style={{ width: 100, justifyContent: 'center' }}>
-                    <View style={staff.isOnDuty ? styles.statusPillActive : styles.statusPillInactive}>
+                    <Pressable 
+                      onPress={() => handleToggleDuty(staff)}
+                      style={staff.isOnDuty ? styles.statusPillActive : styles.statusPillInactive}
+                    >
                       <View style={staff.isOnDuty ? styles.statusDotActive : styles.statusDotInactive} />
                       <Text style={staff.isOnDuty ? styles.statusTextActive : styles.statusTextInactive}>
                         {staff.isOnDuty ? 'On Duty' : 'Off Duty'}
                       </Text>
-                    </View>
+                    </Pressable>
                   </View>
                   <View style={{ width: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                     <Pressable onPress={() => openEditModal(staff)}>
                       <Icon name="edit" size={20} color="#3B82F6" />
                     </Pressable>
-                    <Pressable onPress={() => handleDeleteStaffDirectly(staff.id)}>
+                    <Pressable onPress={() => handleDeleteStaffDirectly(staff.id, staff.name)}>
                       <Icon name="trash" size={20} color="#EF4444" />
                     </Pressable>
                   </View>
@@ -447,8 +561,16 @@ export default function AdminDashboardScreen() {
                 />
               </View>
 
-              <Pressable style={styles.submitButton} onPress={handleAddStaff}>
-                <Text style={styles.submitButtonText}>Add Staff Member</Text>
+              <Pressable 
+                style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]} 
+                onPress={handleAddStaff}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Add Staff Member</Text>
+                )}
               </Pressable>
             </ScrollView>
           </View>
@@ -596,8 +718,9 @@ const styles = StyleSheet.create({
   },
   navTitle: {
     fontSize: 20,
-    fontFamily: 'Inter_800ExtraBold',
+    fontWeight: '800',
     color: '#FFFFFF', // White text
+    letterSpacing: -0.3,
   },
   bottomTabBar: {
     flexDirection: 'row',
@@ -631,12 +754,12 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 12,
-    fontFamily: 'Inter_500Medium',
+    fontWeight: '500',
     color: '#94A3B8',
   },
   tabTextActive: {
     fontSize: 12,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
     color: '#064E3B',
   },
   navRight: {
@@ -665,7 +788,7 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
     color: '#FFFFFF',
     display: Platform.OS === 'web' ? 'flex' : 'none',
   },
@@ -734,12 +857,12 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 26,
-    fontFamily: 'Inter_800ExtraBold',
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
   statLabel: {
     fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
     marginTop: 2,
   },
   statIconContainer: {
@@ -760,10 +883,10 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 11,
-    fontFamily: 'Inter_500Medium',
+    fontWeight: '500',
   },
   progressTextBold: {
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
   },
   progressBarBg: {
     height: 6,
@@ -794,7 +917,7 @@ const styles = StyleSheet.create({
   },
   tableTitle: {
     fontSize: 18,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
     color: '#0F172A',
   },
   tableFilters: {
@@ -821,12 +944,12 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
     color: '#64748B',
   },
   filterTextActive: {
     fontSize: 12,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   addStaffButton: {
@@ -845,7 +968,7 @@ const styles = StyleSheet.create({
   },
   addStaffButtonText: {
     fontSize: 13,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   tableRowHeader: {
@@ -861,7 +984,7 @@ const styles = StyleSheet.create({
   },
   tableCol: {
     fontSize: 12,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
     color: '#A7F3D0',
   },
   tableRow: {
@@ -882,11 +1005,11 @@ const styles = StyleSheet.create({
   },
   tableCell: {
     fontSize: 13,
-    fontFamily: 'Inter_500Medium',
+    fontWeight: '500',
     color: '#000000',
   },
   tableCellBold: {
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
     color: '#0F172A',
   },
   tableAvatar: {
@@ -896,7 +1019,7 @@ const styles = StyleSheet.create({
   },
   tableRoleText: {
     fontSize: 13,
-    fontFamily: 'Inter_500Medium',
+    fontWeight: '500',
     color: '#000000',
   },
   statusPillActive: {
@@ -933,12 +1056,12 @@ const styles = StyleSheet.create({
   },
   statusTextActive: {
     fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
     color: '#15803D',
   },
   statusTextInactive: {
     fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
     color: '#64748B',
   },
   /* Modal Styles Below */
@@ -962,7 +1085,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: 'Inter_800ExtraBold',
+    fontWeight: '800',
     color: '#0F172A',
   },
   closeModalButton: {
@@ -973,7 +1096,7 @@ const styles = StyleSheet.create({
   },
   formLabel: {
     fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
     color: '#475569',
     marginBottom: 8,
   },
@@ -985,7 +1108,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 15,
-    fontFamily: 'Inter_500Medium',
+    fontWeight: '500',
     color: '#0F172A',
   },
   roleSelectContainer: {
@@ -1008,12 +1131,12 @@ const styles = StyleSheet.create({
   },
   roleOptionText: {
     fontSize: 13,
-    fontFamily: 'Inter_500Medium',
+    fontWeight: '500',
     color: '#64748B',
   },
   roleOptionTextActive: {
     color: '#064E3B',
-    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
   },
   textArea: {
     height: 100,
@@ -1030,7 +1153,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
   },
   actionButtonsRow: {
     flexDirection: 'row',
@@ -1062,6 +1185,6 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: '#EF4444',
     fontSize: 15,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
   },
 });

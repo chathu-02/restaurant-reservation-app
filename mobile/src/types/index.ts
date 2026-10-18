@@ -81,7 +81,7 @@ export interface CreateWalkInPayload {
 // Customer Portal Types
 // ----------------------------------------
 
-export type SeatingPreferenceType = 'Indoor' | 'Outdoor' | 'Any table';
+export type SeatingPreferenceType = 'Indoor' | 'Outdoor' | 'Any Table' | 'Any table';
 
 export interface JoinQueueFormPayload {
   fullName: string;

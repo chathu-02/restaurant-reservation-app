@@ -365,7 +365,9 @@ app.patch("/api/reservations/:id/status", async (req, res) => {
 app.post("/api/kitchen/tasks", async (req, res) => {
   const title = String(req.body.title || "").trim();
   const station = String(req.body.station || "").trim();
-  const { priority = "normal", dueTime = "", notes = "" } = req.body;
+  const priority = req.body.priority || "normal";
+  const dueTime = typeof req.body.dueTime === "string" ? req.body.dueTime.trim() : "";
+  const notes = typeof req.body.notes === "string" ? req.body.notes.trim() : "";
   if (!title || !station) {
     return res.status(400).json({ message: "Task title and station are required" });
   }
@@ -452,10 +454,27 @@ app.delete("/api/kitchen/tasks/:id", async (req, res) => {
   }
 });
 
+app.get("/api/queue", (req, res) => {
+  res.json({ data: queue });
+});
+
+app.get("/api/queue/:id", (req, res) => {
+  const item = queue.find((q) => q.id === req.params.id);
+  if (!item) return res.status(404).json({ message: "Queue entry not found" });
+  res.json({ data: item });
+});
+
 app.post("/api/queue", (req, res) => {
   const entry = { id: `q-${Date.now()}`, ...req.body, createdAt: new Date().toISOString() };
   queue.push(entry);
   res.status(201).json({ message: "Queue entry added", data: entry });
+});
+
+app.delete("/api/queue/:id", (req, res) => {
+  const index = queue.findIndex((q) => q.id === req.params.id);
+  if (index === -1) return res.status(404).json({ message: "Queue entry not found" });
+  const [removed] = queue.splice(index, 1);
+  res.json({ message: "Left queue", data: removed });
 });
 
 // Connect to MongoDB and start the API

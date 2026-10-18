@@ -4,7 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 export type Role = "customer" | "manager" | "front" | "kitchen";
@@ -54,7 +54,8 @@ export async function registerCustomer(
 
 export async function login(email: string, password: string): Promise<Role> {
   const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
-  const snap = await getDoc(doc(db, "users", cred.user.uid));
+  const userRef = doc(db, "users", cred.user.uid);
+  const snap = await getDoc(userRef);
   if (!snap.exists()) {
     await signOut(auth);
     throw Object.assign(new Error("no profile"), { code: "app/no-profile" });
@@ -64,6 +65,19 @@ export async function login(email: string, password: string): Promise<Role> {
     await signOut(auth);
     throw Object.assign(new Error("inactive"), { code: "app/inactive" });
   }
+
+  // When staff/manager logs in, automatically set their status to On Duty
+  if (data.role && data.role.toLowerCase() !== "customer") {
+    try {
+      await updateDoc(userRef, {
+        isOnDuty: true,
+        lastLogin: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn("Could not mark user as on-duty on login:", err);
+    }
+  }
+
   return data.role as Role;
 }
 
@@ -71,8 +85,31 @@ export function sendReset(email: string) {
   return sendPasswordResetEmail(auth, email.trim());
 }
 
-export function logout() {
-  return signOut(auth);
+export async function logout() {
+  const currentUser = auth.currentUser;
+  // Sign out first so a slow or unavailable Firestore connection cannot block
+  // the user's logout action. Updating the staff duty status is best effort.
+  await signOut(auth);
+
+  if (currentUser) {
+    void (async () => {
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.role && data.role.toLowerCase() !== "customer") {
+            await updateDoc(userRef, {
+              isOnDuty: false,
+              lastLogout: serverTimestamp(),
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Could not mark user as off-duty on logout:", err);
+      }
+    })();
+  }
 }
 
 // Where each role lands after login. Staff and kitchen routes are for the

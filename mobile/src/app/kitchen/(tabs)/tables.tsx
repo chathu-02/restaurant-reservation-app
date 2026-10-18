@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/components/form-ui";
 import { dateValue, formatTime, loadTables, ReservationDoc, TableDoc } from "@/lib/booking";
 import { subscribeKitchenReservations } from "@/lib/kitchen";
+import KitchenBackButton from "@/components/KitchenBackButton";
 
 type TableState = "free" | "booked" | "seated" | "preparing" | "ready" | "served";
 
@@ -75,9 +76,12 @@ export default function KitchenTablesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerLeft}>
+          <KitchenBackButton />
+          <View>
           <Text style={styles.title}>Table view</Text>
           <Text style={styles.subtitle}>Live floor assignments for today</Text>
+          </View>
         </View>
         <View style={styles.liveBadge}>
           <View style={styles.liveDot} />
@@ -171,6 +175,7 @@ const stateTextStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", paddingHorizontal: 24, paddingTop: 14, paddingBottom: 18 },
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
   title: { fontSize: 24, fontWeight: "800", color: colors.text },
   subtitle: { color: colors.muted, fontSize: 13, marginTop: 4 },
   liveBadge: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#EAF7F0", paddingHorizontal: 9, paddingVertical: 6, borderRadius: 12 },

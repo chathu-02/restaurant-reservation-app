@@ -54,6 +54,7 @@ export type IconName =
   | 'target'
   | 'walk'
   | 'chart'
+  | 'clipboard'
   | 'more-vertical'
   | 'flash'
   | 'whatsapp'
@@ -160,6 +161,8 @@ export function Icon({ name, size = 20, color = '#111827', style }: IconProps) {
       return <MaterialCommunityIcons name="walk" size={size} color={color} style={style} />;
     case 'chart':
       return <Feather name="bar-chart-2" size={size} color={color} style={style} />;
+    case 'clipboard':
+      return <Ionicons name="clipboard-outline" size={size} color={color} style={style} />;
     case 'more-vertical':
       return <Feather name="more-vertical" size={size} color={color} style={style} />;
     case 'flash':

@@ -16,6 +16,7 @@ import {
   query,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import KitchenBackButton from "@/components/KitchenBackButton";
 
 type KitchenFeedItem = {
   id: string;
@@ -105,7 +106,10 @@ export default function KitchenAlertsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Alerts</Text>
+        <View style={styles.headerLeft}>
+          <KitchenBackButton />
+          <Text style={styles.headerTitle}>Alerts</Text>
+        </View>
         <Pressable
           style={styles.profileBtn}
           onPress={() => router.push("/kitchen/profile" as never)}
@@ -188,6 +192,7 @@ export default function KitchenAlertsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 24, paddingTop: 12, paddingBottom: 16 },
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
   headerTitle: { fontSize: 24, fontWeight: "700", color: colors.text },
   profileBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
   content: { padding: 24 },
