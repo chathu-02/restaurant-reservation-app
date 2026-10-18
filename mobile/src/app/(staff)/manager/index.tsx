@@ -556,6 +556,14 @@ export default function DashboardScreen() {
                     onPress={() => router.push('/(staff)/manager/tables' as never)}
                   />
                   <ManagerToolItem
+                    icon="clipboard"
+                    iconBgColor="#F59E0B"
+                    iconColor="#FFFFFF"
+                    title="Kitchen Prep Plan"
+                    subtitle="Create, update & manage prep tasks"
+                    onPress={() => router.push('/kitchen/tasks' as never)}
+                  />
+                  <ManagerToolItem
                     icon="chart"
                     iconBgColor="#4F46E5"
                     iconColor="#FFFFFF"

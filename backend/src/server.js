@@ -365,7 +365,9 @@ app.patch("/api/reservations/:id/status", async (req, res) => {
 app.post("/api/kitchen/tasks", async (req, res) => {
   const title = String(req.body.title || "").trim();
   const station = String(req.body.station || "").trim();
-  const { priority = "normal", dueTime = "", notes = "" } = req.body;
+  const priority = req.body.priority || "normal";
+  const dueTime = typeof req.body.dueTime === "string" ? req.body.dueTime.trim() : "";
+  const notes = typeof req.body.notes === "string" ? req.body.notes.trim() : "";
   if (!title || !station) {
     return res.status(400).json({ message: "Task title and station are required" });
   }

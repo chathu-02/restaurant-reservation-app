@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/components/form-ui";
 import { ReservationDoc, dateValue, formatTime } from "@/lib/booking";
 import { subscribeKitchenReservations, updateReservationStatus, KitchenStatus } from "@/lib/kitchen";
+import KitchenBackButton from "@/components/KitchenBackButton";
 
 export default function KitchenTodayScreen() {
   const router = useRouter();
@@ -67,6 +68,7 @@ export default function KitchenTodayScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.header}>
             <View style={styles.headerLeft}>
+              <KitchenBackButton />
               <View style={styles.dot} />
               <Text style={styles.headerTitle}>Today’s prep plan</Text>
             </View>

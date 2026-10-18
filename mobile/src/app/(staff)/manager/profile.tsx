@@ -55,9 +55,12 @@ export default function StaffProfileScreen() {
   };
 
   const handleLogout = async () => {
-    // Direct logout without confirmation as requested
-    await logout();
-    router.replace('/(auth)/role-choice' as never);
+    // Always leave the staff area even if Firebase cleanup reports an error.
+    try {
+      await logout();
+    } finally {
+      router.replace('/(auth)/role-choice' as never);
+    }
   };
 
   const services = ['BREAKFAST SERVICE', 'LUNCH SERVICE', 'DINNER SERVICE', 'NIGHT SHIFT'];
