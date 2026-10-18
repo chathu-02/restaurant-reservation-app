@@ -413,6 +413,12 @@ app.put("/api/kitchen/tasks/:id", async (req, res) => {
   if (update.title !== undefined && !String(update.title).trim()) {
     return res.status(400).json({ message: "Task title cannot be empty" });
   }
+  if (update.station !== undefined && !String(update.station).trim()) {
+    return res.status(400).json({ message: "Task station cannot be empty" });
+  }
+  if (Object.keys(update).length === 0) {
+    return res.status(400).json({ message: "At least one task field is required" });
+  }
   if (update.priority !== undefined && !["low", "normal", "high"].includes(update.priority)) {
     return res.status(400).json({ message: "Priority must be low, normal, or high" });
   }
@@ -460,22 +466,21 @@ app.post("/api/queue", (req, res) => {
 
 // Connect to MongoDB and start the API
 async function startServer() {
-  try {
-    if (process.env.MONGODB_URI) {
-      await mongoose.connect(process.env.MONGODB_URI);
-      console.log("MongoDB connected successfully");
-    } else {
-      console.log("MONGODB_URI not provided; running in local in-memory fallback mode");
-    }
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Backend API running on port ${PORT}`);
+  });
 
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Backend API running on port ${PORT}`);
-    });
+  if (!process.env.MONGODB_URI) {
+    console.log("MONGODB_URI not provided; running in local in-memory fallback mode");
+    return;
+  }
+
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 5000 });
+    console.log("MongoDB connected successfully");
   } catch (error) {
-    console.error("Backend startup notice:", error.message);
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Backend API running on port ${PORT} (standalone mode)`);
-    });
+    console.error("MongoDB connection notice:", error.message);
+    console.log("Continuing in local in-memory fallback mode");
   }
 }
 
