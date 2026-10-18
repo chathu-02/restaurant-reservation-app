@@ -87,24 +87,29 @@ export function sendReset(email: string) {
 
 export async function logout() {
   const currentUser = auth.currentUser;
+  // Sign out first so a slow or unavailable Firestore connection cannot block
+  // the user's logout action. Updating the staff duty status is best effort.
+  await signOut(auth);
+
   if (currentUser) {
-    try {
-      const userRef = doc(db, "users", currentUser.uid);
-      const snap = await getDoc(userRef);
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data.role && data.role.toLowerCase() !== "customer") {
-          await updateDoc(userRef, {
-            isOnDuty: false,
-            lastLogout: serverTimestamp(),
-          });
+    void (async () => {
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.role && data.role.toLowerCase() !== "customer") {
+            await updateDoc(userRef, {
+              isOnDuty: false,
+              lastLogout: serverTimestamp(),
+            });
+          }
         }
+      } catch (err) {
+        console.warn("Could not mark user as off-duty on logout:", err);
       }
-    } catch (err) {
-      console.warn("Could not mark user as off-duty on logout:", err);
-    }
+    })();
   }
-  return signOut(auth);
 }
 
 // Where each role lands after login. Staff and kitchen routes are for the

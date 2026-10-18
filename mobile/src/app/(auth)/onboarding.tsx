@@ -1,11 +1,6 @@
 import { Logo } from "@/components/logo";
 import { BRAND } from "@/lib/brand";
 import {
-  CormorantGaramond_500Medium,
-  CormorantGaramond_600SemiBold,
-  CormorantGaramond_700Bold,
-} from "@expo-google-fonts/cormorant-garamond";
-import {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_500Medium,
   PlusJakartaSans_600SemiBold,
@@ -109,9 +104,6 @@ export default function Onboarding() {
   const { width, height } = useWindowDimensions();
 
   const [fontsLoaded] = useFonts({
-    CormorantGaramond_500Medium,
-    CormorantGaramond_600SemiBold,
-    CormorantGaramond_700Bold,
     PlusJakartaSans_400Regular,
     PlusJakartaSans_500Medium,
     PlusJakartaSans_600SemiBold,
@@ -396,7 +388,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   splashName: {
-    fontFamily: "CormorantGaramond_700Bold",
+    fontFamily: "Georgia",
     fontSize: 40,
     color: "#064E3B",
     marginTop: 18,
@@ -437,9 +429,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
   },
 
-  // Headline (Cormorant Garamond - Luxury Editorial Serif)
+  // Headline (system serif fallback keeps onboarding portable)
   tagText: {
-    fontFamily: "CormorantGaramond_600SemiBold",
+    fontFamily: "Georgia",
     fontSize: 36,
     color: "#FFFFFF",
     textAlign: "center",

@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/components/form-ui";
 import { ReservationDoc, formatTime, dateValue, nextDays } from "@/lib/booking";
 import { subscribeKitchenReservations } from "@/lib/kitchen";
+import KitchenBackButton from "@/components/KitchenBackButton";
 
 export default function KitchenUpcomingScreen() {
   const router = useRouter();
@@ -40,7 +41,10 @@ export default function KitchenUpcomingScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Upcoming</Text>
+        <View style={styles.headerLeft}>
+          <KitchenBackButton />
+          <Text style={styles.headerTitle}>Upcoming</Text>
+        </View>
         <View style={styles.headerActions}>
           <Pressable
             style={styles.profileBtn}
@@ -112,6 +116,7 @@ export default function KitchenUpcomingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 24, paddingTop: 12, paddingBottom: 16 },
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
   headerTitle: { fontSize: 24, fontWeight: "700", color: colors.text },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   profileBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1, borderWidth: 1, borderColor: "#E2E8F0" },
